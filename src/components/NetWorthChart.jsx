@@ -1,11 +1,28 @@
+import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 
+// So that X labels don't overlap: on narrow screens show every Nth month (~5–6 labels)
+function getXAxisInterval(dataLength, isNarrow) {
+  if (!isNarrow || dataLength <= 6) return 0;
+  const targetLabels = 5;
+  return Math.max(0, Math.floor(dataLength / targetLabels) - 1);
+}
+
 export default function NetWorthChart({ months, totals }) {
+  const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 640px)');
+    const onChange = (e) => setNarrow(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
   const data = months.map((m, i) => ({
     date: m.shortLabel,
     total: totals[i],
   }));
+  const xInterval = getXAxisInterval(data.length, narrow);
 
   return (
     <div className="bg-surface-alt rounded-2xl p-5 border border-border">
@@ -21,8 +38,11 @@ export default function NetWorthChart({ months, totals }) {
               </linearGradient>
             </defs>
             <XAxis
-              dataKey="date" tick={{ fill: '#94a3b8', fontSize: 11 }}
-              axisLine={false} tickLine={false} interval={0}
+              dataKey="date"
+              tick={{ fill: '#94a3b8', fontSize: narrow ? 10 : 11 }}
+              axisLine={false}
+              tickLine={false}
+              interval={xInterval}
             />
             <YAxis
               tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false}
