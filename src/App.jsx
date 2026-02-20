@@ -4,6 +4,7 @@ import { computeStatistics } from './utils/statistics';
 import { formatMoney, formatChange, formatPct } from './utils/formatters';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { fetchSheetData } from './services/sheetsApi';
+import { SPREADSHEET_ID, SPREADSHEET_ID_2 } from './config';
 import LoginScreen from './components/LoginScreen';
 import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
@@ -14,19 +15,38 @@ import StatsGrid from './components/StatsGrid';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 
+const PROFILE_KEY = 'mt_profile';
+const PROFILES = [
+  { id: 'olga', name: 'Olga', sheetId: SPREADSHEET_ID },
+  ...(SPREADSHEET_ID_2 ? [{ id: 'andrea', name: 'Andrea', sheetId: SPREADSHEET_ID_2 }] : []),
+];
+
+function getInitialProfile() {
+  try {
+    const saved = localStorage.getItem(PROFILE_KEY);
+    if (saved === 'andrea' && SPREADSHEET_ID_2) return 'andrea';
+    return 'olga';
+  } catch {
+    return 'olga';
+  }
+}
+
 export default function App() {
   const { user, accessToken, ready, login, logout, isLoggedIn } = useGoogleAuth();
+  const [profile, setProfile] = useState(getInitialProfile);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const currentSheetId = PROFILES.find(p => p.id === profile)?.sheetId || SPREADSHEET_ID;
+
   useEffect(() => {
-    if (!accessToken) return;
+    if (!accessToken || !currentSheetId) return;
 
     setLoading(true);
     setError(null);
 
-    fetchSheetData(accessToken)
+    fetchSheetData(accessToken, currentSheetId)
       .then(csvText => {
         const rows = parseCSV(csvText);
         const months = groupByMonth(rows);
@@ -35,7 +55,14 @@ export default function App() {
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [accessToken]);
+  }, [accessToken, currentSheetId]);
+
+  const switchProfile = (id) => {
+    setProfile(id);
+    try {
+      localStorage.setItem(PROFILE_KEY, id);
+    } catch { /* ignore */ }
+  };
 
   if (!isLoggedIn) {
     return <LoginScreen onLogin={login} ready={ready} />;
@@ -81,7 +108,20 @@ export default function App() {
             </div>
             <h1 className="text-xl font-bold tracking-tight">Money<span className="text-brand">Tracker</span></h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {PROFILES.length > 1 && (
+              <div className="flex rounded-xl bg-surface border border-border p-0.5">
+                {PROFILES.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => switchProfile(p.id)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${profile === p.id ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary'}`}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
             {user && (
               <button
                 onClick={logout}

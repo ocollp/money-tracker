@@ -1,5 +1,6 @@
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
+export const SPREADSHEET_ID_2 = import.meta.env.VITE_SPREADSHEET_ID_2 || '';
 export const SHEET_RANGE = 'A:I';
 export const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 

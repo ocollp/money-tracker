@@ -1,7 +1,7 @@
-import { SPREADSHEET_ID, SHEET_RANGE } from '../config';
+import { SHEET_RANGE } from '../config';
 
-export async function fetchSheetData(accessToken) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_RANGE}`;
+export async function fetchSheetData(accessToken, spreadsheetId) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${SHEET_RANGE}`;
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },

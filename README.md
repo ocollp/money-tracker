@@ -18,7 +18,8 @@ Personal finance dashboard: net worth over time, monthly changes, burn rate, run
 
    Edit `.env` with:
    - `VITE_GOOGLE_CLIENT_ID` — Google OAuth client ID (Web application)
-   - `VITE_SPREADSHEET_ID` — ID of your Google Sheet (from the sheet URL)
+   - `VITE_SPREADSHEET_ID` — ID of the first Google Sheet (shown as “Olga” in the switcher)
+   - `VITE_SPREADSHEET_ID_2` — (optional) ID of a second Sheet (shown as “Andrea”). If set, a profile switcher appears next to the title.
    - Optional (mortgage card): `VITE_MORTGAGE_END_YEAR` and `VITE_MORTGAGE_END_MONTH` (remaining months are computed automatically), or `VITE_MORTGAGE_REMAINING_MONTHS`; plus `VITE_MORTGAGE_MONTHLY_PAYMENT`, `VITE_OWNERSHIP_SHARE`
 
 3. Run locally:
