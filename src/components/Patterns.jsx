@@ -1,6 +1,6 @@
-import { formatMoney, formatChange } from '../utils/formatters';
+import { formatChange } from '../utils/formatters';
 
-export default function Patterns({ patterns, yearComparison }) {
+export default function Patterns({ yearComparison }) {
   const sortedYears = [...yearComparison].sort((a, b) => b.year - a.year);
 
   return (
@@ -50,37 +50,6 @@ export default function Patterns({ patterns, yearComparison }) {
         </div>
       )}
 
-      {/* Monthly patterns */}
-      {patterns.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Patrons mensuals</p>
-          <p className="text-[10px] text-text-secondary mb-2.5">Mesos que sempre em repeteixo igual, mirant tots els anys</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {patterns.filter(p => p.type === 'positive').length > 0 && (
-              <div className="bg-positive/5 border border-positive/15 rounded-xl p-4 space-y-2.5">
-                <p className="text-xs font-semibold text-positive uppercase tracking-wider">Sempre guanyo</p>
-                {patterns.filter(p => p.type === 'positive').map((p, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{p.month}</span>
-                    <span className="text-sm font-bold text-positive">{formatMoney(p.avg)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {patterns.filter(p => p.type === 'negative').length > 0 && (
-              <div className="bg-negative/5 border border-negative/15 rounded-xl p-4 space-y-2.5">
-                <p className="text-xs font-semibold text-negative uppercase tracking-wider">Sempre perdo</p>
-                {patterns.filter(p => p.type === 'negative').map((p, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{p.month}</span>
-                    <span className="text-sm font-bold text-negative">{formatMoney(p.avg)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -2,20 +2,20 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 import { COLORS } from '../utils/formatters';
 
+const displayName = (name) => (name === 'Efectivo' ? 'Efectiu' : name);
 const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0];
   return (
     <div className="bg-surface border border-border rounded-xl px-3 py-2 shadow-xl">
-      <p className="text-xs text-text-secondary">{d.name}</p>
+      <p className="text-xs text-text-secondary">{displayName(d.name)}</p>
       <p className="text-sm font-bold">{formatMoney(d.value)}</p>
     </div>
   );
 };
 
-export default function DistributionChart({ distribution: rawDistribution, title }) {
-  const distribution = rawDistribution.filter(d => d.name !== 'BBVA');
-  if (!distribution.length) return null;
+export default function DistributionChart({ distribution, title }) {
+  if (!distribution?.length) return null;
 
   const total = distribution.reduce((s, d) => s + d.value, 0);
   const recalculated = distribution.map(d => ({ ...d, pct: total > 0 ? (d.value / total) * 100 : 0 }));
@@ -52,7 +52,7 @@ export default function DistributionChart({ distribution: rawDistribution, title
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                  <span className="text-text-secondary text-sm">{d.name}</span>
+                  <span className="text-text-secondary text-sm">{d.name === 'Efectivo' ? 'Efectiu' : d.name}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <span className="text-sm font-semibold">{formatMoney(d.value)}</span>

@@ -47,11 +47,11 @@ export default function Heatmap({ data }) {
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-positive inline-block" />
-            <span className="text-positive font-semibold">{positiveMonths}</span>
+            <span className="text-positive font-semibold">{positiveMonths} ↑</span>
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-negative inline-block" />
-            <span className="text-negative font-semibold">{negativeMonths}</span>
+            <span className="text-negative font-semibold">{negativeMonths} ↓</span>
           </span>
         </div>
       </div>

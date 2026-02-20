@@ -10,7 +10,7 @@ export default function NetWorthChart({ months, totals }) {
   return (
     <div className="bg-surface-alt rounded-2xl p-5 border border-border">
       <h3 className="text-lg font-semibold mb-1">Patrimoni</h3>
-      <p className="text-xs text-text-secondary mb-4">Sense habitatge</p>
+      <p className="text-xs text-text-secondary mb-4">Patrimoni sense habitatge</p>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 5, right: 5, bottom: 20, left: 5 }}>

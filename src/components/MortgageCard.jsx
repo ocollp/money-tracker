@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 
@@ -15,7 +16,7 @@ export default function MortgageCard({ housing }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <MiniStat label="Valor habitatge" value={formatMoney(housing.fullValue)} hint={`La meva part: ${formatMoney(housing.value)}`} />
         <MiniStat label="Deute total" value={formatMoney(-housing.fullDebt)} negative hint={`El meu deute: ${formatMoney(-housing.debt)}`} />
-        <MiniStat label="El meu equity" value={formatMoney(housing.equity)} highlight />
+        <MiniStat label="El meu equity" value={formatMoney(housing.equity)} highlight tooltip="L'equity és la part de la casa que et pertany neta de deute: el que et quedaria si venguessis l'habitatge i paguessis la hipoteca." />
       </div>
 
       <div>
@@ -32,7 +33,7 @@ export default function MortgageCard({ housing }) {
         <div className="flex justify-between text-xs text-text-secondary mt-1.5">
           <span>Quota: {formatMoney(housing.monthlyPayment)}/mes</span>
           {housing.monthsRemaining && (
-            <span>Falten {housing.monthsRemaining} mesos (~{(housing.monthsRemaining / 12).toFixed(0)} anys)</span>
+            <span>Queden {housing.monthsRemaining} mesos (~{(housing.monthsRemaining / 12).toFixed(0)} anys)</span>
           )}
         </div>
       </div>
@@ -62,11 +63,11 @@ export default function MortgageCard({ housing }) {
               <Tooltip
                 contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 12 }}
                 labelStyle={{ color: '#94a3b8' }}
-                formatter={(v, name) => [formatMoney(v), name === 'debt' ? 'Deute' : 'Equity']}
+                formatter={(v, name) => [formatMoney(v), name]}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
               <Area type="monotone" dataKey="debt" name="Deute" stroke="#ef4444" fill="url(#debtGrad)" strokeWidth={2} dot={false} />
-              <Area type="monotone" dataKey="equity" name="Equity" stroke="#22c55e" fill="url(#equityGrad)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="equity" name="Patrimoni net" stroke="#22c55e" fill="url(#equityGrad)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -75,10 +76,32 @@ export default function MortgageCard({ housing }) {
   );
 }
 
-function MiniStat({ label, value, negative, highlight, hint }) {
+function MiniStat({ label, value, negative, highlight, hint, tooltip }) {
+  const [showTip, setShowTip] = useState(false);
   return (
-    <div className="bg-surface rounded-xl p-3">
-      <p className="text-xs text-text-secondary mb-1">{label}</p>
+    <div className="bg-surface rounded-xl p-3 relative">
+      <div className="flex items-center gap-1.5 mb-1">
+        <p className="text-xs text-text-secondary">{label}</p>
+        {tooltip && (
+          <button
+            type="button"
+            className="text-text-secondary/50 hover:text-brand transition-colors"
+            onMouseEnter={() => setShowTip(true)}
+            onMouseLeave={() => setShowTip(false)}
+            onClick={() => setShowTip(p => !p)}
+            aria-label="Info"
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {showTip && tooltip && (
+        <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-surface-alt border border-border rounded-xl p-2.5 text-[11px] text-text-secondary leading-relaxed shadow-xl">
+          {tooltip}
+        </div>
+      )}
       <p className={`text-sm font-bold ${highlight ? 'text-positive' : negative ? 'text-negative' : ''}`}>
         {value}
       </p>

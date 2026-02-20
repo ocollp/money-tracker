@@ -17,8 +17,8 @@ import MortgageCard from './components/MortgageCard';
 
 const PROFILE_KEY = 'mt_profile';
 const PROFILES = [
-  { id: 'olga', name: 'Olga', sheetId: SPREADSHEET_ID },
-  ...(SPREADSHEET_ID_2 ? [{ id: 'andrea', name: 'Andrea', sheetId: SPREADSHEET_ID_2 }] : []),
+  { id: 'olga', name: 'Olga', emoji: '👩🏼', sheetId: SPREADSHEET_ID },
+  ...(SPREADSHEET_ID_2 ? [{ id: 'andrea', name: 'Andrea', emoji: '👩🏻', sheetId: SPREADSHEET_ID_2 }] : []),
 ];
 
 function getInitialProfile() {
@@ -45,6 +45,7 @@ export default function App() {
 
     setLoading(true);
     setError(null);
+    setStats(null);
 
     fetchSheetData(accessToken, currentSheetId)
       .then(csvText => {
@@ -117,7 +118,7 @@ export default function App() {
                     onClick={() => switchProfile(p.id)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${profile === p.id ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary'}`}
                   >
-                    {p.name}
+                    {p.emoji} {p.name}
                   </button>
                 ))}
               </div>
@@ -147,7 +148,7 @@ export default function App() {
             icon="📊"
           />
           <KpiCard
-            title={`${new Date().getFullYear()}`}
+            title="Patrimoni net"
             value={formatMoney(stats.current)}
             subtitle={stats.changeVsYearPct != null ? `vs any passat: ${formatPct(stats.changeVsYearPct)}` : null}
             trend={stats.changeVsYear ?? 0}
@@ -163,7 +164,7 @@ export default function App() {
           <KpiCard
             title="Coixí"
             value={stats.runway != null ? `${stats.runway} mesos` : '—'}
-            subtitle={null}
+            subtitle={stats.runway != null ? `~${Math.round(stats.runway / 12)} anys` : null}
             trend={0}
             icon="🛡️"
           />
@@ -175,29 +176,11 @@ export default function App() {
 
         {stats.hasHousing && <MortgageCard housing={stats.housing} />}
 
-        <DistributionChart distribution={stats.distribution} title="On tens els diners" />
+        <DistributionChart distribution={stats.distribution} title="On tinc els diners" />
 
         <CashVsInvestedChart data={stats.cashVsInvested} />
 
-        {stats.outlierChanges.length > 0 && (
-          <div className="bg-warning/10 border border-warning/20 rounded-xl px-4 py-3 text-sm text-warning flex items-start gap-2.5">
-            <span className="text-lg leading-none mt-0.5">⚡</span>
-            <div>
-              <span className="font-medium">Mesos atípics detectats: </span>
-              <span className="text-text-secondary">
-                {stats.outlierChanges.map(c =>
-                  `${c.month.label} (${formatChange(c.value)})`
-                ).join(', ')}
-                . S'exclouen de les mitjanes per reflectir la meva vida normal.
-              </span>
-            </div>
-          </div>
-        )}
-
-        <Patterns
-          patterns={stats.patterns}
-          yearComparison={stats.yearComparison}
-        />
+        <Patterns yearComparison={stats.yearComparison} />
       </main>
 
     </div>

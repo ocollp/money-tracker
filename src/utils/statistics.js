@@ -95,7 +95,7 @@ export function computeStatistics(months) {
   const bestStreak = findStreak(changes, true);
   const worstStreak = findStreak(changes, false);
 
-  // Distribution by entity (latest month, LIQUID only — no BBVA/housing)
+  // Distribution by entity (latest month): only non-housing rows. Excluded per row when category is Vivienda personal or Hipoteca; BBVA (and any entity) appears with its non-housing balance.
   const latestMonth = months[months.length - 1];
   const distribution = Object.entries(latestMonth.byEntityLiquid)
     .map(([name, value]) => ({ name, value, pct: current > 0 ? (value / current) * 100 : 0 }))
