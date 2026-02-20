@@ -29,20 +29,13 @@ export default function Heatmap({ data }) {
 
   const positiveMonths = data.filter(d => d.value > 0).length;
   const negativeMonths = data.filter(d => d.value < 0).length;
-  const bestCell = data.reduce((a, b) => (a.value > b.value ? a : b), data[0]);
-  const worstCell = data.reduce((a, b) => (a.value < b.value ? a : b), data[0]);
 
   return (
     <div className="bg-surface-alt rounded-2xl border border-border overflow-hidden">
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center">
-            <span className="text-base">🗓️</span>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Heat Map</h3>
-            <p className="text-[11px] text-text-secondary -mt-0.5">Rendiment mes a mes</p>
-          </div>
+        <div>
+          <h3 className="text-lg font-semibold">Heat Map</h3>
+          <p className="text-[11px] text-text-secondary -mt-0.5">Rendiment mes a mes</p>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1">
@@ -133,7 +126,7 @@ export default function Heatmap({ data }) {
         </div>
       )}
 
-      <div className="px-5 pb-4 pt-1 flex flex-wrap items-center justify-between gap-2 text-[10px] text-text-secondary border-t border-border/50">
+      <div className="px-5 pb-4 pt-1 flex flex-wrap items-center gap-2 text-[10px] text-text-secondary border-t border-border/50">
         <div className="flex items-center gap-2 pt-3">
           <span className="text-text-secondary/60 font-medium">Pèrdua</span>
           <div className="flex items-center gap-0.5">
@@ -144,14 +137,6 @@ export default function Heatmap({ data }) {
             <div className="w-4 h-3 rounded" style={{ backgroundColor: 'rgba(34, 197, 94, 0.8)' }} />
           </div>
           <span className="text-text-secondary/60 font-medium">Guany</span>
-        </div>
-        <div className="flex gap-4 pt-3">
-          {bestCell && (
-            <span>Millor: <span className="text-positive font-semibold">{bestCell.month} ({formatChange(bestCell.value)})</span></span>
-          )}
-          {worstCell && (
-            <span>Pitjor: <span className="text-negative font-semibold">{worstCell.month} ({formatChange(worstCell.value)})</span></span>
-          )}
         </div>
       </div>
     </div>

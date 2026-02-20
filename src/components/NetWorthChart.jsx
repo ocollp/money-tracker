@@ -2,16 +2,22 @@ import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 
-// Show few dates (5–6) so they stay readable; same on mobile and desktop
-function getXAxisInterval(dataLength) {
-  if (dataLength <= 5) return 0;
-  const targetLabels = 5;
-  return Math.max(0, Math.floor(dataLength / targetLabels) - 1);
+// Always show first and last date at the margins; 1 or 2 in the middle with correct spacing
+function getXAxisTicks(data, isNarrow) {
+  if (!data?.length) return [];
+  if (data.length <= 3) return data.map((d) => d.date);
+  const first = data[0].date;
+  const last = data[data.length - 1].date;
+  const n = data.length;
+  if (isNarrow) {
+    const mid = data[Math.floor(n / 2)].date;
+    return [first, mid, last];
+  }
+  const mid1 = data[Math.floor(n / 3)].date;
+  const mid2 = data[Math.floor((2 * n) / 3)].date;
+  return [first, mid1, mid2, last];
 }
 
-// Recharts draws the first tick at the left edge of the band; the line starts at the band center.
-// We don't shift the tick so the "J" of "Jun" stays at the left edge = where the line visually starts (band start after padding).
-// That way hover over the label matches the first data point (Jun).
 function renderXAxisTick(props, firstDate, lastDate, fontSize) {
   const { x, y, payload } = props;
   const isFirst = payload.value === firstDate;
@@ -40,11 +46,11 @@ export default function NetWorthChart({ months, totals }) {
     date: m.shortLabel,
     total: totals[i],
   }));
-  const xInterval = getXAxisInterval(data.length);
+  const xTicks = getXAxisTicks(data, narrow);
   const chartMargin = {
     top: 5,
     right: narrow ? 16 : 12,
-    bottom: 24,
+    bottom: 26,
     left: 8,
   };
   const tickFontSize = narrow ? 10 : 11;
@@ -66,7 +72,7 @@ export default function NetWorthChart({ months, totals }) {
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              interval={xInterval}
+              ticks={xTicks}
               padding={{ left: 8, right: 8 }}
               tick={(props) => renderXAxisTick(props, data[0]?.date, data[data.length - 1]?.date, tickFontSize)}
             />

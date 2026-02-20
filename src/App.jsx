@@ -101,14 +101,7 @@ export default function App() {
     <div className="min-h-screen">
       <header className="border-b border-border sticky top-0 bg-surface/80 backdrop-blur-xl z-10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand/20 flex items-center justify-center">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight">Money<span className="text-brand">Tracker</span></h1>
-          </div>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight">Money<span className="text-brand">Tracker</span></h1>
           <div className="flex items-center gap-2 sm:gap-4">
             {PROFILES.length > 1 && (
               <div className="flex rounded-lg sm:rounded-xl bg-surface border border-border p-0.5">
@@ -145,28 +138,24 @@ export default function App() {
             value={formatChange(stats.changeVsPrev)}
             subtitle={stats.changeVsPrevPct != null ? `vs mes anterior: ${formatPct(stats.changeVsPrevPct)}` : null}
             trend={stats.changeVsPrev}
-            icon="📊"
           />
           <KpiCard
             title="Patrimoni net"
             value={formatMoney(stats.current)}
             subtitle={stats.changeVsYearPct != null ? `vs any passat: ${formatPct(stats.changeVsYearPct)}` : null}
             trend={stats.changeVsYear ?? 0}
-            icon="📈"
           />
           <KpiCard
             title="Mitjana mensual"
             value={formatChange(stats.avgChange)}
             subtitle={null}
             trend={stats.avgChange}
-            icon="📉"
           />
           <KpiCard
             title="Coixí"
             value={stats.runway != null ? `${stats.runway} mesos` : '—'}
             subtitle={stats.runway != null ? `~${Math.round(stats.runway / 12)} anys` : null}
             trend={0}
-            icon="🛡️"
           />
         </section>
 

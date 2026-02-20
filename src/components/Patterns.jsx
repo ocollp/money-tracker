@@ -5,14 +5,9 @@ export default function Patterns({ yearComparison }) {
 
   return (
     <div className="bg-surface-alt rounded-2xl p-5 border border-border space-y-5">
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center">
-          <span className="text-base">🔍</span>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold">Insights</h3>
-          <p className="text-[11px] text-text-secondary -mt-0.5">Basats en els meus històrics</p>
-        </div>
+      <div>
+        <h3 className="text-lg font-semibold">Tendències</h3>
+        <p className="text-[11px] text-text-secondary -mt-0.5">Basats en els meus històrics</p>
       </div>
 
       {/* Year comparison — descending */}

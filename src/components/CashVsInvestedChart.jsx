@@ -2,10 +2,19 @@ import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 
-function getXAxisInterval(dataLength) {
-  if (dataLength <= 5) return 0;
-  const targetLabels = 5;
-  return Math.max(0, Math.floor(dataLength / targetLabels) - 1);
+function getXAxisTicks(data, isNarrow) {
+  if (!data?.length) return [];
+  if (data.length <= 3) return data.map((d) => d.date);
+  const first = data[0].date;
+  const last = data[data.length - 1].date;
+  const n = data.length;
+  if (isNarrow) {
+    const mid = data[Math.floor(n / 2)].date;
+    return [first, mid, last];
+  }
+  const mid1 = data[Math.floor(n / 3)].date;
+  const mid2 = data[Math.floor((2 * n) / 3)].date;
+  return [first, mid1, mid2, last];
 }
 
 function renderXAxisTick(props, firstDate, lastDate, fontSize) {
@@ -35,10 +44,10 @@ export default function CashVsInvestedChart({ data }) {
   const chartMargin = {
     top: 5,
     right: narrow ? 16 : 12,
-    bottom: 24,
+    bottom: 26,
     left: 8,
   };
-  const xInterval = data?.length ? getXAxisInterval(data.length) : 0;
+  const xTicks = getXAxisTicks(data, narrow);
   const tickFontSize = narrow ? 10 : 11;
 
   return (
@@ -61,7 +70,7 @@ export default function CashVsInvestedChart({ data }) {
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              interval={xInterval}
+              ticks={xTicks}
               padding={{ left: 8, right: 8 }}
               tick={(props) => renderXAxisTick(props, data?.[0]?.date, data?.[data.length - 1]?.date, tickFontSize)}
             />

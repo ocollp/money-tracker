@@ -1,8 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 
+function getXAxisTicks(data, isNarrow) {
+  if (!data?.length) return [];
+  if (data.length <= 3) return data.map((d) => d.date);
+  const first = data[0].date;
+  const last = data[data.length - 1].date;
+  const n = data.length;
+  if (isNarrow) {
+    const mid = data[Math.floor(n / 2)].date;
+    return [first, mid, last];
+  }
+  const mid1 = data[Math.floor(n / 3)].date;
+  const mid2 = data[Math.floor((2 * n) / 3)].date;
+  return [first, mid1, mid2, last];
+}
+
+function renderXAxisTick(props, firstDate, lastDate, fontSize) {
+  const { x, y, payload } = props;
+  const isFirst = payload.value === firstDate;
+  const isLast = payload.value === lastDate;
+  const textAnchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={0} dy={8} textAnchor={textAnchor} fill="#94a3b8" fontSize={fontSize}>
+        {payload.value}
+      </text>
+    </g>
+  );
+}
+
 export default function MortgageCard({ housing }) {
+  const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 640px)');
+    const onChange = (e) => setNarrow(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
   const debtPaidPct = housing.initialDebt > 0
     ? ((housing.totalPaid / housing.initialDebt) * 100).toFixed(1)
     : 0;
@@ -10,7 +48,7 @@ export default function MortgageCard({ housing }) {
   return (
     <div className="bg-surface-alt rounded-2xl p-5 border border-border space-y-5">
       <div>
-        <h3 className="text-lg font-semibold">Casa meva</h3>
+        <h3 className="text-lg font-semibold">Casa</h3>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -41,7 +79,15 @@ export default function MortgageCard({ housing }) {
       {housing.evolution.length > 1 && (
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={housing.evolution} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+            <AreaChart
+              data={housing.evolution}
+              margin={{
+                top: 5,
+                right: narrow ? 16 : 12,
+                bottom: 26,
+                left: 8,
+              }}
+            >
               <defs>
                 <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2} />
@@ -53,12 +99,24 @@ export default function MortgageCard({ housing }) {
                 </linearGradient>
               </defs>
               <XAxis
-                dataKey="date" tick={{ fill: '#94a3b8', fontSize: 11 }}
-                axisLine={false} tickLine={false}
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                ticks={getXAxisTicks(housing.evolution, narrow)}
+                padding={{ left: 8, right: 8 }}
+                tick={(props) => renderXAxisTick(
+                  props,
+                  housing.evolution[0]?.date,
+                  housing.evolution[housing.evolution.length - 1]?.date,
+                  narrow ? 10 : 11
+                )}
               />
               <YAxis
-                tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false}
-                tickFormatter={v => `${(v / 1000).toFixed(0)}k`} width={40}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
+                width={40}
               />
               <Tooltip
                 contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 12 }}
