@@ -6,10 +6,10 @@ export default function KpiCard({ title, value, subtitle, trend, icon, tooltip }
   const arrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '';
 
   return (
-    <div className="bg-surface-alt rounded-2xl p-5 border border-border hover:border-brand/40 transition-colors relative">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-surface-alt rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-border hover:border-brand/40 transition-colors relative">
+      <div className="flex items-center justify-between mb-1.5 sm:mb-3">
         <div className="flex items-center gap-1.5">
-          <span className="text-text-secondary text-sm font-medium">{title}</span>
+          <span className="text-text-secondary text-xs sm:text-sm font-medium">{title}</span>
           {tooltip && (
             <button
               className="text-text-secondary/50 hover:text-brand transition-colors"
@@ -23,11 +23,11 @@ export default function KpiCard({ title, value, subtitle, trend, icon, tooltip }
             </button>
           )}
         </div>
-        {icon && <span className="text-2xl">{icon}</span>}
+        {icon && <span className="text-lg sm:text-2xl">{icon}</span>}
       </div>
-      <div className="text-2xl font-bold tracking-tight">{value}</div>
+      <div className="text-lg sm:text-2xl font-bold tracking-tight">{value}</div>
       {subtitle && (
-        <div className={`text-sm mt-1.5 ${trendColor} font-medium`}>
+        <div className={`text-xs sm:text-sm mt-0.5 sm:mt-1.5 ${trendColor} font-medium`}>
           {arrow} {subtitle}
         </div>
       )}

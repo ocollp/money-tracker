@@ -100,23 +100,23 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-border sticky top-0 bg-surface/80 backdrop-blur-xl z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand/20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand/20 flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold tracking-tight">Money<span className="text-brand">Tracker</span></h1>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight">Money<span className="text-brand">Tracker</span></h1>
           </div>
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {PROFILES.length > 1 && (
-              <div className="flex rounded-xl bg-surface border border-border p-0.5">
+              <div className="flex rounded-lg sm:rounded-xl bg-surface border border-border p-0.5">
                 {PROFILES.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => switchProfile(p.id)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${profile === p.id ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary'}`}
+                    className={`px-2 py-1 rounded-md sm:px-3 sm:py-1.5 sm:rounded-lg text-xs sm:text-sm font-medium transition-colors ${profile === p.id ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary'}`}
                   >
                     {p.emoji} {p.name}
                   </button>
@@ -138,8 +138,8 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           <KpiCard
             title="Mes actual"
             value={formatChange(stats.changeVsPrev)}
@@ -172,7 +172,7 @@ export default function App() {
 
         <Heatmap data={stats.heatmap} />
 
-        <NetWorthChart months={stats.months} totals={stats.liquidTotals} />
+        <NetWorthChart months={stats.netWorthMonths} totals={stats.netWorthTotals} />
 
         {stats.hasHousing && <MortgageCard housing={stats.housing} />}
 

@@ -21,8 +21,8 @@ export default function NetWorthChart({ months, totals }) {
               </linearGradient>
             </defs>
             <XAxis
-              dataKey="date" tick={{ fill: '#94a3b8', fontSize: 12 }}
-              axisLine={false} tickLine={false} interval="preserveStartEnd"
+              dataKey="date" tick={{ fill: '#94a3b8', fontSize: 11 }}
+              axisLine={false} tickLine={false} interval={0}
             />
             <YAxis
               tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false}

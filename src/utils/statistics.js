@@ -1,7 +1,35 @@
 import { MORTGAGE_REMAINING_MONTHS, MORTGAGE_END_YEAR, MORTGAGE_END_MONTH, MORTGAGE_MONTHLY_PAYMENT, OWNERSHIP_SHARE } from '../config.js';
 
+// Fill missing months between first and last so charts show a continuous timeline
+function fillMissingMonths(months) {
+  if (months.length <= 1) return { filledMonths: months, filledLiquidTotals: months.map(m => m.liquidTotal) };
+  const first = months[0].date;
+  const last = months[months.length - 1].date;
+  const byKey = new Map(months.map(m => [m.key, m]));
+  const filledMonths = [];
+  const filledLiquidTotals = [];
+  const monthNamesShort = ['', 'Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
+  let lastLiquid = months[0].liquidTotal;
+  for (let d = new Date(first.getFullYear(), first.getMonth(), 1); d <= last; d.setMonth(d.getMonth() + 1)) {
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const existing = byKey.get(key);
+    if (existing) {
+      filledMonths.push(existing);
+      lastLiquid = existing.liquidTotal;
+      filledLiquidTotals.push(existing.liquidTotal);
+    } else {
+      const shortLabel = `${monthNamesShort[d.getMonth() + 1]} ${String(d.getFullYear()).slice(2)}`;
+      filledMonths.push({ key, date: new Date(d), shortLabel, label: `${monthNamesShort[d.getMonth() + 1]} ${d.getFullYear()}`, liquidTotal: lastLiquid });
+      filledLiquidTotals.push(lastLiquid);
+    }
+  }
+  return { filledMonths, filledLiquidTotals };
+}
+
 export function computeStatistics(months) {
   if (!months.length) return null;
+
+  const { filledMonths, filledLiquidTotals } = fillMissingMonths(months);
 
   const totals = months.map(m => m.total);
   const liquidTotals = months.map(m => m.liquidTotal);
@@ -251,6 +279,8 @@ export function computeStatistics(months) {
     seasonality,
     months,
     liquidTotals,
+    netWorthMonths: filledMonths,
+    netWorthTotals: filledLiquidTotals,
     hasHousing,
     housing: {
       fullValue: fullPropertyValue,
