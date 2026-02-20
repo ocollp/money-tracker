@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /money-tracker/
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SPREADSHEET_ID: ${{ secrets.VITE_SPREADSHEET_ID }}
+          VITE_MORTGAGE_REMAINING_MONTHS: ${{ secrets.VITE_MORTGAGE_REMAINING_MONTHS }}
+          VITE_MORTGAGE_END_YEAR: ${{ secrets.VITE_MORTGAGE_END_YEAR }}
+          VITE_MORTGAGE_END_MONTH: ${{ secrets.VITE_MORTGAGE_END_MONTH }}
+          VITE_MORTGAGE_MONTHLY_PAYMENT: ${{ secrets.VITE_MORTGAGE_MONTHLY_PAYMENT }}
+          VITE_OWNERSHIP_SHARE: ${{ secrets.VITE_OWNERSHIP_SHARE }}
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deploy
+        uses: actions/deploy-pages@v4
