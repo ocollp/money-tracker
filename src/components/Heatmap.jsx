@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatChange } from '../utils/formatters';
+import { formatMoney } from '../utils/formatters';
 
 export default function Heatmap({ data }) {
   const [selected, setSelected] = useState(null);
@@ -34,8 +34,7 @@ export default function Heatmap({ data }) {
     <div className="bg-surface-alt rounded-2xl border border-border overflow-hidden">
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Heat Map</h3>
-          <p className="text-[11px] text-text-secondary -mt-0.5">Rendiment mes a mes</p>
+          <h3 className="text-lg font-semibold">Rendiment mensual</h3>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1">
@@ -77,10 +76,10 @@ export default function Heatmap({ data }) {
                         {cell && (
                           <>
                             <span className="text-[11px] font-bold leading-none drop-shadow-sm">
-                              {cell.value > 0 ? '+' : ''}{(cell.value / 1000).toFixed(1)}k
+                              {(Math.abs(cell.value) / 1000).toFixed(1)}k
                             </span>
                             <span className="text-[8px] text-text-primary/50 leading-none mt-0.5 font-medium">
-                              {cell.pct > 0 ? '+' : ''}{cell.pct.toFixed(1)}%
+                              {Math.abs(cell.pct).toFixed(1)}%
                             </span>
                           </>
                         )}
@@ -90,7 +89,7 @@ export default function Heatmap({ data }) {
                 })}
                 <td className="p-0 pl-2">
                   <div className={`rounded-lg h-12 flex items-center justify-center text-[11px] font-bold ${(yearTotals[year] || 0) >= 0 ? 'text-positive bg-positive/15 border border-positive/20' : 'text-negative bg-negative/15 border border-negative/20'}`}>
-                    {yearTotals[year] != null ? `${yearTotals[year] > 0 ? '+' : ''}${(yearTotals[year] / 1000).toFixed(1)}k` : ''}
+                    {yearTotals[year] != null ? `${(Math.abs(yearTotals[year]) / 1000).toFixed(1)}k` : ''}
                   </div>
                 </td>
               </tr>
@@ -112,13 +111,13 @@ export default function Heatmap({ data }) {
           <div className="flex gap-5 text-right">
             <div>
               <p className={`text-sm font-bold ${selected.value >= 0 ? 'text-positive' : 'text-negative'}`}>
-                {formatChange(selected.value)}
+                {formatMoney(Math.abs(selected.value))}
               </p>
               <p className="text-[10px] text-text-secondary">total</p>
             </div>
             <div>
               <p className={`text-sm font-bold ${selected.pct >= 0 ? 'text-positive' : 'text-negative'}`}>
-                {selected.pct > 0 ? '+' : ''}{selected.pct.toFixed(1)}%
+                {Math.abs(selected.pct).toFixed(1)}%
               </p>
               <p className="text-[10px] text-text-secondary">percentatge</p>
             </div>

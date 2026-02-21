@@ -1,4 +1,4 @@
-import { formatChange } from '../utils/formatters';
+import { formatMoney } from '../utils/formatters';
 
 export default function Patterns({ yearComparison }) {
   const sortedYears = [...yearComparison].sort((a, b) => b.year - a.year);
@@ -21,7 +21,7 @@ export default function Patterns({ yearComparison }) {
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-bold">{y.year}</span>
                       <span className={`text-sm font-bold ${y.total >= 0 ? 'text-positive' : 'text-negative'}`}>
-                        {formatChange(y.total)}
+                        {formatMoney(Math.abs(y.total))}
                       </span>
                     </div>
                     <div className="w-full bg-surface rounded-full h-1.5 overflow-hidden">
@@ -30,8 +30,7 @@ export default function Patterns({ yearComparison }) {
                         style={{ width: `${barWidth}%` }}
                       />
                     </div>
-                    <div className="flex justify-between mt-1.5 text-[10px] text-text-secondary">
-                      <span>{y.months} mesos</span>
+                    <div className="flex justify-end mt-1.5 text-[10px] text-text-secondary">
                       <span>{y.positive}↑ {y.negative}↓</span>
                     </div>
                   </div>

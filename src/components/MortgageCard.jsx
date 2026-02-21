@@ -46,21 +46,21 @@ export default function MortgageCard({ housing }) {
     : 0;
 
   return (
-    <div className="bg-surface-alt rounded-2xl p-5 border border-border space-y-5">
+    <div className="bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border space-y-5">
       <div>
         <h3 className="text-lg font-semibold">Habitatge</h3>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <MiniStat label="Valor habitatge" value={formatMoney(housing.fullValue)} hint={formatMoney(housing.value)} />
-        <MiniStat label="Deute total amb el banc" value={formatMoney(-housing.fullDebt)} negative hint={formatMoney(-housing.debt)} />
+        <MiniStat label="Deute total amb el banc" value={formatMoney(housing.fullDebt)} hint={formatMoney(housing.debt)} negative />
         <MiniStat label="Patrimoni net" value={formatMoney(housing.totalEquity ?? housing.equity)} highlight hint={formatMoney(housing.equity)} />
       </div>
 
       <div>
         <div className="flex justify-between text-sm mb-1.5">
-          <span className="text-text-secondary">Hipoteca pagada</span>
-          <span className="font-medium text-brand">{debtPaidPct}%</span>
+          <span className="text-text-secondary">Progrés de la hipoteca</span>
+          <span className="font-medium text-positive">{debtPaidPct}%</span>
         </div>
         <div className="w-full bg-surface rounded-full h-3 overflow-hidden">
           <div
@@ -84,8 +84,8 @@ export default function MortgageCard({ housing }) {
               margin={{
                 top: 5,
                 right: narrow ? 16 : 12,
-                bottom: 26,
-                left: 8,
+                bottom: 12,
+                left: 0,
               }}
             >
               <defs>
@@ -112,11 +112,19 @@ export default function MortgageCard({ housing }) {
                 )}
               />
               <YAxis
-                tick={{ fill: '#94a3b8', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
                 width={40}
+                tick={(props) => {
+                  const { y, payload } = props;
+                  const text = `${(payload.value / 1000).toFixed(0)}k`;
+                  return (
+                    <text x={0} y={y} dy={4} textAnchor="start" fill="#94a3b8" fontSize={11}>
+                      {text}
+                    </text>
+                  );
+                }}
               />
               <Tooltip
                 contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 12 }}

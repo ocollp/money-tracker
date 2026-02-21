@@ -1,11 +1,24 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 
-// Paleta suau i llegible: tons ben diferenciats, no massa saturats
 const DISTRIBUTION_COLORS = [
   '#6366f1', '#22c55e', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ec4899',
   '#14b8a6', '#a855f7', '#64748b',
 ];
+
+const ENTITY_COLORS = {
+  BBVA: '#004481',
+  Revolut: '#facc15',
+  'Trade Republic': '#8b5cf6',
+  Urbanitae: '#16a34a',
+  Efectivo: '#eab308',
+  Indexa: '#ea580c',
+  Fundeen: '#ec4899',
+};
+
+function getColor(name, index) {
+  return ENTITY_COLORS[name] ?? DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
+}
 
 const displayName = (name) => (name === 'Efectivo' ? 'Efectiu' : name);
 const CustomTooltip = ({ active, payload }) => {
@@ -28,15 +41,15 @@ export default function DistributionChart({ distribution, title }) {
   const n = recalculated.length;
 
   return (
-    <div className="bg-surface-alt rounded-2xl p-5 border border-border">
-      <h3 className="text-lg font-semibold mb-5">{title}</h3>
+    <div className="bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
+      <h3 className="text-lg font-semibold mb-3">{title}</h3>
       <div className="flex flex-col sm:flex-row items-center gap-6">
         <div className="relative h-48 w-48 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <defs>
-                {recalculated.map((_, i) => {
-                  const c = DISTRIBUTION_COLORS[i % DISTRIBUTION_COLORS.length];
+                {recalculated.map((d, i) => {
+                  const c = getColor(d.name, i);
                   return (
                     <radialGradient key={i} id={`distGrad-${i}`} cx="50%" cy="50%" r="50%">
                       <stop offset="0%" stopColor={c} stopOpacity={0.9} />
@@ -68,7 +81,7 @@ export default function DistributionChart({ distribution, title }) {
             <div key={d.name} className="space-y-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: DISTRIBUTION_COLORS[i % DISTRIBUTION_COLORS.length], opacity: 0.9 }} />
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: getColor(d.name, i), opacity: 0.9 }} />
                   <span className="text-text-secondary text-sm">{d.name === 'Efectivo' ? 'Efectiu' : d.name}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
@@ -81,7 +94,7 @@ export default function DistributionChart({ distribution, title }) {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${(d.pct / maxPct) * 100}%`,
-                    background: `linear-gradient(90deg, ${DISTRIBUTION_COLORS[i % DISTRIBUTION_COLORS.length]}80, ${DISTRIBUTION_COLORS[i % DISTRIBUTION_COLORS.length]})`,
+                    background: `linear-gradient(90deg, ${getColor(d.name, i)}80, ${getColor(d.name, i)})`,
                   }}
                 />
               </div>

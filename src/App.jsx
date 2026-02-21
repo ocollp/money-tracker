@@ -258,19 +258,22 @@ export default function App() {
 
         <Heatmap data={stats.heatmap} />
 
-        <NetWorthChart
-          months={stats.netWorthMonths}
-          totals={stats.netWorthTotals}
-          title="Diners i inversions"
-          subtitle="Efectiu, comptes i inversions"
-          tooltipLabel="Diners i inversions"
-        />
-
-        {stats.hasHousing && <MortgageCard housing={stats.housing} />}
-
-        <CashVsInvestedChart data={stats.cashVsInvested} />
-
-        <DistributionChart distribution={stats.distribution} title="Repartiment" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className={stats.hasHousing ? '' : 'lg:col-span-2'}>
+            <NetWorthChart
+              months={stats.netWorthMonths}
+              totals={stats.netWorthTotals}
+              title="Diners i inversions"
+              subtitle={null}
+              tooltipLabel="Diners i inversions"
+            />
+          </div>
+          {stats.hasHousing && (
+            <MortgageCard housing={stats.housing} />
+          )}
+          <DistributionChart distribution={stats.distribution} title="Repartiment" />
+          <CashVsInvestedChart data={stats.cashVsInvested} />
+        </div>
 
         <Patterns yearComparison={stats.yearComparison} />
       </main>

@@ -50,8 +50,8 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
   const chartMargin = {
     top: 5,
     right: narrow ? 16 : 12,
-    bottom: 26,
-    left: 8,
+    bottom: 12,
+    left: 0,
   };
   const tickFontSize = narrow ? 10 : 11;
 
@@ -69,10 +69,10 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
   };
 
   return (
-    <div className="bg-surface-alt rounded-2xl p-5 border border-border">
-      <h3 className="text-lg font-semibold mb-1">{title}</h3>
-      <p className="text-xs text-text-secondary mb-4">{subtitle}</p>
-      <div className="h-72">
+    <div className="bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
+      <h3 className="text-lg font-semibold mb-3">{title}</h3>
+      {subtitle && <p className="text-xs text-text-secondary mb-4">{subtitle}</p>}
+      <div className="min-h-[280px] h-80 lg:h-[380px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={chartMargin}>
             <defs>
@@ -90,8 +90,19 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
               tick={(props) => renderXAxisTick(props, data[0]?.date, data[data.length - 1]?.date, tickFontSize)}
             />
             <YAxis
-              tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false}
-              tickFormatter={v => `${(v / 1000).toFixed(0)}k`} width={40}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
+              width={40}
+              tick={(props) => {
+                const { y, payload } = props;
+                const text = `${(payload.value / 1000).toFixed(0)}k`;
+                return (
+                  <text x={0} y={y} dy={4} textAnchor="start" fill="#94a3b8" fontSize={12}>
+                    {text}
+                  </text>
+                );
+              }}
             />
             <Tooltip content={renderTooltip} />
             <Area
