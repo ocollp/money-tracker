@@ -52,9 +52,9 @@ export default function MortgageCard({ housing }) {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <MiniStat label="Valor habitatge" value={formatMoney(housing.fullValue)} hint={`La meva part: ${formatMoney(housing.value)}`} />
-        <MiniStat label="Deute total amb el banc" value={formatMoney(-housing.fullDebt)} negative hint={`El meu deute: ${formatMoney(-housing.debt)}`} />
-        <MiniStat label="Patrimoni net" value={formatMoney(housing.totalEquity ?? housing.equity)} hint={`El meu patrimoni net: ${formatMoney(housing.equity)}`} highlight />
+        <MiniStat label="Valor habitatge" value={formatMoney(housing.fullValue)} hint={formatMoney(housing.value)} />
+        <MiniStat label="Deute total amb el banc" value={formatMoney(-housing.fullDebt)} negative hint={formatMoney(-housing.debt)} />
+        <MiniStat label="Patrimoni net" value={formatMoney(housing.totalEquity ?? housing.equity)} highlight hint={formatMoney(housing.equity)} />
       </div>
 
       <div>
