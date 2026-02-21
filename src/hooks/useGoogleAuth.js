@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { GOOGLE_CLIENT_ID, SCOPES } from '../config';
 
 const STORAGE_KEY = 'mt_auth';
+const REFRESH_BEFORE_MS = 5 * 60 * 1000; // refresh 5 min before expiry (tab throttling can delay timers)
+const EXPIRING_SOON_MS = 10 * 60 * 1000;  // consider "expiring soon" when < 10 min left
 
 function loadSession() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const session = JSON.parse(raw);
-    return session; // return even when expired, so we can try silent refresh on next load
+    return JSON.parse(raw);
   } catch { /* ignore */ }
   return null;
 }
@@ -16,7 +17,7 @@ function loadSession() {
 function saveSession(token, expiresIn, user) {
   const session = {
     accessToken: token,
-    expiresAt: Date.now() + (expiresIn - 120) * 1000,
+    expiresAt: Date.now() + Math.max(0, (expiresIn - 120)) * 1000,
     user,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -25,55 +26,79 @@ function saveSession(token, expiresIn, user) {
 
 export default function useGoogleAuth() {
   const saved = loadSession();
-  const isValid = saved?.expiresAt && Date.now() < saved.expiresAt;
-  const [user, setUser] = useState(isValid ? saved?.user ?? null : null);
-  const [accessToken, setAccessToken] = useState(isValid ? saved?.accessToken ?? null : null);
+  const hasValidToken = saved?.expiresAt && Date.now() < saved.expiresAt;
+  const [user, setUser] = useState(saved?.user ?? null);
+  const [accessToken, setAccessToken] = useState(hasValidToken ? saved?.accessToken ?? null : null);
   const [ready, setReady] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
   const refreshTimer = useRef(null);
+  const expiresAtRef = useRef(saved?.expiresAt ?? null);
+  const clientRef = useRef(null);
 
   const scheduleRefresh = useCallback((expiresAt, client) => {
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
-    const ms = Math.max(expiresAt - Date.now() - 60_000, 10_000);
+    expiresAtRef.current = expiresAt;
+    const ms = Math.max(expiresAt - Date.now() - REFRESH_BEFORE_MS, 15_000);
     refreshTimer.current = setTimeout(() => {
       if (client) client.requestAccessToken({ prompt: '' });
     }, ms);
   }, []);
 
+  const trySilentRefresh = useCallback((client) => {
+    if (client) client.requestAccessToken({ prompt: '' });
+  }, []);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (window.google?.accounts?.oauth2) {
-        clearInterval(interval);
+    let interval;
+    const setup = () => {
+      if (!window.google?.accounts?.oauth2) return false;
 
-        const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: SCOPES,
-          callback: (response) => {
-            if (response.access_token) {
-              const expiresIn = response.expires_in || 3600;
-              fetchUserInfo(response.access_token).then(userInfo => {
-                const session = saveSession(response.access_token, expiresIn, userInfo);
-                setAccessToken(response.access_token);
-                setUser(userInfo);
-                scheduleRefresh(session.expiresAt, client);
-              });
-            }
-          },
-        });
-        setTokenClient(client);
-        setReady(true);
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
+        callback: (response) => {
+          if (response.access_token) {
+            const expiresIn = response.expires_in || 3600;
+            fetchUserInfo(response.access_token).then(userInfo => {
+              const session = saveSession(response.access_token, expiresIn, userInfo);
+              setAccessToken(session.accessToken);
+              setUser(session.user);
+              scheduleRefresh(session.expiresAt, client);
+            });
+          }
+        },
+      });
+      clientRef.current = client;
+      setTokenClient(client);
+      setReady(true);
 
-        if (saved?.accessToken && saved?.expiresAt > Date.now()) {
-          scheduleRefresh(saved.expiresAt, client);
-        } else if (saved?.user) {
-          // Session expired but we had a user: try silent refresh (may work if still logged in to Google)
-          client.requestAccessToken({ prompt: '' });
-        }
+      if (hasValidToken && saved?.expiresAt) {
+        scheduleRefresh(saved.expiresAt, client);
+      } else if (saved?.user) {
+        trySilentRefresh(client);
       }
+      return client;
+    };
+
+    interval = setInterval(() => {
+      if (setup()) clearInterval(interval);
     }, 100);
+
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      const exp = expiresAtRef.current;
+      const now = Date.now();
+      const client = clientRef.current;
+      if (exp != null && exp - now < EXPIRING_SOON_MS && client) {
+        trySilentRefresh(client);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
     };
   }, []);
@@ -100,9 +125,20 @@ export default function useGoogleAuth() {
     }
     localStorage.removeItem(STORAGE_KEY);
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    expiresAtRef.current = null;
     setUser(null);
     setAccessToken(null);
   }, [accessToken]);
 
-  return { user, accessToken, ready, login, logout, isLoggedIn: !!accessToken };
+  const needsRefresh = !!user && !accessToken;
+
+  return {
+    user,
+    accessToken,
+    ready,
+    login,
+    logout,
+    isLoggedIn: !!user,
+    needsRefresh,
+  };
 }

@@ -4,7 +4,6 @@ export const SPREADSHEET_ID_2 = import.meta.env.VITE_SPREADSHEET_ID_2 || '';
 export const SHEET_RANGE = 'A:I';
 export const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 
-// Mortgage (optional; if not set, card hides or shows only data from sheet)
 const n = (v) => {
   const s = typeof v === 'string' ? v.trim() : v;
   if (s === '' || s === undefined) return null;

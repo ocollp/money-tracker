@@ -3,7 +3,8 @@ import { parseCSV, groupByMonth } from './utils/parseCSV';
 import { computeStatistics } from './utils/statistics';
 import { formatMoney, formatChange, formatPct } from './utils/formatters';
 import useGoogleAuth from './hooks/useGoogleAuth';
-import { fetchSheetData } from './services/sheetsApi';
+import { fetchSheetData, checkSheetAccess } from './services/sheetsApi';
+import { getTestStats } from './data/testData';
 import { SPREADSHEET_ID, SPREADSHEET_ID_2 } from './config';
 import LoginScreen from './components/LoginScreen';
 import KpiCard from './components/KpiCard';
@@ -15,10 +16,14 @@ import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 
 const PROFILE_KEY = 'mt_profile';
-const PROFILES = [
-  { id: 'olga', name: 'Olga', emoji: '👩🏼', sheetId: SPREADSHEET_ID },
-  ...(SPREADSHEET_ID_2 ? [{ id: 'andrea', name: 'Andrea', emoji: '👩🏻', sheetId: SPREADSHEET_ID_2 }] : []),
-];
+const PROFILE_OLGA = { id: 'olga', name: 'Olga', emoji: '👩🏼', sheetId: SPREADSHEET_ID };
+const PROFILE_ANDREA = { id: 'andrea', name: 'Andrea', emoji: '👩🏻', sheetId: SPREADSHEET_ID_2 };
+
+function isTestDataPath() {
+  if (typeof window === 'undefined') return false;
+  const p = window.location.pathname;
+  return p === '/test' || p.endsWith('/test');
+}
 
 function getInitialProfile() {
   try {
@@ -31,16 +36,56 @@ function getInitialProfile() {
 }
 
 export default function App() {
-  const { user, accessToken, ready, login, logout, isLoggedIn } = useGoogleAuth();
+  const isTestData = isTestDataPath();
+  const { user, accessToken, ready, login, logout, needsRefresh } = useGoogleAuth();
   const [profile, setProfile] = useState(getInitialProfile);
+  const [sheetAccess, setSheetAccess] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [fetchKey, setFetchKey] = useState(0);
 
-  const currentSheetId = PROFILES.find(p => p.id === profile)?.sheetId || SPREADSHEET_ID;
+  const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : user;
 
   useEffect(() => {
-    if (!accessToken || !currentSheetId) return;
+    if (!isTestData) return;
+    setSheetAccess({ id1: true, id2: false });
+    setStats(getTestStats());
+  }, [isTestData]);
+
+  const effectiveProfiles = !sheetAccess
+    ? []
+    : [
+        ...(sheetAccess.id1 ? [PROFILE_OLGA] : []),
+        ...(sheetAccess.id2 && SPREADSHEET_ID_2 ? [PROFILE_ANDREA] : []),
+      ];
+  const effectiveProfile =
+    effectiveProfiles.length === 1
+      ? effectiveProfiles[0].id
+      : effectiveProfiles.some(p => p.id === profile)
+        ? profile
+        : effectiveProfiles[0]?.id || 'olga';
+  const currentSheetId = effectiveProfiles.find(p => p.id === effectiveProfile)?.sheetId || SPREADSHEET_ID;
+
+  useEffect(() => {
+    if (isTestData || !accessToken) {
+      if (!isTestData) setSheetAccess(null);
+      return;
+    }
+    let cancelled = false;
+    Promise.all([
+      checkSheetAccess(accessToken, SPREADSHEET_ID),
+      SPREADSHEET_ID_2 ? checkSheetAccess(accessToken, SPREADSHEET_ID_2) : Promise.resolve(false),
+    ]).then(([id1, id2]) => {
+      if (!cancelled) setSheetAccess({ id1: !!id1, id2: !!id2 });
+    });
+    return () => { cancelled = true; };
+  }, [accessToken, isTestData]);
+
+  useEffect(() => {
+    if (isTestData) return;
+    if (!accessToken || !sheetAccess || !currentSheetId) return;
+    if (!sheetAccess.id1 && !sheetAccess.id2) return;
 
     setLoading(true);
     setError(null);
@@ -55,7 +100,7 @@ export default function App() {
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [accessToken, currentSheetId]);
+  }, [accessToken, sheetAccess, currentSheetId, fetchKey]);
 
   const switchProfile = (id) => {
     setProfile(id);
@@ -64,16 +109,44 @@ export default function App() {
     } catch { /* ignore */ }
   };
 
-  if (!isLoggedIn) {
+  if (!effectiveUser || (needsRefresh && !isTestData)) {
     return <LoginScreen onLogin={login} ready={ready} />;
   }
 
-  if (loading) {
+  if (!isTestData && accessToken && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="bg-surface-alt rounded-2xl p-8 border border-red-500/30 text-center max-w-md space-y-4">
+          <p className="text-negative text-lg font-medium">Error al carregar les dades</p>
+          <p className="text-text-secondary text-sm">No tens accés a cap dels fulls de càlcul configurats.</p>
+          <button
+            onClick={logout}
+            className="text-sm text-text-secondary hover:text-brand transition-colors underline"
+          >
+            Tancar sessió
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isTestData && accessToken && sheetAccess === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">Carregant dades...</span>
+          <span className="text-text-secondary">Comprovant accés...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if ((loading && !isTestData) || (isTestData && !stats)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+          <span className="text-text-secondary">{isTestData ? 'Carregant dades de test...' : 'Carregant dades...'}</span>
         </div>
       </div>
     );
@@ -102,29 +175,52 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <h1 className="text-lg sm:text-xl font-bold tracking-tight">Money<span className="text-brand">Tracker</span></h1>
           <div className="flex items-center gap-2 sm:gap-4">
-            {PROFILES.length > 1 && (
+            {effectiveProfiles.length > 1 && (
               <div className="flex rounded-lg sm:rounded-xl bg-surface border border-border p-0.5">
-                {PROFILES.map((p) => (
+                {effectiveProfiles.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => switchProfile(p.id)}
-                    className={`px-2 py-1 rounded-md sm:px-3 sm:py-1.5 sm:rounded-lg text-xs sm:text-sm font-medium transition-colors ${profile === p.id ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary'}`}
+                    className={`px-2 py-1 rounded-md sm:px-3 sm:py-1.5 sm:rounded-lg text-xs sm:text-sm font-medium transition-colors ${effectiveProfile === p.id ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary'}`}
                   >
                     {p.emoji} {p.name}
                   </button>
                 ))}
               </div>
             )}
-            {user && (
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 text-sm text-text-secondary hover:text-brand transition-colors"
-              >
-                {user.picture && (
-                  <img src={user.picture} alt="" className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
-                )}
-                <span className="hidden sm:inline">Tancar sessió</span>
-              </button>
+            {!isTestData && (
+            <button
+              type="button"
+              onClick={() => setFetchKey(k => k + 1)}
+              disabled={loading}
+              className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-colors disabled:opacity-50"
+              title="Actualitzar dades"
+              aria-label="Actualitzar dades"
+            >
+              <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+            )}
+            {effectiveUser && (
+              isTestData ? (
+                <a
+                  href={import.meta.env.BASE_URL || '/'}
+                  className="flex items-center gap-2 text-sm text-text-secondary hover:text-brand transition-colors"
+                >
+                  <span className="hidden sm:inline">Sortir (dades de test)</span>
+                </a>
+              ) : (
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-2 text-sm text-text-secondary hover:text-brand transition-colors"
+                >
+                  {effectiveUser.picture && (
+                    <img src={effectiveUser.picture} alt="" className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
+                  )}
+                  <span className="hidden sm:inline">Tancar sessió</span>
+                </button>
+              )
             )}
           </div>
         </div>

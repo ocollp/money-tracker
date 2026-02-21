@@ -93,8 +93,7 @@ export function computeStatistics(months) {
     ? negativeMonths.reduce((s, c) => s + c.value, 0) / negativeMonths.length
     : 0;
 
-  // Runway: mesos que duraria el patrimoni sense ingressos. Més realista usant el percentil 75
-  // dels mesos negatius (gastos alts) en lloc de la mitjana, per no infraestimar el despesa.
+  // Runway: months of runway at current burn; use P75 of negative months for a conservative estimate.
   const absNegatives = negativeMonths.map(c => Math.abs(c.value)).sort((a, b) => a - b);
   const p75Index = Math.floor(absNegatives.length * 0.75);
   const conservativeExpense = absNegatives.length
@@ -150,7 +149,7 @@ export function computeStatistics(months) {
   const bestStreak = findStreak(changes, true);
   const worstStreak = findStreak(changes, false);
 
-  // Distribution by entity (latest month): líquid + equity (patrimoni net habitatge) per entitat. BBVA amb hipoteca/vivenda mostra el seu equity.
+  // Distribution by entity (latest month): liquid + housing equity per entity.
   const latestMonth = months[months.length - 1];
   const byEntityHousing = latestMonth.byEntityHousing || {};
   const allEntityNames = [...new Set([
@@ -250,7 +249,7 @@ export function computeStatistics(months) {
   const monthlyMortgagePayment = currentDebt > 0 && MORTGAGE_MONTHLY_PAYMENT != null ? MORTGAGE_MONTHLY_PAYMENT : 0;
   const fullPropertyValue = latestHousingValue / share;
   const fullDebt = currentDebt / share;
-  // housingEquity = el teu patrimoni net (si el full té la teva part, share=0,5). Total pis = equity / share.
+  // totalEquity = full property equity when share < 1 (user's sheet holds their share).
   const totalEquity = share > 0 && share < 1 ? housingEquity / share : housingEquity;
 
   // Savings rate (average of positive months, excluding outliers)
