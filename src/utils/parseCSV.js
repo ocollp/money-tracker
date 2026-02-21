@@ -48,6 +48,7 @@ export function groupByMonth(rows) {
         mortgageDebt: 0,
         byEntity: {},
         byEntityLiquid: {},
+        byEntityHousing: {},
         byCategory: {},
       };
     }
@@ -59,6 +60,9 @@ export function groupByMonth(rows) {
     if (row.isHousing) {
       if (row.categoria === 'Vivienda personal') m.housingValue = row.cantidad;
       if (row.categoria === 'Hipoteca') m.mortgageDebt = row.cantidad;
+      if (!m.byEntityHousing[row.entidad]) m.byEntityHousing[row.entidad] = { value: 0, debt: 0 };
+      if (row.categoria === 'Vivienda personal') m.byEntityHousing[row.entidad].value = row.cantidad;
+      if (row.categoria === 'Hipoteca') m.byEntityHousing[row.entidad].debt = row.cantidad;
     } else {
       m.liquidTotal += row.cantidad;
       m.byEntityLiquid[row.entidad] = (m.byEntityLiquid[row.entidad] || 0) + row.cantidad;

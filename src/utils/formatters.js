@@ -1,11 +1,12 @@
 export function formatMoney(value) {
-  if (value == null || isNaN(value)) return '—';
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
+  const num = Number(value);
+  if (value == null || isNaN(num)) return '—';
+  const formatted = new Intl.NumberFormat('es-ES', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(value);
+    useGrouping: true,
+  }).format(num);
+  return `${formatted} €`;
 }
 
 export function formatPct(value) {

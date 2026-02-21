@@ -58,12 +58,12 @@ export default function CashVsInvestedChart({ data }) {
           <AreaChart data={data} margin={chartMargin}>
             <defs>
               <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f97316" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
+                <stop offset="0%" stopColor="#eab308" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#eab308" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="invGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
+                <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
@@ -81,11 +81,23 @@ export default function CashVsInvestedChart({ data }) {
             <Tooltip
               contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 12 }}
               labelStyle={{ color: '#94a3b8' }}
-              formatter={(v) => formatMoney(v)}
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                return (
+                  <div className="rounded-xl px-3 py-2" style={{ background: '#1e293b', border: '1px solid #334155' }}>
+                    <div className="text-xs font-medium mb-1.5" style={{ color: '#94a3b8' }}>{label}</div>
+                    {payload.map((p) => (
+                      <div key={p.dataKey} className="text-sm" style={{ color: p.color }}>
+                        {p.name}: {formatMoney(p.value)}
+                      </div>
+                    ))}
+                  </div>
+                );
+              }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-            <Area type="monotone" dataKey="Cash" name="Efectiu" stroke="#f97316" fill="url(#cashGrad)" strokeWidth={2} dot={false} />
-            <Area type="monotone" dataKey="Invested" name="Invertit" stroke="#a78bfa" fill="url(#invGrad)" strokeWidth={2} dot={false} />
+            <Area type="monotone" dataKey="Cash" name="Cash" stroke="#eab308" fill="url(#cashGrad)" strokeWidth={2} dot={false} />
+            <Area type="monotone" dataKey="Invested" name="Invertit" stroke="#6366f1" fill="url(#invGrad)" strokeWidth={2} dot={false} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

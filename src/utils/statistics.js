@@ -1,43 +1,57 @@
-import { MORTGAGE_REMAINING_MONTHS, MORTGAGE_END_YEAR, MORTGAGE_END_MONTH, MORTGAGE_MONTHLY_PAYMENT, OWNERSHIP_SHARE } from '../config.js';
+import { MORTGAGE_END_YEAR, MORTGAGE_END_MONTH, MORTGAGE_MONTHLY_PAYMENT, OWNERSHIP_SHARE } from '../config.js';
+
+function totalWealth(m) {
+  return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0);
+}
 
 // Fill missing months between first and last so charts show a continuous timeline
 function fillMissingMonths(months) {
-  if (months.length <= 1) return { filledMonths: months, filledLiquidTotals: months.map(m => m.liquidTotal) };
+  if (months.length <= 1) {
+    const tw = months.length ? totalWealth(months[0]) : 0;
+    return { filledMonths: months, filledLiquidTotals: months.map(m => m.liquidTotal), filledTotalWealth: months.map(m => totalWealth(m)) };
+  }
   const first = months[0].date;
   const last = months[months.length - 1].date;
   const byKey = new Map(months.map(m => [m.key, m]));
   const filledMonths = [];
   const filledLiquidTotals = [];
+  const filledTotalWealth = [];
   const monthNamesShort = ['', 'Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
   let lastLiquid = months[0].liquidTotal;
+  let lastTW = totalWealth(months[0]);
   for (let d = new Date(first.getFullYear(), first.getMonth(), 1); d <= last; d.setMonth(d.getMonth() + 1)) {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const existing = byKey.get(key);
     if (existing) {
       filledMonths.push(existing);
       lastLiquid = existing.liquidTotal;
+      lastTW = totalWealth(existing);
       filledLiquidTotals.push(existing.liquidTotal);
+      filledTotalWealth.push(lastTW);
     } else {
       const shortLabel = `${monthNamesShort[d.getMonth() + 1]} ${String(d.getFullYear()).slice(2)}`;
       filledMonths.push({ key, date: new Date(d), shortLabel, label: `${monthNamesShort[d.getMonth() + 1]} ${d.getFullYear()}`, liquidTotal: lastLiquid });
       filledLiquidTotals.push(lastLiquid);
+      filledTotalWealth.push(lastTW);
     }
   }
-  return { filledMonths, filledLiquidTotals };
+  return { filledMonths, filledLiquidTotals, filledTotalWealth };
 }
 
 export function computeStatistics(months) {
   if (!months.length) return null;
 
-  const { filledMonths, filledLiquidTotals } = fillMissingMonths(months);
+  const { filledMonths, filledLiquidTotals, filledTotalWealth } = fillMissingMonths(months);
 
   const totals = months.map(m => m.total);
   const liquidTotals = months.map(m => m.liquidTotal);
+  const totalWealthByMonth = months.map(m => totalWealth(m));
 
-  // Primary = liquid (without housing). Total = with housing for the mortgage card.
   const current = liquidTotals[liquidTotals.length - 1];
   const currentTotal = totals[totals.length - 1];
+  const currentTotalWealth = totalWealthByMonth[totalWealthByMonth.length - 1];
   const previous = liquidTotals.length > 1 ? liquidTotals[liquidTotals.length - 2] : null;
+  const previousTotalWealth = totalWealthByMonth.length > 1 ? totalWealthByMonth[totalWealthByMonth.length - 2] : null;
   const yearAgoIdx = liquidTotals.length > 12 ? liquidTotals.length - 13 : null;
 
   const changeVsPrev = previous !== null ? current - previous : null;
@@ -45,6 +59,12 @@ export function computeStatistics(months) {
   const changeVsYear = yearAgoIdx !== null ? current - liquidTotals[yearAgoIdx] : null;
   const changeVsYearPct = yearAgoIdx !== null && liquidTotals[yearAgoIdx]
     ? ((current - liquidTotals[yearAgoIdx]) / liquidTotals[yearAgoIdx]) * 100 : null;
+
+  const changeVsPrevTotal = previousTotalWealth != null ? currentTotalWealth - previousTotalWealth : null;
+  const changeVsPrevPctTotal = previousTotalWealth ? ((currentTotalWealth - previousTotalWealth) / previousTotalWealth) * 100 : null;
+  const changeVsYearTotal = yearAgoIdx != null ? currentTotalWealth - totalWealthByMonth[yearAgoIdx] : null;
+  const changeVsYearPctTotal = yearAgoIdx != null && totalWealthByMonth[yearAgoIdx]
+    ? ((currentTotalWealth - totalWealthByMonth[yearAgoIdx]) / totalWealthByMonth[yearAgoIdx]) * 100 : null;
 
   const maxTotal = Math.max(...liquidTotals);
   const minTotal = Math.min(...liquidTotals);
@@ -67,15 +87,22 @@ export function computeStatistics(months) {
   const outlierChanges = changes.filter(c => !normalChanges.includes(c));
   const avgChange = normalChanges.length ? normalChanges.reduce((s, c) => s + c.value, 0) / normalChanges.length : 0;
 
-  // Burn rate
+  // Burn rate (monthly spend when balance goes down)
   const negativeMonths = normalChanges.filter(c => c.value < 0);
   const burnRate = negativeMonths.length
     ? negativeMonths.reduce((s, c) => s + c.value, 0) / negativeMonths.length
     : 0;
 
-  // Runway
-  const avgExpense = burnRate ? Math.abs(burnRate) : null;
-  const runway = avgExpense ? Math.floor(current / avgExpense) : null;
+  // Runway: mesos que duraria el patrimoni sense ingressos. Més realista usant el percentil 75
+  // dels mesos negatius (gastos alts) en lloc de la mitjana, per no infraestimar el despesa.
+  const absNegatives = negativeMonths.map(c => Math.abs(c.value)).sort((a, b) => a - b);
+  const p75Index = Math.floor(absNegatives.length * 0.75);
+  const conservativeExpense = absNegatives.length
+    ? (absNegatives[p75Index] ?? absNegatives[absNegatives.length - 1])
+    : (burnRate ? Math.abs(burnRate) : null);
+  const runway = conservativeExpense && conservativeExpense > 0
+    ? Math.floor(current / conservativeExpense)
+    : null;
 
   // Velocity (last 12 months, liquid)
   const last12 = changes.slice(-12);
@@ -123,10 +150,27 @@ export function computeStatistics(months) {
   const bestStreak = findStreak(changes, true);
   const worstStreak = findStreak(changes, false);
 
-  // Distribution by entity (latest month): only non-housing rows. Excluded per row when category is Vivienda personal or Hipoteca; BBVA (and any entity) appears with its non-housing balance.
+  // Distribution by entity (latest month): líquid + equity (patrimoni net habitatge) per entitat. BBVA amb hipoteca/vivenda mostra el seu equity.
   const latestMonth = months[months.length - 1];
-  const distribution = Object.entries(latestMonth.byEntityLiquid)
-    .map(([name, value]) => ({ name, value, pct: current > 0 ? (value / current) * 100 : 0 }))
+  const byEntityHousing = latestMonth.byEntityHousing || {};
+  const allEntityNames = [...new Set([
+    ...Object.keys(latestMonth.byEntity),
+    ...Object.keys(latestMonth.byEntityLiquid),
+    ...Object.keys(byEntityHousing),
+  ])];
+  const totalForDistribution = current + (latestMonth.housingValue || 0) + (latestMonth.mortgageDebt || 0);
+  const distribution = allEntityNames
+    .map((name) => {
+      const liquid = latestMonth.byEntityLiquid[name] ?? 0;
+      const housing = byEntityHousing[name];
+      const equity = housing ? (housing.value || 0) + (housing.debt || 0) : 0;
+      const value = liquid + equity;
+      return {
+        name,
+        value,
+        pct: totalForDistribution !== 0 ? (value / totalForDistribution) * 100 : 0,
+      };
+    })
     .sort((a, b) => b.value - a.value);
 
   // Entity evolution (liquid only)
@@ -147,8 +191,24 @@ export function computeStatistics(months) {
     Invested: m.invertidoLiquid,
   }));
 
-  // Heatmap
-  const heatmap = changes.map(c => ({
+  // Monthly changes in total wealth (liquid + housing equity) so investing in housing is not shown as "spent"
+  const changesTotal = [];
+  for (let i = 1; i < months.length; i++) {
+    const liquidChange = liquidTotals[i] - liquidTotals[i - 1];
+    const housingEquityPrev = (months[i - 1].housingValue || 0) + (months[i - 1].mortgageDebt || 0);
+    const housingEquityCurr = (months[i].housingValue || 0) + (months[i].mortgageDebt || 0);
+    const totalChange = liquidChange + (housingEquityCurr - housingEquityPrev);
+    const prevTotal = liquidTotals[i - 1] + housingEquityPrev;
+    const pct = prevTotal ? (totalChange / prevTotal) * 100 : 0;
+    changesTotal.push({ month: months[i], value: totalChange, pct });
+  }
+  const normalChangesTotal = filterOutliers(changesTotal);
+  const avgChangeTotal = normalChangesTotal.length
+    ? normalChangesTotal.reduce((s, c) => s + c.value, 0) / normalChangesTotal.length
+    : 0;
+
+  // Heatmap: total wealth change so housing investment is not shown as spent
+  const heatmap = changesTotal.map(c => ({
     month: c.month.shortLabel,
     fullMonth: c.month.label,
     key: c.month.key,
@@ -185,13 +245,13 @@ export function computeStatistics(months) {
       const now = new Date();
       const end = new Date(MORTGAGE_END_YEAR, MORTGAGE_END_MONTH - 1, 1);
       mortgageMonthsRemaining = Math.max(0, (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()));
-    } else if (MORTGAGE_REMAINING_MONTHS != null) {
-      mortgageMonthsRemaining = MORTGAGE_REMAINING_MONTHS;
     }
   }
   const monthlyMortgagePayment = currentDebt > 0 && MORTGAGE_MONTHLY_PAYMENT != null ? MORTGAGE_MONTHLY_PAYMENT : 0;
   const fullPropertyValue = latestHousingValue / share;
   const fullDebt = currentDebt / share;
+  // housingEquity = el teu patrimoni net (si el full té la teva part, share=0,5). Total pis = equity / share.
+  const totalEquity = share > 0 && share < 1 ? housingEquity / share : housingEquity;
 
   // Savings rate (average of positive months, excluding outliers)
   const positiveMonths = normalChanges.filter(c => c.value > 0);
@@ -199,9 +259,9 @@ export function computeStatistics(months) {
     ? positiveMonths.reduce((s, c) => s + c.value, 0) / positiveMonths.length
     : 0;
 
-  // Year over year comparison
+  // Year over year: total wealth change (includes housing, not as spending)
   const yearSummary = {};
-  for (const c of changes) {
+  for (const c of changesTotal) {
     const y = c.month.date.getFullYear();
     if (!yearSummary[y]) yearSummary[y] = { year: y, total: 0, months: 0, positive: 0, negative: 0 };
     yearSummary[y].total += c.value;
@@ -243,10 +303,16 @@ export function computeStatistics(months) {
   return {
     current,
     currentTotal,
+    currentTotalWealth,
     changeVsPrev,
     changeVsPrevPct,
+    changeVsPrevTotal,
+    changeVsPrevPctTotal,
     changeVsYear,
     changeVsYearPct,
+    changeVsYearTotal,
+    changeVsYearPctTotal,
+    avgChangeTotal,
     maxTotal,
     minTotal,
     maxMonth: months[maxIdx],
@@ -281,6 +347,7 @@ export function computeStatistics(months) {
     liquidTotals,
     netWorthMonths: filledMonths,
     netWorthTotals: filledLiquidTotals,
+    netWorthTotalWealth: filledTotalWealth,
     hasHousing,
     housing: {
       fullValue: fullPropertyValue,
@@ -288,6 +355,7 @@ export function computeStatistics(months) {
       value: latestHousingValue,
       debt: currentDebt,
       equity: housingEquity,
+      totalEquity,
       totalPaid,
       initialDebt,
       monthlyPayment: monthlyMortgagePayment,

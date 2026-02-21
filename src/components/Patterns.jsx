@@ -6,14 +6,11 @@ export default function Patterns({ yearComparison }) {
   return (
     <div className="bg-surface-alt rounded-2xl p-5 border border-border space-y-5">
       <div>
-        <h3 className="text-lg font-semibold">Tendències</h3>
-        <p className="text-[11px] text-text-secondary -mt-0.5">Basats en els meus històrics</p>
+        <h3 className="text-lg font-semibold">Evolució per anys</h3>
       </div>
 
-      {/* Year comparison — descending */}
       {sortedYears.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2.5">Any a any</p>
           <div className="flex flex-wrap gap-2">
             {sortedYears.map(y => {
               const best = Math.max(...sortedYears.map(yc => Math.abs(yc.total)));

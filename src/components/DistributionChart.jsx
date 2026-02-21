@@ -1,6 +1,11 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
-import { COLORS } from '../utils/formatters';
+
+// Paleta suau i llegible: tons ben diferenciats, no massa saturats
+const DISTRIBUTION_COLORS = [
+  '#6366f1', '#22c55e', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ec4899',
+  '#14b8a6', '#a855f7', '#64748b',
+];
 
 const displayName = (name) => (name === 'Efectivo' ? 'Efectiu' : name);
 const CustomTooltip = ({ active, payload }) => {
@@ -20,6 +25,7 @@ export default function DistributionChart({ distribution, title }) {
   const total = distribution.reduce((s, d) => s + d.value, 0);
   const recalculated = distribution.map(d => ({ ...d, pct: total > 0 ? (d.value / total) * 100 : 0 }));
   const maxPct = Math.max(...recalculated.map(d => d.pct));
+  const n = recalculated.length;
 
   return (
     <div className="bg-surface-alt rounded-2xl p-5 border border-border">
@@ -28,6 +34,17 @@ export default function DistributionChart({ distribution, title }) {
         <div className="relative h-48 w-48 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
+              <defs>
+                {recalculated.map((_, i) => {
+                  const c = DISTRIBUTION_COLORS[i % DISTRIBUTION_COLORS.length];
+                  return (
+                    <radialGradient key={i} id={`distGrad-${i}`} cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor={c} stopOpacity={0.9} />
+                      <stop offset="100%" stopColor={c} stopOpacity={0.5} />
+                    </radialGradient>
+                  );
+                })}
+                </defs>
               <Pie
                 data={recalculated} dataKey="value" nameKey="name"
                 cx="50%" cy="50%" innerRadius={52} outerRadius={80}
@@ -35,7 +52,7 @@ export default function DistributionChart({ distribution, title }) {
                 paddingAngle={3}
               >
                 {recalculated.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  <Cell key={i} fill={`url(#distGrad-${i})`} />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 50 }} />
@@ -51,7 +68,7 @@ export default function DistributionChart({ distribution, title }) {
             <div key={d.name} className="space-y-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: DISTRIBUTION_COLORS[i % DISTRIBUTION_COLORS.length], opacity: 0.9 }} />
                   <span className="text-text-secondary text-sm">{d.name === 'Efectivo' ? 'Efectiu' : d.name}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
@@ -62,7 +79,10 @@ export default function DistributionChart({ distribution, title }) {
               <div className="w-full bg-surface rounded-full h-1.5 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${(d.pct / maxPct) * 100}%`, backgroundColor: COLORS[i % COLORS.length] }}
+                  style={{
+                    width: `${(d.pct / maxPct) * 100}%`,
+                    background: `linear-gradient(90deg, ${DISTRIBUTION_COLORS[i % DISTRIBUTION_COLORS.length]}80, ${DISTRIBUTION_COLORS[i % DISTRIBUTION_COLORS.length]})`,
+                  }}
                 />
               </div>
             </div>

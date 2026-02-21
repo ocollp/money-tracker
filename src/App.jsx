@@ -11,7 +11,6 @@ import NetWorthChart from './components/NetWorthChart';
 import DistributionChart from './components/DistributionChart';
 import CashVsInvestedChart from './components/CashVsInvestedChart';
 import Heatmap from './components/Heatmap';
-import StatsGrid from './components/StatsGrid';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 
@@ -132,42 +131,50 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        <section className={`grid grid-cols-2 gap-2 sm:gap-3 ${stats.hasHousing ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
           <KpiCard
             title="Mes actual"
-            value={formatChange(stats.changeVsPrev)}
-            subtitle={stats.changeVsPrevPct != null ? `vs mes anterior: ${formatPct(stats.changeVsPrevPct)}` : null}
-            trend={stats.changeVsPrev}
+            value={formatChange(stats.changeVsPrevTotal ?? stats.changeVsPrev)}
+            subtitle={(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct) != null ? `${formatPct(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct)} respecte al mes anterior` : null}
+            trend={stats.changeVsPrevTotal ?? stats.changeVsPrev ?? 0}
           />
           <KpiCard
-            title="Patrimoni net"
+            title="Diners i inversions"
             value={formatMoney(stats.current)}
-            subtitle={stats.changeVsYearPct != null ? `vs any passat: ${formatPct(stats.changeVsYearPct)}` : null}
-            trend={stats.changeVsYear ?? 0}
+            subtitle={(stats.changeVsYearPctTotal ?? stats.changeVsYearPct) != null ? `${formatPct(stats.changeVsYearPctTotal ?? stats.changeVsYearPct)} respecte l'any passat` : null}
+            trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
           />
-          <KpiCard
-            title="Mitjana mensual"
-            value={formatChange(stats.avgChange)}
-            subtitle={null}
-            trend={stats.avgChange}
-          />
+          {stats.hasHousing && (
+            <KpiCard
+              title="Patrimoni total"
+              value={formatMoney(stats.currentTotalWealth)}
+              subtitle={null}
+              trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
+            />
+          )}
           <KpiCard
             title="Coixí"
             value={stats.runway != null ? `${stats.runway} mesos` : '—'}
-            subtitle={stats.runway != null ? `~${Math.round(stats.runway / 12)} anys` : null}
+            subtitle={null}
             trend={0}
           />
         </section>
 
         <Heatmap data={stats.heatmap} />
 
-        <NetWorthChart months={stats.netWorthMonths} totals={stats.netWorthTotals} />
+        <NetWorthChart
+          months={stats.netWorthMonths}
+          totals={stats.netWorthTotals}
+          title="Diners i inversions"
+          subtitle="Efectiu, comptes i inversions"
+          tooltipLabel="Diners i inversions"
+        />
 
         {stats.hasHousing && <MortgageCard housing={stats.housing} />}
 
-        <DistributionChart distribution={stats.distribution} title="On tinc els diners" />
-
         <CashVsInvestedChart data={stats.cashVsInvested} />
+
+        <DistributionChart distribution={stats.distribution} title="Repartiment" />
 
         <Patterns yearComparison={stats.yearComparison} />
       </main>

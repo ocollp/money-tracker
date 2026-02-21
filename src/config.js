@@ -11,7 +11,6 @@ const n = (v) => {
   const num = Number(s);
   return Number.isNaN(num) ? null : num;
 };
-export const MORTGAGE_REMAINING_MONTHS = n(import.meta.env.VITE_MORTGAGE_REMAINING_MONTHS);
 export const MORTGAGE_END_YEAR = n(import.meta.env.VITE_MORTGAGE_END_YEAR);
 export const MORTGAGE_END_MONTH = n(import.meta.env.VITE_MORTGAGE_END_MONTH);
 export const MORTGAGE_MONTHLY_PAYMENT = n(import.meta.env.VITE_MORTGAGE_MONTHLY_PAYMENT);

@@ -8,8 +8,7 @@ function loadSession() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const session = JSON.parse(raw);
-    if (session.expiresAt && Date.now() < session.expiresAt) return session;
-    localStorage.removeItem(STORAGE_KEY);
+    return session; // return even when expired, so we can try silent refresh on next load
   } catch { /* ignore */ }
   return null;
 }
@@ -26,8 +25,9 @@ function saveSession(token, expiresIn, user) {
 
 export default function useGoogleAuth() {
   const saved = loadSession();
-  const [user, setUser] = useState(saved?.user || null);
-  const [accessToken, setAccessToken] = useState(saved?.accessToken || null);
+  const isValid = saved?.expiresAt && Date.now() < saved.expiresAt;
+  const [user, setUser] = useState(isValid ? saved?.user ?? null : null);
+  const [accessToken, setAccessToken] = useState(isValid ? saved?.accessToken ?? null : null);
   const [ready, setReady] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
   const refreshTimer = useRef(null);
@@ -65,6 +65,9 @@ export default function useGoogleAuth() {
 
         if (saved?.accessToken && saved?.expiresAt > Date.now()) {
           scheduleRefresh(saved.expiresAt, client);
+        } else if (saved?.user) {
+          // Session expired but we had a user: try silent refresh (may work if still logged in to Google)
+          client.requestAccessToken({ prompt: '' });
         }
       }
     }, 100);

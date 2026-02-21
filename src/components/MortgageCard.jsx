@@ -48,13 +48,13 @@ export default function MortgageCard({ housing }) {
   return (
     <div className="bg-surface-alt rounded-2xl p-5 border border-border space-y-5">
       <div>
-        <h3 className="text-lg font-semibold">Casa</h3>
+        <h3 className="text-lg font-semibold">Habitatge</h3>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <MiniStat label="Valor habitatge" value={formatMoney(housing.fullValue)} hint={`La meva part: ${formatMoney(housing.value)}`} />
-        <MiniStat label="Deute total" value={formatMoney(-housing.fullDebt)} negative hint={`El meu deute: ${formatMoney(-housing.debt)}`} />
-        <MiniStat label="El meu equity" value={formatMoney(housing.equity)} highlight tooltip="L'equity és la part de la casa que et pertany neta de deute: el que et quedaria si venguessis l'habitatge i paguessis la hipoteca." />
+        <MiniStat label="Deute total amb el banc" value={formatMoney(-housing.fullDebt)} negative hint={`El meu deute: ${formatMoney(-housing.debt)}`} />
+        <MiniStat label="Patrimoni net" value={formatMoney(housing.totalEquity ?? housing.equity)} hint={`El meu patrimoni net: ${formatMoney(housing.equity)}`} highlight />
       </div>
 
       <div>
@@ -70,7 +70,7 @@ export default function MortgageCard({ housing }) {
         </div>
         <div className="flex justify-between text-xs text-text-secondary mt-1.5">
           <span>Quota: {formatMoney(housing.monthlyPayment)}/mes</span>
-          {housing.monthsRemaining && (
+          {housing.monthsRemaining != null && housing.monthsRemaining > 0 && (
             <span>Queden {housing.monthsRemaining} mesos (~{(housing.monthsRemaining / 12).toFixed(0)} anys)</span>
           )}
         </div>
@@ -121,7 +121,19 @@ export default function MortgageCard({ housing }) {
               <Tooltip
                 contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 12 }}
                 labelStyle={{ color: '#94a3b8' }}
-                formatter={(v, name) => [formatMoney(v), name]}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div className="rounded-xl px-3 py-2" style={{ background: '#1e293b', border: '1px solid #334155' }}>
+                      <div className="text-xs font-medium mb-1.5" style={{ color: '#94a3b8' }}>{label}</div>
+                      {payload.map((p) => (
+                        <div key={p.dataKey} className="text-sm" style={{ color: p.color }}>
+                          {p.name}: {formatMoney(p.value)}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
               <Area type="monotone" dataKey="debt" name="Deute" stroke="#ef4444" fill="url(#debtGrad)" strokeWidth={2} dot={false} />
