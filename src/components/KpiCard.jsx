@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-export default function KpiCard({ title, value, subtitle, trend, icon, tooltip }) {
+export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, className = '', highlight = false }) {
   const [showTip, setShowTip] = useState(false);
   const trendColor = trend > 0 ? 'text-positive' : trend < 0 ? 'text-negative' : 'text-text-secondary';
   const arrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '';
 
   return (
-    <div className="bg-surface-alt rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-border hover:border-brand/40 transition-colors relative">
+    <div className={`bg-surface-alt rounded-xl sm:rounded-2xl p-3 sm:p-5 border transition-colors relative ${highlight ? 'border-brand/40 hover:border-brand/60' : 'border-border hover:border-brand/40'} ${className}`.trim()}>
       <div className="flex items-center justify-between mb-1.5 sm:mb-3">
         <div className="flex items-center gap-1.5">
           <span className="text-text-secondary text-xs sm:text-sm font-medium">{title}</span>

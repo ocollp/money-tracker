@@ -1,18 +1,12 @@
-import { useState } from 'react';
-import { formatMoney } from '../utils/formatters';
-
 export default function Heatmap({ data }) {
-  const [selected, setSelected] = useState(null);
 
   const years = [...new Set(data.map(d => d.año))].sort();
   const monthNames = ['Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
 
   const grid = {};
-  const yearTotals = {};
   for (const d of data) {
     if (!grid[d.año]) grid[d.año] = {};
     grid[d.año][d.mes] = d;
-    yearTotals[d.año] = (yearTotals[d.año] || 0) + d.value;
   }
 
   const allValues = data.map(d => d.value);
@@ -48,37 +42,34 @@ export default function Heatmap({ data }) {
         </div>
       </div>
 
-      <div className="px-5 pb-2 overflow-x-auto">
-        <table className="w-full border-separate" style={{ borderSpacing: '3px' }}>
+      <div className="px-3 sm:px-5 pb-2 overflow-x-auto scrollbar-hide-mobile -mx-1 sm:mx-0">
+        <table className="w-full min-w-[320px] sm:min-w-0 border-separate" style={{ borderSpacing: '4px 6px' }}>
           <thead>
             <tr>
-              <th className="text-left text-text-secondary text-[10px] font-semibold p-0 w-10"></th>
+              <th className="text-left text-text-secondary text-[10px] sm:text-[11px] font-semibold p-0 w-7 sm:w-10"></th>
               {monthNames.map(m => (
-                <th key={m} className="text-center text-text-secondary/70 text-[10px] font-semibold pb-1.5">{m}</th>
+                <th key={m} className="text-center text-text-secondary/70 text-[10px] sm:text-[11px] font-semibold pb-1 sm:pb-1.5 px-0.5 min-w-[2.25rem] sm:min-w-0">{m}</th>
               ))}
-              <th className="text-center text-text-secondary/70 text-[10px] font-semibold pb-1.5 pl-2">Any</th>
             </tr>
           </thead>
           <tbody>
             {years.map(year => (
               <tr key={year}>
-                <td className="text-text-secondary text-[11px] font-bold pr-1">{year}</td>
+                <td className="text-text-secondary text-[11px] sm:text-[12px] font-bold pr-1 align-middle">{year}</td>
                 {Array.from({ length: 12 }, (_, i) => {
                   const cell = grid[year]?.[i];
-                  const isSelected = selected && selected.año === year && selected.mes === i;
                   return (
-                    <td key={i} className="p-0">
+                    <td key={i} className="p-0.5 sm:p-0 align-middle">
                       <div
-                        className={`rounded-lg h-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${isSelected ? 'ring-2 ring-brand ring-offset-1 ring-offset-surface-alt scale-110 z-10 relative' : 'hover:scale-105 hover:brightness-110'}`}
+                        className="rounded-full sm:rounded-lg w-[2.25rem] h-[2.25rem] sm:w-full sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 mx-auto sm:mx-0"
                         style={getCellStyle(cell?.value)}
-                        onClick={() => setSelected(cell && !isSelected ? cell : null)}
                       >
                         {cell && (
                           <>
-                            <span className="text-[11px] font-bold leading-none drop-shadow-sm">
+                            <span className="text-[11px] sm:text-[13px] font-bold leading-none drop-shadow-sm tabular-nums">
                               {(Math.abs(cell.value) / 1000).toFixed(1)}k
                             </span>
-                            <span className="text-[8px] text-text-primary/50 leading-none mt-0.5 font-medium">
+                            <span className="text-[9px] sm:text-[10px] text-text-primary/70 leading-none mt-0.5 font-medium hidden sm:inline tabular-nums">
                               {Math.abs(cell.pct).toFixed(1)}%
                             </span>
                           </>
@@ -87,43 +78,11 @@ export default function Heatmap({ data }) {
                     </td>
                   );
                 })}
-                <td className="p-0 pl-2">
-                  <div className={`rounded-lg h-12 flex items-center justify-center text-[11px] font-bold ${(yearTotals[year] || 0) >= 0 ? 'text-positive bg-positive/15 border border-positive/20' : 'text-negative bg-negative/15 border border-negative/20'}`}>
-                    {yearTotals[year] != null ? `${(Math.abs(yearTotals[year]) / 1000).toFixed(1)}k` : ''}
-                  </div>
-                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {selected && (
-        <div className="mx-5 mb-3 bg-surface rounded-xl p-3.5 border border-border flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg font-bold ${selected.value >= 0 ? 'bg-positive/15 text-positive' : 'bg-negative/15 text-negative'}`}>
-              {selected.value >= 0 ? '↑' : '↓'}
-            </div>
-            <div>
-              <p className="text-sm font-semibold">{selected.month}</p>
-            </div>
-          </div>
-          <div className="flex gap-5 text-right">
-            <div>
-              <p className={`text-sm font-bold ${selected.value >= 0 ? 'text-positive' : 'text-negative'}`}>
-                {formatMoney(Math.abs(selected.value))}
-              </p>
-              <p className="text-[10px] text-text-secondary">total</p>
-            </div>
-            <div>
-              <p className={`text-sm font-bold ${selected.pct >= 0 ? 'text-positive' : 'text-negative'}`}>
-                {Math.abs(selected.pct).toFixed(1)}%
-              </p>
-              <p className="text-[10px] text-text-secondary">percentatge</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="px-5 pb-4 pt-1 flex flex-wrap items-center gap-2 text-[10px] text-text-secondary border-t border-border/50">
         <div className="flex items-center gap-2 pt-3">

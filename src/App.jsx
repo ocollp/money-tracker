@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { parseCSV, groupByMonth } from './utils/parseCSV';
 import { computeStatistics } from './utils/statistics';
 import { formatMoney, formatChange, formatPct } from './utils/formatters';
@@ -95,7 +95,7 @@ export default function App() {
       .then(csvText => {
         const rows = parseCSV(csvText);
         const months = groupByMonth(rows);
-        const s = computeStatistics(months);
+        const s = computeStatistics(months, { profileId: effectiveProfile });
         setStats(s);
       })
       .catch(err => setError(err.message))
@@ -108,6 +108,43 @@ export default function App() {
       localStorage.setItem(PROFILE_KEY, id);
     } catch { /* ignore */ }
   };
+
+  // Horizontal swipe (mobile) to switch profile (Olga ↔ Andrea)
+  const mainRef = useRef(null);
+  const swipeStart = useRef({ x: 0, y: 0 });
+  const swipeLock = useRef(false);
+  const handleTouchStart = (e) => {
+    if (effectiveProfiles.length !== 2) return;
+    const t = e.touches[0];
+    swipeStart.current = { x: t.clientX, y: t.clientY };
+    swipeLock.current = false;
+  };
+  const handleTouchMove = useCallback((e) => {
+    if (effectiveProfiles.length !== 2) return;
+    const t = e.touches[0];
+    const dx = t.clientX - swipeStart.current.x;
+    const dy = t.clientY - swipeStart.current.y;
+    if (!swipeLock.current && (Math.abs(dx) > 50 || Math.abs(dy) > 50)) {
+      swipeLock.current = Math.abs(dx) > Math.abs(dy);
+      if (swipeLock.current) e.preventDefault();
+    } else if (swipeLock.current) e.preventDefault();
+  }, [effectiveProfiles.length]);
+  const handleTouchEnd = (e) => {
+    if (effectiveProfiles.length !== 2) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeStart.current.x;
+    if (swipeLock.current && Math.abs(dx) > 50) {
+      const idx = effectiveProfiles.findIndex(p => p.id === effectiveProfile);
+      const next = dx < 0 ? (idx + 1) % effectiveProfiles.length : (idx - 1 + effectiveProfiles.length) % effectiveProfiles.length;
+      switchProfile(effectiveProfiles[next].id);
+    }
+  };
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => el.removeEventListener('touchmove', handleTouchMove);
+  }, [handleTouchMove]);
 
   if (!effectiveUser || (needsRefresh && !isTestData)) {
     return <LoginScreen onLogin={login} ready={ready} />;
@@ -226,8 +263,14 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <section className={`grid grid-cols-2 gap-2 sm:gap-3 ${stats.hasHousing ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+      <main
+        ref={mainRef}
+        className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: effectiveProfiles.length === 2 ? 'pan-y' : undefined }}
+      >
+        <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${stats.hasHousing ? 'lg:grid-cols-3' : ''}`}>
           <KpiCard
             title="Mes actual"
             value={formatChange(stats.changeVsPrevTotal ?? stats.changeVsPrev)}
@@ -242,24 +285,20 @@ export default function App() {
           />
           {stats.hasHousing && (
             <KpiCard
+              className="col-span-2 lg:col-span-1"
               title="Patrimoni total"
               value={formatMoney(stats.currentTotalWealth)}
               subtitle={null}
               trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
+              highlight
             />
           )}
-          <KpiCard
-            title="Coixí"
-            value={stats.runway != null ? `${stats.runway} mesos` : '—'}
-            subtitle={null}
-            trend={0}
-          />
         </section>
 
         <Heatmap data={stats.heatmap} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <div className={stats.hasHousing ? '' : 'lg:col-span-2'}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:items-stretch">
+          <div className={`h-full min-h-0 ${stats.hasHousing ? '' : 'lg:col-span-2'}`}>
             <NetWorthChart
               months={stats.netWorthMonths}
               totals={stats.netWorthTotals}

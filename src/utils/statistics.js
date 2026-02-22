@@ -1,4 +1,4 @@
-import { MORTGAGE_END_YEAR, MORTGAGE_END_MONTH, MORTGAGE_MONTHLY_PAYMENT, OWNERSHIP_SHARE } from '../config.js';
+import { MORTGAGE_END_YEAR, MORTGAGE_END_MONTH, MORTGAGE_MONTHLY_PAYMENT, OWNERSHIP_SHARE, ASSUMED_UNEMPLOYMENT } from '../config.js';
 
 function totalWealth(m) {
   return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0);
@@ -38,8 +38,9 @@ function fillMissingMonths(months) {
   return { filledMonths, filledLiquidTotals, filledTotalWealth };
 }
 
-export function computeStatistics(months) {
+export function computeStatistics(months, options = {}) {
   if (!months.length) return null;
+  const { profileId } = options;
 
   const { filledMonths, filledLiquidTotals, filledTotalWealth } = fillMissingMonths(months);
 
@@ -71,7 +72,6 @@ export function computeStatistics(months) {
   const maxIdx = liquidTotals.indexOf(maxTotal);
   const minIdx = liquidTotals.indexOf(minTotal);
 
-  // Monthly changes (liquid only)
   const changes = [];
   for (let i = 1; i < months.length; i++) {
     const diff = liquidTotals[i] - liquidTotals[i - 1];
@@ -82,18 +82,16 @@ export function computeStatistics(months) {
   const bestMonth = changes.length ? changes.reduce((a, b) => a.value > b.value ? a : b) : null;
   const worstMonth = changes.length ? changes.reduce((a, b) => a.value < b.value ? a : b) : null;
 
-  // Filter outliers
   const normalChanges = filterOutliers(changes);
   const outlierChanges = changes.filter(c => !normalChanges.includes(c));
   const avgChange = normalChanges.length ? normalChanges.reduce((s, c) => s + c.value, 0) / normalChanges.length : 0;
 
-  // Burn rate (monthly spend when balance goes down)
   const negativeMonths = normalChanges.filter(c => c.value < 0);
   const burnRate = negativeMonths.length
     ? negativeMonths.reduce((s, c) => s + c.value, 0) / negativeMonths.length
     : 0;
 
-  // Runway: months of runway at current burn; use P75 of negative months for a conservative estimate.
+  // Runway: P75 of negative months for conservative expense estimate
   const absNegatives = negativeMonths.map(c => Math.abs(c.value)).sort((a, b) => a - b);
   const p75Index = Math.floor(absNegatives.length * 0.75);
   const conservativeExpense = absNegatives.length
@@ -103,24 +101,20 @@ export function computeStatistics(months) {
     ? Math.floor(current / conservativeExpense)
     : null;
 
-  // Velocity (last 12 months, liquid)
   const last12 = changes.slice(-12);
   const velocity = last12.length
     ? last12.reduce((s, c) => s + c.value, 0) / last12.length
     : 0;
 
-  // Projection (liquid)
   const projection1y = current + velocity * 12;
   const projection5y = current + velocity * 60;
 
-  // Volatility (liquid, excluding outliers)
   const meanChange = normalChanges.length ? normalChanges.reduce((s, c) => s + c.value, 0) / normalChanges.length : 0;
   const variance = normalChanges.length
     ? normalChanges.reduce((s, c) => s + Math.pow(c.value - meanChange, 2), 0) / normalChanges.length
     : 0;
   const volatility = Math.sqrt(variance);
 
-  // Max drawdown (liquid)
   let maxDrawdown = 0;
   let peak = liquidTotals[0];
   let drawdownStart = null;
@@ -145,11 +139,10 @@ export function computeStatistics(months) {
     }
   }
 
-  // Streaks
   const bestStreak = findStreak(changes, true);
   const worstStreak = findStreak(changes, false);
 
-  // Distribution by entity (latest month): liquid + housing equity per entity.
+  // Distribution: liquid + housing equity per entity (latest month)
   const latestMonth = months[months.length - 1];
   const byEntityHousing = latestMonth.byEntityHousing || {};
   const allEntityNames = [...new Set([
@@ -158,21 +151,26 @@ export function computeStatistics(months) {
     ...Object.keys(byEntityHousing),
   ])];
   const totalForDistribution = current + (latestMonth.housingValue || 0) + (latestMonth.mortgageDebt || 0);
-  const distribution = allEntityNames
-    .map((name) => {
-      const liquid = latestMonth.byEntityLiquid[name] ?? 0;
-      const housing = byEntityHousing[name];
-      const equity = housing ? (housing.value || 0) + (housing.debt || 0) : 0;
-      const value = liquid + equity;
-      return {
-        name,
-        value,
-        pct: totalForDistribution !== 0 ? (value / totalForDistribution) * 100 : 0,
-      };
-    })
+  const distributionRaw = [];
+  for (const name of allEntityNames) {
+    const liquid = latestMonth.byEntityLiquid[name] ?? 0;
+    const housing = byEntityHousing[name];
+    const equity = housing ? (housing.value || 0) + (housing.debt || 0) : 0;
+    const value = liquid + equity;
+    if (profileId === 'andrea' && name === 'BBVA' && liquid > 0 && equity !== 0) {
+      distributionRaw.push({ name: 'BBVA - Compte corrent', value: liquid });
+      distributionRaw.push({ name: 'BBVA - Hipoteca', value: equity });
+    } else {
+      distributionRaw.push({ name, value });
+    }
+  }
+  const distribution = distributionRaw
+    .map((d) => ({
+      ...d,
+      pct: totalForDistribution !== 0 ? (d.value / totalForDistribution) * 100 : 0,
+    }))
     .sort((a, b) => b.value - a.value);
 
-  // Entity evolution (liquid only)
   const allEntitiesLiquid = [...new Set(months.flatMap(m => Object.keys(m.byEntityLiquid)))];
   const entityEvolution = months.map(m => {
     const point = { date: m.shortLabel, key: m.key };
@@ -182,7 +180,6 @@ export function computeStatistics(months) {
     return point;
   });
 
-  // Cash vs Invested (liquid only)
   const cashVsInvested = months.map(m => ({
     date: m.shortLabel,
     key: m.key,
@@ -190,7 +187,7 @@ export function computeStatistics(months) {
     Invested: m.invertidoLiquid,
   }));
 
-  // Monthly changes in total wealth (liquid + housing equity) so investing in housing is not shown as "spent"
+  // Total wealth change (liquid + housing equity) so housing investment isn’t treated as spent
   const changesTotal = [];
   for (let i = 1; i < months.length; i++) {
     const liquidChange = liquidTotals[i] - liquidTotals[i - 1];
@@ -206,7 +203,6 @@ export function computeStatistics(months) {
     ? normalChangesTotal.reduce((s, c) => s + c.value, 0) / normalChangesTotal.length
     : 0;
 
-  // Heatmap: total wealth change so housing investment is not shown as spent
   const heatmap = changesTotal.map(c => ({
     month: c.month.shortLabel,
     fullMonth: c.month.label,
@@ -217,7 +213,6 @@ export function computeStatistics(months) {
     mes: c.month.date.getMonth(),
   }));
 
-  // Mortgage / housing
   const hasHousing = months.some(m => m.housingValue > 0);
   const latestHousingValue = latestMonth.housingValue;
   const latestMortgageDebt = latestMonth.mortgageDebt;
@@ -247,18 +242,25 @@ export function computeStatistics(months) {
     }
   }
   const monthlyMortgagePayment = currentDebt > 0 && MORTGAGE_MONTHLY_PAYMENT != null ? MORTGAGE_MONTHLY_PAYMENT : 0;
+  // Runway if one loses job: mortgage − unemployment; other pays expenses → draw from savings = mortgage − unemployment
+  const unemployment = ASSUMED_UNEMPLOYMENT ?? 0;
+  const runwayExpenseUnemployed = hasHousing && monthlyMortgagePayment > 0
+    ? Math.max(0, monthlyMortgagePayment - unemployment)
+    : null;
+  const runwayUnemployed = runwayExpenseUnemployed != null && runwayExpenseUnemployed > 0
+    ? Math.floor(current / runwayExpenseUnemployed)
+    : runwayExpenseUnemployed === 0 ? null : null; // unemployment covers mortgage
+  const runwayExpenseLevelUnemployed = runwayExpenseUnemployed > 0 ? runwayExpenseUnemployed : null;
+
   const fullPropertyValue = latestHousingValue / share;
   const fullDebt = currentDebt / share;
-  // totalEquity = full property equity when share < 1 (user's sheet holds their share).
   const totalEquity = share > 0 && share < 1 ? housingEquity / share : housingEquity;
 
-  // Savings rate (average of positive months, excluding outliers)
   const positiveMonths = normalChanges.filter(c => c.value > 0);
   const savingsRate = positiveMonths.length
     ? positiveMonths.reduce((s, c) => s + c.value, 0) / positiveMonths.length
     : 0;
 
-  // Year over year: total wealth change (includes housing, not as spending)
   const yearSummary = {};
   for (const c of changesTotal) {
     const y = c.month.date.getFullYear();
@@ -270,7 +272,6 @@ export function computeStatistics(months) {
   }
   const yearComparison = Object.values(yearSummary).sort((a, b) => a.year - b.year);
 
-  // Current streak
   let currentStreak = { count: 0, type: null };
   for (let i = changes.length - 1; i >= 0; i--) {
     const type = changes[i].value >= 0 ? 'positive' : 'negative';
@@ -283,7 +284,6 @@ export function computeStatistics(months) {
     }
   }
 
-  // Seasonality: average by quarter
   const quarterNames = ['Q1 (Gen-Mar)', 'Q2 (Abr-Jun)', 'Q3 (Jul-Set)', 'Q4 (Oct-Des)'];
   const quarterTotals = [[], [], [], []];
   for (const c of normalChanges) {
@@ -296,7 +296,6 @@ export function computeStatistics(months) {
     count: quarterTotals[i].length,
   }));
 
-  // Patterns
   const patterns = detectPatterns(changes);
 
   return {
@@ -325,6 +324,9 @@ export function computeStatistics(months) {
     totalMonthCount: normalChanges.length,
     outlierChanges,
     runway,
+    runwayExpenseLevel: conservativeExpense,
+    runwayUnemployed: hasHousing ? runwayUnemployed : undefined,
+    runwayExpenseLevelUnemployed: hasHousing ? runwayExpenseLevelUnemployed : undefined,
     velocity,
     projection1y,
     projection5y,

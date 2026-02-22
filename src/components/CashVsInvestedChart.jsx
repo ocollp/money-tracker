@@ -51,15 +51,15 @@ export default function CashVsInvestedChart({ data }) {
   const tickFontSize = narrow ? 10 : 11;
 
   return (
-    <div className="bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
-      <h3 className="text-lg font-semibold mb-3">Cash vs Invertit</h3>
-      <div className="min-h-[280px] h-80 lg:h-[380px]">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
+      <h3 className="text-lg font-semibold mb-3 shrink-0">Cash vs Invertit</h3>
+      <div className="min-h-[280px] flex-1 min-h-0 touch-none" style={{ touchAction: 'none' }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={chartMargin}>
             <defs>
               <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#eab308" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#eab308" stopOpacity={0} />
+                <stop offset="0%" stopColor="#ec4899" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#ec4899" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="invGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -107,7 +107,7 @@ export default function CashVsInvestedChart({ data }) {
               }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-            <Area type="monotone" dataKey="Cash" name="Cash" stroke="#eab308" fill="url(#cashGrad)" strokeWidth={2} dot={false} />
+            <Area type="monotone" dataKey="Cash" name="Cash" stroke="#ec4899" fill="url(#cashGrad)" strokeWidth={2} dot={false} />
             <Area type="monotone" dataKey="Invested" name="Invertit" stroke="#6366f1" fill="url(#invGrad)" strokeWidth={2} dot={false} />
           </AreaChart>
         </ResponsiveContainer>

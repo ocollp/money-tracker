@@ -46,7 +46,7 @@ export default function MortgageCard({ housing }) {
     : 0;
 
   return (
-    <div className="bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border space-y-5">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border space-y-5">
       <div>
         <h3 className="text-lg font-semibold">Habitatge</h3>
       </div>
@@ -77,7 +77,7 @@ export default function MortgageCard({ housing }) {
       </div>
 
       {housing.evolution.length > 1 && (
-        <div className="h-52">
+        <div className="h-52 touch-none" style={{ touchAction: 'none' }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={housing.evolution}

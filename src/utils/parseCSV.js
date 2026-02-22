@@ -56,7 +56,7 @@ export function groupByMonth(rows) {
     m.entries.push(row);
     m.total += row.cantidad;
 
-    // Only Vivienda personal / Hipoteca count as housing; same entity (e.g. BBVA) can have both housing and non-housing rows
+    // Only Vivienda personal / Hipoteca count as housing; same entity can have both
     if (row.isHousing) {
       if (row.categoria === 'Vivienda personal') m.housingValue = row.cantidad;
       if (row.categoria === 'Hipoteca') m.mortgageDebt = row.cantidad;

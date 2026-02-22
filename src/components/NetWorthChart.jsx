@@ -69,10 +69,10 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
   };
 
   return (
-    <div className="bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
-      <h3 className="text-lg font-semibold mb-3">{title}</h3>
-      {subtitle && <p className="text-xs text-text-secondary mb-4">{subtitle}</p>}
-      <div className="min-h-[280px] h-80 lg:h-[380px]">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
+      <h3 className="text-lg font-semibold mb-3 shrink-0">{title}</h3>
+      {subtitle && <p className="text-xs text-text-secondary mb-4 shrink-0">{subtitle}</p>}
+      <div className="min-h-[280px] flex-1 min-h-0 touch-none" style={{ touchAction: 'none' }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={chartMargin}>
             <defs>

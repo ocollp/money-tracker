@@ -32,3 +32,14 @@ body {
   background: var(--color-surface-hover);
   border-radius: 3px;
 }
+
+/* Hide scrollbar on mobile but keep touch scroll (e.g. heatmap) */
+@media (max-width: 640px) {
+  .scrollbar-hide-mobile {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide-mobile::-webkit-scrollbar {
+    display: none;
+  }
+}
