@@ -52,7 +52,7 @@ export default function CashVsInvestedChart({ data }) {
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
-      <h3 className="text-lg font-semibold mb-3 shrink-0">Cash vs Invertit</h3>
+      <h3 className="text-lg font-semibold mb-3 shrink-0">Invertit vs Cash</h3>
       <div className="min-h-[280px] flex-1 min-h-0 touch-none" style={{ touchAction: 'none' }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={chartMargin}>
@@ -106,9 +106,18 @@ export default function CashVsInvestedChart({ data }) {
                 );
               }}
             />
-            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-            <Area type="monotone" dataKey="Cash" name="Cash" stroke="#ec4899" fill="url(#cashGrad)" strokeWidth={2} dot={false} />
             <Area type="monotone" dataKey="Invested" name="Invertit" stroke="#6366f1" fill="url(#invGrad)" strokeWidth={2} dot={false} />
+            <Area type="monotone" dataKey="Cash" name="Cash" stroke="#ec4899" fill="url(#cashGrad)" strokeWidth={2} dot={false} />
+            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} content={({ payload }) => (
+              <div className="flex flex-wrap justify-center gap-4" style={{ fontSize: 12 }}>
+                {payload?.slice().reverse().map((entry) => (
+                  <span key={entry.value} className="inline-flex items-center gap-1.5">
+                    <span className="rounded-full inline-block" style={{ width: 8, height: 8, backgroundColor: entry.color }} />
+                    <span style={{ color: entry.color }}>{entry.value}</span>
+                  </span>
+                ))}
+              </div>
+            )} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
