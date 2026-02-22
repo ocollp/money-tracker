@@ -26,6 +26,8 @@ export function parseCSV(text) {
   return rows;
 }
 
+import { HOUSING_EQUITY_FIXED, HOUSING_EQUITY_ENTITY } from '../config.js';
+
 export function groupByMonth(rows) {
   const months = {};
 
@@ -80,7 +82,15 @@ export function groupByMonth(rows) {
     m.byCategory[row.categoria] = (m.byCategory[row.categoria] || 0) + row.cantidad;
   }
 
-  return Object.values(months).sort((a, b) => a.date - b.date);
+  const sorted = Object.values(months).sort((a, b) => a.date - b.date);
+  if (HOUSING_EQUITY_FIXED != null && HOUSING_EQUITY_FIXED > 0) {
+    for (const m of sorted) {
+      m.housingValue = HOUSING_EQUITY_FIXED;
+      if (!m.byEntityHousing[HOUSING_EQUITY_ENTITY]) m.byEntityHousing[HOUSING_EQUITY_ENTITY] = { value: 0, debt: 0 };
+      m.byEntityHousing[HOUSING_EQUITY_ENTITY].value = HOUSING_EQUITY_FIXED;
+    }
+  }
+  return sorted;
 }
 
 function monthName(n) {

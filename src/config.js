@@ -14,5 +14,5 @@ export const MORTGAGE_END_YEAR = n(import.meta.env.VITE_MORTGAGE_END_YEAR);
 export const MORTGAGE_END_MONTH = n(import.meta.env.VITE_MORTGAGE_END_MONTH);
 export const MORTGAGE_MONTHLY_PAYMENT = n(import.meta.env.VITE_MORTGAGE_MONTHLY_PAYMENT);
 export const OWNERSHIP_SHARE = n(import.meta.env.VITE_OWNERSHIP_SHARE);
-/** Assumed monthly unemployment (€) for runway when one loses job */
-export const ASSUMED_UNEMPLOYMENT = n(import.meta.env.VITE_ASSUMED_UNEMPLOYMENT) ?? 1000;
+export const HOUSING_EQUITY_FIXED = n(import.meta.env.VITE_HOUSING_EQUITY);
+export const HOUSING_EQUITY_ENTITY = (import.meta.env.VITE_HOUSING_EQUITY_ENTITY || 'BBVA').trim() || 'BBVA';

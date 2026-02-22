@@ -1,4 +1,4 @@
-import { MORTGAGE_END_YEAR, MORTGAGE_END_MONTH, MORTGAGE_MONTHLY_PAYMENT, OWNERSHIP_SHARE, ASSUMED_UNEMPLOYMENT } from '../config.js';
+import { MORTGAGE_END_YEAR, MORTGAGE_END_MONTH, MORTGAGE_MONTHLY_PAYMENT, OWNERSHIP_SHARE } from '../config.js';
 
 function totalWealth(m) {
   return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0);
@@ -242,15 +242,6 @@ export function computeStatistics(months, options = {}) {
     }
   }
   const monthlyMortgagePayment = currentDebt > 0 && MORTGAGE_MONTHLY_PAYMENT != null ? MORTGAGE_MONTHLY_PAYMENT : 0;
-  // Runway if one loses job: mortgage − unemployment; other pays expenses → draw from savings = mortgage − unemployment
-  const unemployment = ASSUMED_UNEMPLOYMENT ?? 0;
-  const runwayExpenseUnemployed = hasHousing && monthlyMortgagePayment > 0
-    ? Math.max(0, monthlyMortgagePayment - unemployment)
-    : null;
-  const runwayUnemployed = runwayExpenseUnemployed != null && runwayExpenseUnemployed > 0
-    ? Math.floor(current / runwayExpenseUnemployed)
-    : runwayExpenseUnemployed === 0 ? null : null; // unemployment covers mortgage
-  const runwayExpenseLevelUnemployed = runwayExpenseUnemployed > 0 ? runwayExpenseUnemployed : null;
 
   const fullPropertyValue = latestHousingValue / share;
   const fullDebt = currentDebt / share;
@@ -325,8 +316,6 @@ export function computeStatistics(months, options = {}) {
     outlierChanges,
     runway,
     runwayExpenseLevel: conservativeExpense,
-    runwayUnemployed: hasHousing ? runwayUnemployed : undefined,
-    runwayExpenseLevelUnemployed: hasHousing ? runwayExpenseLevelUnemployed : undefined,
     velocity,
     projection1y,
     projection5y,
