@@ -116,9 +116,6 @@ export default function DistributionChart({ distribution, title }) {
           {listItems.map((entry) =>
             entry.grouped ? (
               <div key="bbva-group" className="space-y-1">
-                <div className="flex justify-end">
-                  <span className="text-xs text-text-secondary w-10 text-right">{entry.combinedPct.toFixed(0)}%</span>
-                </div>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: ENTITY_COLORS[entry.first.name], opacity: 0.9 }} />
