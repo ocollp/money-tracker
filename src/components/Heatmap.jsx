@@ -83,20 +83,6 @@ export default function Heatmap({ data }) {
           </tbody>
         </table>
       </div>
-
-      <div className="px-5 pb-4 pt-1 flex flex-wrap items-center gap-2 text-[10px] text-text-secondary border-t border-border/50">
-        <div className="flex items-center gap-2 pt-3">
-          <span className="text-text-secondary/60 font-medium">Pèrdua</span>
-          <div className="flex items-center gap-0.5">
-            <div className="w-4 h-3 rounded" style={{ backgroundColor: 'rgba(239, 68, 68, 0.8)' }} />
-            <div className="w-4 h-3 rounded" style={{ backgroundColor: 'rgba(239, 68, 68, 0.45)' }} />
-            <div className="w-4 h-3 rounded" style={{ backgroundColor: 'rgba(148, 163, 184, 0.08)' }} />
-            <div className="w-4 h-3 rounded" style={{ backgroundColor: 'rgba(34, 197, 94, 0.45)' }} />
-            <div className="w-4 h-3 rounded" style={{ backgroundColor: 'rgba(34, 197, 94, 0.8)' }} />
-          </div>
-          <span className="text-text-secondary/60 font-medium">Guany</span>
-        </div>
-      </div>
     </div>
   );
 }

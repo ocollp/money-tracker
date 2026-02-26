@@ -102,6 +102,23 @@ export default function App() {
       .finally(() => setLoading(false));
   }, [accessToken, sheetAccess, currentSheetId, fetchKey]);
 
+  // Actualització automàtica quan el bot afegeix dades al Sheet (polling en segon pla)
+  const POLL_INTERVAL_MS = 45 * 1000; // 45 segons
+  useEffect(() => {
+    if (isTestData || !accessToken || !currentSheetId || !stats) return;
+    const intervalId = setInterval(() => {
+      fetchSheetData(accessToken, currentSheetId)
+        .then(csvText => {
+          const rows = parseCSV(csvText);
+          const months = groupByMonth(rows);
+          const s = computeStatistics(months, { profileId: effectiveProfile });
+          setStats(s);
+        })
+        .catch(() => { /* ignora errors en background */ });
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [isTestData, accessToken, currentSheetId, effectiveProfile, stats]);
+
   const switchProfile = (id) => {
     setProfile(id);
     try {
