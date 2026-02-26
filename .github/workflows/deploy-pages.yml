@@ -40,6 +40,9 @@ jobs:
           VITE_MORTGAGE_MONTHLY_PAYMENT: ${{ secrets.VITE_MORTGAGE_MONTHLY_PAYMENT }}
           VITE_OWNERSHIP_SHARE: ${{ secrets.VITE_OWNERSHIP_SHARE }}
 
+      - name: Fix SPA routing for GitHub Pages
+        run: cp dist/index.html dist/404.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
