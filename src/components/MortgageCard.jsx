@@ -46,7 +46,7 @@ export default function MortgageCard({ housing }) {
     : 0;
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border space-y-5">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 space-y-5">
       <div>
         <h3 className="text-lg font-semibold">Habitatge</h3>
       </div>
@@ -163,7 +163,7 @@ function MiniStat({ label, value, negative, highlight, hint, tooltip }) {
         {tooltip && (
           <button
             type="button"
-            className="text-text-secondary/50 hover:text-brand transition-colors"
+            className="text-text-secondary/50 hover:text-brand transition-all duration-200 active:scale-95"
             onMouseEnter={() => setShowTip(true)}
             onMouseLeave={() => setShowTip(false)}
             onClick={() => setShowTip(p => !p)}
@@ -180,7 +180,7 @@ function MiniStat({ label, value, negative, highlight, hint, tooltip }) {
           {tooltip}
         </div>
       )}
-      <p className={`text-sm font-bold ${highlight ? 'text-positive' : negative ? 'text-negative' : ''}`}>
+      <p className={`text-sm font-bold ${highlight ? 'text-positive' : negative ? 'text-negative' : 'text-text-primary'}`}>
         {value}
       </p>
       {hint && <p className="text-[10px] text-text-secondary/50 mt-0.5">{hint}</p>}

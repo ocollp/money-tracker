@@ -102,8 +102,7 @@ export default function App() {
       .finally(() => setLoading(false));
   }, [accessToken, sheetAccess, currentSheetId, fetchKey]);
 
-  // Actualització automàtica quan el bot afegeix dades al Sheet (polling en segon pla)
-  const POLL_INTERVAL_MS = 45 * 1000; // 45 segons
+  const POLL_INTERVAL_MS = 45 * 1000;
   useEffect(() => {
     if (isTestData || !accessToken || !currentSheetId || !stats) return;
     const intervalId = setInterval(() => {
@@ -114,7 +113,7 @@ export default function App() {
           const s = computeStatistics(months, { profileId: effectiveProfile });
           setStats(s);
         })
-        .catch(() => { /* ignora errors en background */ });
+        .catch(() => {});
     }, POLL_INTERVAL_MS);
     return () => clearInterval(intervalId);
   }, [isTestData, accessToken, currentSheetId, effectiveProfile, stats]);
@@ -126,7 +125,6 @@ export default function App() {
     } catch { /* ignore */ }
   };
 
-  // Horizontal swipe (mobile) to switch profile (Olga ↔ Andrea)
   const mainRef = useRef(null);
   const swipeStart = useRef({ x: 0, y: 0 });
   const swipeLock = useRef(false);
@@ -170,13 +168,16 @@ export default function App() {
   if (!isTestData && accessToken && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="bg-surface-alt rounded-2xl p-8 border border-red-500/30 text-center max-w-md space-y-4">
+        <div className="bg-surface-alt/90 rounded-2xl p-8 border border-white/[0.06] shadow-xl text-center max-w-md space-y-4">
           <p className="text-negative text-lg font-medium">Error al carregar les dades</p>
           <p className="text-text-secondary text-sm">No tens accés a cap dels fulls de càlcul configurats.</p>
           <button
             onClick={logout}
-            className="text-sm text-text-secondary hover:text-brand transition-colors underline"
+            className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-brand transition-all duration-200 underline active:opacity-80"
           >
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
             Tancar sessió
           </button>
         </div>
@@ -209,13 +210,16 @@ export default function App() {
   if (error || !stats) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-surface-alt rounded-2xl p-8 border border-red-500/30 text-center max-w-md space-y-4">
+        <div className="bg-surface-alt/90 rounded-2xl p-8 border border-white/[0.06] shadow-xl text-center max-w-md space-y-4">
           <p className="text-negative text-lg font-medium">Error al carregar les dades</p>
           <p className="text-text-secondary text-sm">{error}</p>
           <button
             onClick={logout}
-            className="text-sm text-text-secondary hover:text-brand transition-colors underline"
+            className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-brand transition-all duration-200 underline active:opacity-80"
           >
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
             Tancar sessió i tornar-ho a provar
           </button>
         </div>
@@ -225,57 +229,76 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-border sticky top-0 bg-surface/80 backdrop-blur-xl z-10">
+      <header className="sticky top-0 z-10 bg-surface/70 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight">Money<span className="text-brand">Tracker</span></h1>
-          <div className="flex items-center gap-2 sm:gap-4">
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-text-primary">Finances <span className="text-brand">personals</span></h1>
+          <div className="flex items-center justify-end gap-1 sm:gap-2">
             {effectiveProfiles.length > 1 && (
-              <div className="flex rounded-lg sm:rounded-xl bg-surface border border-border p-0.5">
+              <div className="flex rounded-xl bg-surface-alt/80 border border-white/[0.06] p-0.5 shadow-sm shrink-0">
                 {effectiveProfiles.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => switchProfile(p.id)}
-                    className={`px-2 py-1 rounded-md sm:px-3 sm:py-1.5 sm:rounded-lg text-xs sm:text-sm font-medium transition-colors ${effectiveProfile === p.id ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary'}`}
+                    className={`px-2 py-1 rounded-md sm:px-3 sm:py-1.5 sm:rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${effectiveProfile === p.id ? 'bg-brand text-white scale-100' : 'text-text-secondary hover:text-text-primary hover:scale-[1.02] active:scale-[0.98]'}`}
                   >
                     {p.emoji} {p.name}
                   </button>
                 ))}
               </div>
             )}
-            {!isTestData && (
-            <button
-              type="button"
-              onClick={() => setFetchKey(k => k + 1)}
-              disabled={loading}
-              className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-colors disabled:opacity-50"
-              title="Actualitzar dades"
-              aria-label="Actualitzar dades"
-            >
-              <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-            )}
-            {effectiveUser && (
-              isTestData ? (
-                <a
-                  href={import.meta.env.BASE_URL || '/'}
-                  className="flex items-center gap-2 text-sm text-text-secondary hover:text-brand transition-colors"
-                >
-                  <span className="hidden sm:inline">Sortir (dades de test)</span>
-                </a>
-              ) : (
-                <button
-                  onClick={logout}
-                  className="flex items-center gap-2 text-sm text-text-secondary hover:text-brand transition-colors"
-                >
-                  {effectiveUser.picture && (
-                    <img src={effectiveUser.picture} alt="" className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
-                  )}
-                  <span className="hidden sm:inline">Tancar sessió</span>
-                </button>
-              )
-            )}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {!isTestData && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setFetchKey(k => k + 1)}
+                    disabled={loading}
+                    className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                    title="Actualitzar dades"
+                    aria-label="Actualitzar dades"
+                  >
+                    <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                  <a
+                    href={`${import.meta.env.BASE_URL || ''}test`}
+                    className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 hover:scale-110 active:scale-95"
+                    title="Dades de test"
+                    aria-label="Dades de test"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                  </a>
+                </>
+              )}
+              {effectiveUser && (
+                isTestData ? (
+                  <a
+                    href={import.meta.env.BASE_URL || '/'}
+                    className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 hover:scale-110 active:scale-95"
+                    title="Sortir"
+                    aria-label="Sortir"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  </a>
+                ) : (
+                  <button
+                    onClick={logout}
+                    className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 hover:scale-110 active:scale-95"
+                    title="Tancar sessió"
+                    aria-label="Tancar sessió"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  </button>
+                )
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -307,7 +330,6 @@ export default function App() {
               value={formatMoney(stats.currentTotalWealth)}
               subtitle={null}
               trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
-              highlight
             />
           )}
         </section>

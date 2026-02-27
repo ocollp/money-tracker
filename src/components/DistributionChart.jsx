@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 
 const DISTRIBUTION_COLORS = [
-  '#6366f1', '#22c55e', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ec4899',
+  '#ec4899', '#22c55e', '#0ea5e9', '#8b5cf6', '#f59e0b', '#6366f1',
   '#14b8a6', '#a855f7', '#64748b',
 ];
 
@@ -34,7 +34,7 @@ const CustomTooltip = ({ active, payload }) => {
   return (
     <div className="bg-surface border border-border rounded-xl px-3 py-2 shadow-xl">
       <p className="text-xs text-text-secondary">{displayName(d.name)}</p>
-      <p className="text-sm font-bold">{formatMoney(d.value)}</p>
+      <p className="text-sm font-bold text-text-primary">{formatMoney(d.value)}</p>
     </div>
   );
 };
@@ -77,7 +77,7 @@ export default function DistributionChart({ distribution, title }) {
   }
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10">
       <h3 className="text-lg font-semibold mb-3 shrink-0">{title}</h3>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-6 flex-1 min-h-0">
         <div className="relative h-48 w-48 shrink-0">
@@ -109,7 +109,7 @@ export default function DistributionChart({ distribution, title }) {
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] text-text-secondary">Total</span>
-            <span className="text-sm font-bold">{formatMoney(total)}</span>
+            <span className="text-sm font-bold text-text-primary">{formatMoney(total)}</span>
           </div>
         </div>
         <div className="flex flex-col gap-3 w-full">
@@ -122,7 +122,7 @@ export default function DistributionChart({ distribution, title }) {
                     <span className="text-text-secondary text-sm">{entry.first.name}</span>
                   </div>
                   <div className="flex items-center gap-2.5">
-                    <span className="text-sm font-semibold">{formatMoney(entry.first.value)}</span>
+                    <span className="text-sm font-semibold text-text-primary">{formatMoney(entry.first.value)}</span>
                     <span className="text-xs text-text-secondary w-10 text-right">{entry.first.pct.toFixed(0)}%</span>
                   </div>
                 </div>
@@ -132,7 +132,7 @@ export default function DistributionChart({ distribution, title }) {
                     <span className="text-text-secondary text-sm">{entry.second.name}</span>
                   </div>
                   <div className="flex items-center gap-2.5">
-                    <span className="text-sm font-semibold">{formatMoney(entry.second.value)}</span>
+                    <span className="text-sm font-semibold text-text-primary">{formatMoney(entry.second.value)}</span>
                     <span className="text-xs text-text-secondary w-10 text-right">{entry.second.pct.toFixed(0)}%</span>
                   </div>
                 </div>
@@ -170,7 +170,7 @@ export default function DistributionChart({ distribution, title }) {
                         <span className="text-text-secondary text-sm">{displayName(d.name)}</span>
                       </div>
                       <div className="flex items-center gap-2.5">
-                        <span className="text-sm font-semibold">{formatMoney(d.value)}</span>
+                        <span className="text-sm font-semibold text-text-primary">{formatMoney(d.value)}</span>
                         <span className="text-xs text-text-secondary w-10 text-right">{d.pct.toFixed(0)}%</span>
                       </div>
                     </div>

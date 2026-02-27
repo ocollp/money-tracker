@@ -4,7 +4,7 @@ export default function Patterns({ yearComparison }) {
   const sortedYears = [...yearComparison].sort((a, b) => b.year - a.year);
 
   return (
-    <div className="bg-surface-alt rounded-2xl p-5 border border-border space-y-5">
+    <div className="bg-surface-alt/80 rounded-2xl p-5 border border-white/[0.06] shadow-lg shadow-black/10 space-y-5">
       <div>
         <h3 className="text-lg font-semibold">Evolució per anys</h3>
       </div>

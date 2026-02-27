@@ -232,7 +232,7 @@ export function computeStatistics(months, options = {}) {
     paid: initialDebt - Math.abs(m.mortgageDebt),
   }));
 
-  const share = OWNERSHIP_SHARE != null && OWNERSHIP_SHARE > 0 ? OWNERSHIP_SHARE : 1;
+  const share = options.ownershipShare ?? (OWNERSHIP_SHARE != null && OWNERSHIP_SHARE > 0 ? OWNERSHIP_SHARE : 1);
   let mortgageMonthsRemaining = null;
   if (currentDebt > 0) {
     if (MORTGAGE_END_YEAR != null && MORTGAGE_END_MONTH != null) {

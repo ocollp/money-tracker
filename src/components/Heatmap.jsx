@@ -25,7 +25,7 @@ export default function Heatmap({ data }) {
   const negativeMonths = data.filter(d => d.value < 0).length;
 
   return (
-    <div className="bg-surface-alt rounded-2xl border border-border overflow-hidden">
+    <div className="bg-surface-alt/80 rounded-2xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Rendiment mensual</h3>
@@ -61,7 +61,7 @@ export default function Heatmap({ data }) {
                   return (
                     <td key={i} className="p-0.5 sm:p-0 align-middle">
                       <div
-                        className="rounded-full sm:rounded-lg w-[2.25rem] h-[2.25rem] sm:w-full sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 mx-auto sm:mx-0"
+                        className="rounded-full sm:rounded-lg w-[2.25rem] h-[2.25rem] sm:w-full sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-95 mx-auto sm:mx-0"
                         style={getCellStyle(cell?.value)}
                       >
                         {cell && (

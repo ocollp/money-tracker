@@ -24,7 +24,7 @@ function renderXAxisTick(props, firstDate, lastDate, fontSize) {
   const textAnchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={0} dy={8} textAnchor={textAnchor} fill="#94a3b8" fontSize={fontSize}>
+      <text x={0} y={0} dy={8} textAnchor={textAnchor} fill="#f1f5f9" fontSize={fontSize}>
         {payload.value}
       </text>
     </g>
@@ -51,7 +51,7 @@ export default function CashVsInvestedChart({ data }) {
   const tickFontSize = narrow ? 10 : 11;
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10">
       <h3 className="text-lg font-semibold mb-3 shrink-0">Invertit vs Cash</h3>
       <div className="min-h-[280px] flex-1 min-h-0 touch-none" style={{ touchAction: 'none' }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -83,7 +83,7 @@ export default function CashVsInvestedChart({ data }) {
                 const { y, payload } = props;
                 const text = `${(payload.value / 1000).toFixed(0)}k`;
                 return (
-                  <text x={0} y={y} dy={4} textAnchor="start" fill="#94a3b8" fontSize={12}>
+                  <text x={0} y={y} dy={4} textAnchor="start" fill="#f1f5f9" fontSize={12}>
                     {text}
                   </text>
                 );
@@ -91,15 +91,15 @@ export default function CashVsInvestedChart({ data }) {
             />
             <Tooltip
               contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 12 }}
-              labelStyle={{ color: '#94a3b8' }}
+              labelStyle={{ color: '#f1f5f9' }}
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 return (
                   <div className="rounded-xl px-3 py-2" style={{ background: '#1e293b', border: '1px solid #334155' }}>
-                    <div className="text-xs font-medium mb-1.5" style={{ color: '#94a3b8' }}>{label}</div>
+                    <div className="text-xs font-medium mb-1.5 text-text-primary">{label}</div>
                     {payload.map((p) => (
-                      <div key={p.dataKey} className="text-sm" style={{ color: p.color }}>
-                        {p.name}: {formatMoney(p.value)}
+                      <div key={p.dataKey} className="text-sm text-text-primary">
+                        <span style={{ color: p.color }}>{p.name}</span>: {formatMoney(p.value)}
                       </div>
                     ))}
                   </div>

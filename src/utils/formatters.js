@@ -22,8 +22,8 @@ export function formatChange(value) {
 }
 
 export const COLORS = [
-  '#6366f1', '#22c55e', '#eab308', '#ef4444', '#06b6d4',
-  '#ec4899', '#8b5cf6', '#14b8a6', '#f97316', '#64748b',
+  '#ec4899', '#22c55e', '#6366f1', '#ef4444', '#06b6d4',
+  '#f472b6', '#8b5cf6', '#14b8a6', '#f97316', '#64748b',
   '#a855f7', '#84cc16',
 ];
 

@@ -25,7 +25,7 @@ function renderXAxisTick(props, firstDate, lastDate, fontSize) {
   const textAnchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={0} dy={8} textAnchor={textAnchor} fill="#94a3b8" fontSize={fontSize}>
+      <text x={0} y={0} dy={8} textAnchor={textAnchor} fill="#f1f5f9" fontSize={fontSize}>
         {payload.value}
       </text>
     </g>
@@ -62,14 +62,14 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
         className="rounded-xl px-3 py-2 shadow-lg"
         style={{ background: '#1e293b', border: '1px solid #334155' }}
       >
-        <div className="text-xs font-medium" style={{ color: '#94a3b8' }}>{label}</div>
-        <div className="font-normal" style={{ color: '#6366f1' }}>{formatMoney(payload[0].value)}</div>
+        <div className="text-xs font-medium" style={{ color: '#f1f5f9' }}>{label}</div>
+        <div className="font-normal" style={{ color: '#f1f5f9' }}>{formatMoney(payload[0].value)}</div>
       </div>
     );
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt rounded-2xl px-5 pt-5 pb-3 border border-border">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10">
       <h3 className="text-lg font-semibold mb-3 shrink-0">{title}</h3>
       {subtitle && <p className="text-xs text-text-secondary mb-4 shrink-0">{subtitle}</p>}
       <div className="min-h-[280px] flex-1 min-h-0 touch-none" style={{ touchAction: 'none' }}>
@@ -77,8 +77,8 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
           <AreaChart data={data} margin={chartMargin}>
             <defs>
               <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                <stop offset="0%" stopColor="#ec4899" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#ec4899" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
@@ -98,7 +98,7 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
                 const { y, payload } = props;
                 const text = `${(payload.value / 1000).toFixed(0)}k`;
                 return (
-                  <text x={0} y={y} dy={4} textAnchor="start" fill="#94a3b8" fontSize={12}>
+                  <text x={0} y={y} dy={4} textAnchor="start" fill="#f1f5f9" fontSize={12}>
                     {text}
                   </text>
                 );
@@ -106,8 +106,8 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
             />
             <Tooltip content={renderTooltip} />
             <Area
-              type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={2.5}
-              fill="url(#netWorthGrad)" dot={false} activeDot={{ r: 5, fill: '#6366f1' }}
+              type="monotone" dataKey="total" stroke="#ec4899" strokeWidth={2.5}
+              fill="url(#netWorthGrad)" dot={false} activeDot={{ r: 5, fill: '#ec4899' }}
             />
           </AreaChart>
         </ResponsiveContainer>

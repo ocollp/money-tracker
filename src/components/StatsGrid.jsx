@@ -17,7 +17,7 @@ export default function StatsGrid({ stats }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {sections.map(section => (
-        <div key={section.title} className="bg-surface-alt rounded-2xl p-5 border border-border">
+        <div key={section.title} className="bg-surface-alt/80 rounded-2xl p-5 border border-white/[0.06] shadow-lg shadow-black/10">
           <div className="mb-4">
             <h4 className="text-lg font-semibold">{section.title}</h4>
             {section.tooltip && (

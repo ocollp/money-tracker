@@ -22,12 +22,12 @@ export default function GoalTracker({ current, velocity }) {
   };
 
   return (
-    <div className="bg-surface-alt rounded-2xl p-5 border border-border">
+    <div className="bg-surface-alt/80 rounded-2xl p-5 border border-white/[0.06] shadow-lg shadow-black/10">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Objetivo financiero</h3>
         <button
           onClick={() => setEditing(!editing)}
-          className="text-xs text-text-secondary hover:text-brand transition-colors"
+          className="text-xs text-text-secondary hover:text-brand transition-all duration-200 active:opacity-80"
         >
           {editing ? 'Cerrar' : 'Cambiar meta'}
         </button>
@@ -41,7 +41,7 @@ export default function GoalTracker({ current, velocity }) {
                 key={g}
                 onClick={() => updateGoal(g)}
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  goal === g ? 'bg-brand text-white' : 'bg-surface text-text-secondary hover:text-text-primary'
+                  goal === g ? 'bg-brand text-white' : 'bg-surface text-text-secondary hover:text-text-primary transition-all duration-200 active:scale-[0.98]'
                 }`}
               >
                 {formatMoney(g)}
@@ -58,7 +58,7 @@ export default function GoalTracker({ current, velocity }) {
             />
             <button
               onClick={() => { if (customGoal > 0) updateGoal(Number(customGoal)); }}
-              className="px-3 py-1.5 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors"
+              className="px-3 py-1.5 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand-dark transition-all duration-200 active:scale-[0.98]"
             >
               OK
             </button>

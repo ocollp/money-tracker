@@ -6,13 +6,13 @@ export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, 
   const arrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '';
 
   return (
-    <div className={`bg-surface-alt rounded-xl sm:rounded-2xl p-3 sm:p-5 border transition-colors relative ${highlight ? 'border-brand/40 hover:border-brand/60' : 'border-border hover:border-brand/40'} ${className}`.trim()}>
+    <div className={`bg-surface-alt/80 rounded-2xl p-3 sm:p-5 border border-white/[0.06] shadow-lg shadow-black/10 relative ${highlight ? 'ring-1 ring-brand/30' : ''} ${className}`.trim()}>
       <div className="flex items-center justify-between mb-1.5 sm:mb-3">
         <div className="flex items-center gap-1.5">
           <span className="text-text-secondary text-xs sm:text-sm font-medium">{title}</span>
           {tooltip && (
             <button
-              className="text-text-secondary/50 hover:text-brand transition-colors"
+              className="text-text-secondary/50 hover:text-brand transition-colors duration-150 active:scale-95"
               onMouseEnter={() => setShowTip(true)}
               onMouseLeave={() => setShowTip(false)}
               onClick={() => setShowTip(p => !p)}
@@ -25,14 +25,14 @@ export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, 
         </div>
         {icon && <span className="text-lg sm:text-2xl">{icon}</span>}
       </div>
-      <div className="text-lg sm:text-2xl font-bold tracking-tight">{value}</div>
+      <div className="text-lg sm:text-2xl font-bold tracking-tight text-text-primary">{value}</div>
       {subtitle && (
         <div className={`text-xs sm:text-sm mt-0.5 sm:mt-1.5 ${trendColor} font-medium`}>
           {arrow} {subtitle}
         </div>
       )}
       {tooltip && showTip && (
-        <div className="absolute z-20 left-3 right-3 top-full mt-1 bg-surface border border-border rounded-xl p-3 text-xs text-text-secondary leading-relaxed shadow-xl">
+        <div className="absolute z-20 left-3 right-3 top-full mt-1 bg-surface-alt border border-white/[0.08] rounded-xl p-3 text-xs text-text-secondary leading-relaxed shadow-xl backdrop-blur-sm">
           {tooltip}
         </div>
       )}
