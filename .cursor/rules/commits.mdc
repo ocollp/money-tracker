@@ -1,0 +1,20 @@
+---
+description: Commit messages use Conventional Commits and English
+alwaysApply: true
+---
+
+# Commit messages
+
+- **Format**: Always use [Conventional Commits](https://www.conventionalcommits.org/).
+- **Language**: Write the commit message in **English** (title and body).
+
+## Examples
+
+```
+feat(ui): add piggy GIF to login screen
+fix(sheets): handle empty CSV without crashing
+docs: update Telegram bot setup guide
+chore(deps): bump vite to 7.3.1
+```
+
+When suggesting a commit message for the user, output it in this format and in English only.

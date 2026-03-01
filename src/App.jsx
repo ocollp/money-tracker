@@ -37,7 +37,7 @@ function getInitialProfile() {
 
 export default function App() {
   const isTestData = isTestDataPath();
-  const { user, accessToken, ready, login, logout, needsRefresh } = useGoogleAuth();
+  const { user, accessToken, ready, login, logout, needsRefresh, checkingSession } = useGoogleAuth();
   const [profile, setProfile] = useState(getInitialProfile);
   const [sheetAccess, setSheetAccess] = useState(null);
   const [stats, setStats] = useState(null);
@@ -161,8 +161,8 @@ export default function App() {
     return () => el.removeEventListener('touchmove', handleTouchMove);
   }, [handleTouchMove]);
 
-  if (!effectiveUser || (needsRefresh && !isTestData)) {
-    return <LoginScreen onLogin={login} ready={ready} />;
+  if (!isTestData && (!user || !accessToken)) {
+    return <LoginScreen onLogin={login} ready={ready} checkingSession={checkingSession} />;
   }
 
   if (!isTestData && accessToken && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {

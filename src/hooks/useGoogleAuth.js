@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { GOOGLE_CLIENT_ID, SCOPES } from '../config';
 
 const STORAGE_KEY = 'mt_auth';
-const REFRESH_BEFORE_MS = 5 * 60 * 1000; // refresh 5 min before expiry (tab throttling can delay timers)
-const EXPIRING_SOON_MS = 10 * 60 * 1000;  // consider "expiring soon" when < 10 min left
+const REFRESH_BEFORE_MS = 20 * 60 * 1000; // refresh 20 min before expiry so token is still valid when you come back
+const EXPIRING_SOON_MS = 25 * 60 * 1000;  // when < 25 min left, try refresh on tab focus
+const SILENT_CHECK_MS = 3000;             // wait this long for silent refresh before showing login button
 
 function loadSession() {
   try {
@@ -31,7 +32,9 @@ export default function useGoogleAuth() {
   const [accessToken, setAccessToken] = useState(hasValidToken ? saved?.accessToken ?? null : null);
   const [ready, setReady] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
+  const [silentCheckDone, setSilentCheckDone] = useState(!saved?.user || hasValidToken);
   const refreshTimer = useRef(null);
+  const silentCheckTimer = useRef(null);
   const expiresAtRef = useRef(saved?.expiresAt ?? null);
   const clientRef = useRef(null);
 
@@ -44,8 +47,8 @@ export default function useGoogleAuth() {
     }, ms);
   }, []);
 
-  const trySilentRefresh = useCallback((client) => {
-    if (client) client.requestAccessToken({ prompt: '' });
+  const trySilentRefresh = useCallback((client, promptNone = false) => {
+    if (client) client.requestAccessToken({ prompt: promptNone ? 'none' : '' });
   }, []);
 
   useEffect(() => {
@@ -57,7 +60,8 @@ export default function useGoogleAuth() {
         client_id: GOOGLE_CLIENT_ID,
         scope: SCOPES,
         callback: (response) => {
-          if (response.access_token) {
+          if (response?.access_token) {
+            setSilentCheckDone(true);
             const expiresIn = response.expires_in || 3600;
             fetchUserInfo(response.access_token).then(userInfo => {
               const session = saveSession(response.access_token, expiresIn, userInfo);
@@ -75,7 +79,8 @@ export default function useGoogleAuth() {
       if (hasValidToken && saved?.expiresAt) {
         scheduleRefresh(saved.expiresAt, client);
       } else if (saved?.user) {
-        trySilentRefresh(client);
+        trySilentRefresh(client, true);
+        silentCheckTimer.current = setTimeout(() => setSilentCheckDone(true), SILENT_CHECK_MS);
       }
       return client;
     };
@@ -100,6 +105,7 @@ export default function useGoogleAuth() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
+      if (silentCheckTimer.current) clearTimeout(silentCheckTimer.current);
     };
   }, []);
 
@@ -130,7 +136,8 @@ export default function useGoogleAuth() {
     setAccessToken(null);
   }, [accessToken]);
 
-  const needsRefresh = !!user && !accessToken;
+  const needsRefresh = !!user && !accessToken && silentCheckDone;
+  const checkingSession = !!user && !accessToken && !silentCheckDone;
 
   return {
     user,
@@ -140,5 +147,6 @@ export default function useGoogleAuth() {
     logout,
     isLoggedIn: !!user,
     needsRefresh,
+    checkingSession,
   };
 }
