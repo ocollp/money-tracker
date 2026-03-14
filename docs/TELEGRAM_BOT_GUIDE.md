@@ -19,9 +19,19 @@
 2. Envia `/newbot`, posa un nom (p. ex. “Money Tracker”) i un username que acabi en `bot` (p. ex. `mytracker_bot`).
 3. BotFather et donarà un **token** (semblat a `7123456789:AAH...`). **Guarda’l**: el posaràs a les variables d’entorn del projecte nou.
 
-Optional: use `/setdescription` in BotFather and set something like:
+Opcional: a BotFather pots fer `/setdescription` i posar per exemple:
 
-> Add new money movements to your spreadsheet. Send a short message (e.g. amount, entity, category) and the bot appends a row to your Google Sheet.
+> Add new money movements to your spreadsheet. Press Olga or Andrea, then send your values; the bot appends rows to your Google Sheet.
+
+**Missatge de benvinguda** (quan l’usuari escriu o fa /start): el bot mostra:
+
+```
+Money Tracker 💸
+👩🏼 Olga: <enllaç GOOGLE_FORM_URL_01>
+👩🏻 Andrea: <enllaç GOOGLE_FORM_URL_02>
+```
+
+Les URLs es configuren a `.env` amb `GOOGLE_FORM_URL_01` i `GOOGLE_FORM_URL_02`.
 
 ---
 
@@ -75,12 +85,15 @@ Crea un fitxer `.env` (i afegir-lo a `.gitignore`). Exemple:
 
 ```env
 TELEGRAM_BOT_TOKEN=el_token_que_et_va_donar_BotFather
-GOOGLE_SERVICE_ACCOUNT_JSON=contingut_del_fitxer_json_en_una_linia
-# O bé, si prefereixes path al fitxer (només en local):
-# GOOGLE_APPLICATION_CREDENTIALS=./service-account.json
+GOOGLE_APPLICATION_CREDENTIALS=./service-account.json
+# O GOOGLE_SERVICE_ACCOUNT_JSON=contingut_del_fitxer_json_en_una_linia
 
-SPREADSHEET_ID_OLGA=id_del_sheet_d_olga
-SPREADSHEET_ID_ANDREA=id_del_sheet_d_andrea
+SPREADSHEET_ID=id_del_sheet_d_olga
+SPREADSHEET_ID_2=id_del_sheet_d_andrea
+
+# Enllaços del formulari que es mostren al missatge de benvinguda (un per usuari)
+GOOGLE_FORM_URL_01=https://docs.google.com/forms/d/e/xxxxx_olga/viewform
+GOOGLE_FORM_URL_02=https://docs.google.com/forms/d/e/xxxxx_andrea/viewform
 ```
 
 Per producció, el JSON del Service Account es pot posar en base64 o com a string escapat; el bot el llegirà i farà `JSON.parse`.
