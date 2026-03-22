@@ -1,4 +1,11 @@
-import { MORTGAGE_END_YEAR, MORTGAGE_END_MONTH, MORTGAGE_MONTHLY_PAYMENT, OWNERSHIP_SHARE, ASSUMED_UNEMPLOYMENT } from '../config.js';
+import {
+  MORTGAGE_END_YEAR,
+  MORTGAGE_END_MONTH,
+  MORTGAGE_MONTHLY_PAYMENT,
+  OWNERSHIP_SHARE,
+  ASSUMED_UNEMPLOYMENT,
+  PROFILE_SECONDARY_ID,
+} from '../config.js';
 
 function totalWealth(m) {
   return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0);
@@ -154,7 +161,7 @@ export function computeStatistics(months, options = {}) {
     const housing = byEntityHousing[name];
     const equity = housing ? (housing.value || 0) + (housing.debt || 0) : 0;
     const value = liquid + equity;
-    if (profileId === 'andrea' && name === 'BBVA' && liquid > 0 && equity !== 0) {
+    if (profileId === PROFILE_SECONDARY_ID && name === 'BBVA' && liquid > 0 && equity !== 0) {
       distributionRaw.push({ name: 'BBVA - Compte corrent', value: liquid });
       distributionRaw.push({ name: 'BBVA - Hipoteca', value: equity });
     } else {

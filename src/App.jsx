@@ -2,7 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { formatMoney, formatChange, formatPct } from './utils/formatters';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { useSheetFinanceData } from './hooks/useSheetFinanceData';
-import { PROFILE_EMAILS } from './config';
+import {
+  PROFILE_EMAILS,
+  PROFILE_PRIMARY_ID,
+  PROFILE_SECONDARY_ID,
+  SPREADSHEET_ID_2,
+} from './config';
 import LoginScreen from './components/LoginScreen';
 import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
@@ -20,13 +25,21 @@ function isTestDataPath() {
   return p === '/test' || p.endsWith('/test');
 }
 
+function normalizeStoredProfileId(saved) {
+  if (!saved) return null;
+  if (saved === PROFILE_PRIMARY_ID || saved === 'olga') return PROFILE_PRIMARY_ID;
+  if (saved === PROFILE_SECONDARY_ID || saved === 'andrea') return PROFILE_SECONDARY_ID;
+  return null;
+}
+
 function getInitialProfile() {
   try {
     const saved = localStorage.getItem(PROFILE_KEY);
-    if (saved === 'andrea' && SPREADSHEET_ID_2) return 'andrea';
-    return 'olga';
+    const id = normalizeStoredProfileId(saved);
+    if (id === PROFILE_SECONDARY_ID && SPREADSHEET_ID_2) return PROFILE_SECONDARY_ID;
+    return PROFILE_PRIMARY_ID;
   } catch {
-    return 'olga';
+    return PROFILE_PRIMARY_ID;
   }
 }
 
@@ -34,6 +47,14 @@ export default function App() {
   const isTestData = isTestDataPath();
   const { user, accessToken, ready, login, logout, needsRefresh, checkingSession } = useGoogleAuth();
   const [profile, setProfile] = useState(getInitialProfile);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PROFILE_KEY);
+      if (raw === 'olga') localStorage.setItem(PROFILE_KEY, PROFILE_PRIMARY_ID);
+      if (raw === 'andrea') localStorage.setItem(PROFILE_KEY, PROFILE_SECONDARY_ID);
+    } catch {}
+  }, []);
 
   const {
     sheetAccess,

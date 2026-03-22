@@ -3,10 +3,27 @@ import { parseCSV, groupByMonth } from '../utils/parseCSV';
 import { computeStatistics } from '../utils/statistics';
 import { fetchSheetData, checkSheetAccess } from '../services/sheetsApi';
 import { getTestStats } from '../data/testData';
-import { SPREADSHEET_ID, SPREADSHEET_ID_2 } from '../config';
+import {
+  SPREADSHEET_ID,
+  SPREADSHEET_ID_2,
+  PROFILE_PRIMARY_ID,
+  PROFILE_SECONDARY_ID,
+  PROFILE_LABELS,
+  PROFILE_EMOJIS,
+} from '../config';
 
-const PROFILE_OLGA = { id: 'olga', name: 'Olga', emoji: '👩🏼', sheetId: SPREADSHEET_ID };
-const PROFILE_ANDREA = { id: 'andrea', name: 'Andrea', emoji: '👩🏻', sheetId: SPREADSHEET_ID_2 };
+const PROFILE_PRIMARY = {
+  id: PROFILE_PRIMARY_ID,
+  name: PROFILE_LABELS[PROFILE_PRIMARY_ID],
+  emoji: PROFILE_EMOJIS[PROFILE_PRIMARY_ID],
+  sheetId: SPREADSHEET_ID,
+};
+const PROFILE_SECONDARY = {
+  id: PROFILE_SECONDARY_ID,
+  name: PROFILE_LABELS[PROFILE_SECONDARY_ID],
+  emoji: PROFILE_EMOJIS[PROFILE_SECONDARY_ID],
+  sheetId: SPREADSHEET_ID_2,
+};
 
 const POLL_INTERVAL_MS = 45 * 1000;
 
@@ -20,8 +37,8 @@ export function useSheetFinanceData({ isTestData, accessToken, profile }) {
   const effectiveProfiles = !sheetAccess
     ? []
     : [
-        ...(sheetAccess.id1 ? [PROFILE_OLGA] : []),
-        ...(sheetAccess.id2 && SPREADSHEET_ID_2 ? [PROFILE_ANDREA] : []),
+        ...(sheetAccess.id1 ? [PROFILE_PRIMARY] : []),
+        ...(sheetAccess.id2 && SPREADSHEET_ID_2 ? [PROFILE_SECONDARY] : []),
       ];
 
   const effectiveProfile =
@@ -29,7 +46,7 @@ export function useSheetFinanceData({ isTestData, accessToken, profile }) {
       ? effectiveProfiles[0].id
       : effectiveProfiles.some((p) => p.id === profile)
         ? profile
-        : effectiveProfiles[0]?.id || 'olga';
+        : effectiveProfiles[0]?.id || PROFILE_PRIMARY_ID;
 
   const currentSheetId =
     effectiveProfiles.find((p) => p.id === effectiveProfile)?.sheetId || SPREADSHEET_ID;
