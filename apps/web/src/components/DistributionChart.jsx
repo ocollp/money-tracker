@@ -77,7 +77,7 @@ export default function DistributionChart({ distribution, title }) {
   }
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-3 sm:px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 max-w-full overflow-x-hidden">
       <h3 className="text-lg font-semibold mb-3 shrink-0">{title}</h3>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-6 flex-1 min-h-0">
         <div className="relative h-48 w-48 shrink-0">

@@ -68,7 +68,7 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-3 sm:px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 max-w-full overflow-x-hidden">
       <h3 className="text-lg font-semibold mb-3 shrink-0">{title}</h3>
       {subtitle && <p className="text-xs text-text-secondary mb-4 shrink-0">{subtitle}</p>}
       <div className="min-h-[280px] flex-1 min-h-0 touch-none" style={{ touchAction: 'none' }}>
@@ -92,7 +92,7 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
               axisLine={false}
               tickLine={false}
               tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
-              width={40}
+              width={narrow ? 34 : 40}
               tick={(props) => {
                 const { y, payload } = props;
                 const text = `${(payload.value / 1000).toFixed(0)}k`;

@@ -5,7 +5,7 @@ export default function LoginScreen({
   authError = null,
 }) {
   return (
-    <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex items-center justify-center px-4 bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
+    <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
       <div className="bg-surface-alt/95 rounded-3xl border border-white/[0.06] p-8 sm:p-12 max-w-sm w-full text-center space-y-6 shadow-xl shadow-black/30">
         <div className="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-full overflow-hidden ring-2 ring-white/10 flex items-center justify-center bg-white/5">
           <img

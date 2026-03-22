@@ -56,6 +56,25 @@ export function buildFinanceConfig(apiSettings) {
   };
 }
 
+export function applyLocalProfileDisplay(financeConfig, local) {
+  if (!local || typeof local !== 'object') return financeConfig;
+  const L = { ...financeConfig.profileLabels };
+  const E = { ...financeConfig.profileEmojis };
+  const apply = (key, labelKey, emojiKey) => {
+    const lv = local[labelKey];
+    if (lv != null && String(lv).trim()) {
+      L[key] = String(lv).trim();
+    }
+    const ev = local[emojiKey];
+    if (ev != null && String(ev).trim()) {
+      E[key] = String(ev).trim();
+    }
+  };
+  apply(PROFILE_PRIMARY_ID, 'profilePrimaryLabel', 'profilePrimaryEmoji');
+  apply(PROFILE_SECONDARY_ID, 'profileSecondaryLabel', 'profileSecondaryEmoji');
+  return { ...financeConfig, profileLabels: L, profileEmojis: E };
+}
+
 export function financeConfigToStatsOptions(finance) {
   return {
     ownershipShare: finance.ownershipShare,

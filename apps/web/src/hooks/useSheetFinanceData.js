@@ -46,6 +46,7 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fetchKey, setFetchKey] = useState(0);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   const effectiveProfiles = !sheetAccess
     ? []
@@ -68,6 +69,7 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
     if (!isTestData) return;
     setSheetAccess({ id1: true, id2: false });
     setStats(getTestStats());
+    setLastUpdatedAt(new Date());
   }, [isTestData]);
 
   useEffect(() => {
@@ -105,6 +107,7 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
           profileId: effectiveProfile,
         });
         setStats(s);
+        setLastUpdatedAt(new Date());
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -130,6 +133,7 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
             profileId: effectiveProfile,
           });
           setStats(s);
+          setLastUpdatedAt(new Date());
         })
         .catch(() => {});
     }, POLL_INTERVAL_MS);
@@ -149,5 +153,6 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
     loading,
     error,
     refresh,
+    lastUpdatedAt,
   };
 }

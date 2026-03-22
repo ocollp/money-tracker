@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatMoney, formatPct, formatChange } from './formatters.js';
+import { formatMoney, formatPct, formatChange, formatUpdatedClock } from './formatters.js';
 
 describe('formatMoney', () => {
   it('formats integers with euro suffix', () => {
@@ -33,5 +33,18 @@ describe('formatChange', () => {
 
   it('returns em dash for invalid', () => {
     expect(formatChange(null)).toBe('—');
+  });
+});
+
+describe('formatUpdatedClock', () => {
+  it('returns empty string for invalid input', () => {
+    expect(formatUpdatedClock(null)).toBe('');
+    expect(formatUpdatedClock(undefined)).toBe('');
+  });
+
+  it('returns time string for a Date', () => {
+    const s = formatUpdatedClock(new Date('2024-06-15T14:05:00'));
+    expect(s).toMatch(/14/);
+    expect(s).toMatch(/05/);
   });
 });

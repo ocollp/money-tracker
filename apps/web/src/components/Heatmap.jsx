@@ -42,31 +42,31 @@ export default function Heatmap({ data }) {
         </div>
       </div>
 
-      <div className="px-3 sm:px-5 pb-2 overflow-x-auto scrollbar-hide-mobile -mx-1 sm:mx-0">
-        <table className="w-full min-w-[320px] sm:min-w-0 border-separate" style={{ borderSpacing: '4px 6px' }}>
+      <div className="px-2 sm:px-5 pb-2 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile -mx-1 sm:mx-0 max-w-full">
+        <table className="w-full min-w-0 sm:min-w-0 border-separate max-w-full" style={{ borderSpacing: '3px 4px' }}>
           <thead>
             <tr>
               <th className="text-left text-text-secondary text-[10px] sm:text-[11px] font-semibold p-0 w-7 sm:w-10"></th>
               {monthNames.map(m => (
-                <th key={m} className="text-center text-text-secondary/70 text-[10px] sm:text-[11px] font-semibold pb-1 sm:pb-1.5 px-0.5 min-w-[2.25rem] sm:min-w-0">{m}</th>
+                <th key={m} className="text-center text-text-secondary/70 text-[9px] sm:text-[11px] font-semibold pb-1 px-0 min-w-[1.85rem] sm:min-w-0">{m}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {years.map(year => (
               <tr key={year}>
-                <td className="text-text-secondary text-[11px] sm:text-[12px] font-bold pr-1 align-middle">{year}</td>
+                <td className="text-text-secondary text-[10px] sm:text-[12px] font-bold pr-0.5 align-middle w-8 sm:w-auto">{year}</td>
                 {Array.from({ length: 12 }, (_, i) => {
                   const cell = grid[year]?.[i];
                   return (
-                    <td key={i} className="p-0.5 sm:p-0 align-middle">
+                    <td key={i} className="p-0 sm:p-0 align-middle">
                       <div
-                        className="rounded-full sm:rounded-lg w-[2.25rem] h-[2.25rem] sm:w-full sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-95 mx-auto sm:mx-0"
+                        className="rounded-md sm:rounded-lg w-[1.85rem] h-[1.85rem] sm:w-full sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-95 mx-auto sm:mx-0"
                         style={getCellStyle(cell?.value)}
                       >
                         {cell && (
                           <>
-                            <span className="text-[11px] sm:text-[13px] font-bold leading-none drop-shadow-sm tabular-nums">
+                            <span className="text-[9px] sm:text-[13px] font-bold leading-none drop-shadow-sm tabular-nums">
                               {(Math.abs(cell.value) / 1000).toFixed(1)}k
                             </span>
                             <span className="text-[9px] sm:text-[10px] text-text-primary/70 leading-none mt-0.5 font-medium hidden sm:inline tabular-nums">

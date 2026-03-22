@@ -21,6 +21,15 @@ export function formatChange(value) {
   return `${sign}${formatMoney(value)}`;
 }
 
+export function formatUpdatedClock(date) {
+  if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  try {
+    return date.toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
+
 export const COLORS = [
   '#ec4899', '#22c55e', '#6366f1', '#ef4444', '#06b6d4',
   '#f472b6', '#8b5cf6', '#14b8a6', '#f97316', '#64748b',

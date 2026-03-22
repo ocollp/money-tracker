@@ -11,12 +11,12 @@ export default function Patterns({ yearComparison }) {
 
       {sortedYears.length > 0 && (
         <div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {sortedYears.map(y => {
               const best = Math.max(...sortedYears.map(yc => Math.abs(yc.total)));
               const barWidth = best > 0 ? (Math.abs(y.total) / best) * 100 : 0;
               return (
-                <div key={y.year} className="flex-1 min-w-[120px]">
+                <div key={y.year} className="w-full sm:flex-1 sm:min-w-[120px]">
                   <div className={`rounded-xl p-3 border ${y.total >= 0 ? 'bg-positive/5 border-positive/15' : 'bg-negative/5 border-negative/15'}`}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-bold">{y.year}</span>

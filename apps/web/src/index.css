@@ -23,9 +23,18 @@ body {
   margin: 0;
   background: linear-gradient(165deg, var(--color-surface) 0%, #0f1420 50%, #0a0d14 100%);
   min-height: 100vh;
+  min-height: 100dvh;
   color: var(--color-text-primary);
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  overscroll-behavior-y: contain;
+}
+
+#root {
+  min-height: 100dvh;
 }
 
 ::-webkit-scrollbar {
