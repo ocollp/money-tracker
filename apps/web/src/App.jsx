@@ -1,7 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { formatMoney, formatChange, formatPct } from './utils/formatters';
 import useGoogleAuth from './hooks/useGoogleAuth';
+import { useBackendProfile, clearAppJwt } from './hooks/useBackendProfile';
 import { useSheetFinanceData } from './hooks/useSheetFinanceData';
+import {
+  buildFinanceConfig,
+  financeConfigToSettingsFormShape,
+} from './lib/mergeFinanceConfig.js';
 import {
   PROFILE_EMAILS,
   PROFILE_PRIMARY_ID,
@@ -9,6 +14,8 @@ import {
   SPREADSHEET_ID_2,
 } from './config';
 import LoginScreen from './components/LoginScreen';
+import NoSheetAccessScreen from './components/NoSheetAccessScreen';
+import ProfileSettings from './components/ProfileSettings';
 import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
 import DistributionChart from './components/DistributionChart';
@@ -45,8 +52,31 @@ function getInitialProfile() {
 
 export default function App() {
   const isTestData = isTestDataPath();
-  const { user, accessToken, ready, login, logout, needsRefresh, checkingSession } = useGoogleAuth();
+  const {
+    user,
+    accessToken,
+    login,
+    logout: googleLogout,
+    needsRefresh,
+    checkingSession,
+    canLogin,
+    authError,
+  } = useGoogleAuth();
   const [profile, setProfile] = useState(getInitialProfile);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const { settings, backendReady, patchSettings, hasApi } = useBackendProfile(accessToken);
+  const financeConfig = useMemo(() => buildFinanceConfig(settings), [settings]);
+  const hasPersistedProfile = settings != null;
+  const settingsModalValues = useMemo(
+    () => (hasPersistedProfile ? settings : financeConfigToSettingsFormShape(financeConfig)),
+    [hasPersistedProfile, settings, financeConfig]
+  );
+  const settingsReadOnlySubtitle = hasPersistedProfile
+    ? null
+    : hasApi
+      ? 'L’API està definida però no hi ha perfil desat (p. ex. sense MongoDB o error de connexió). Es mostra la configuració efectiva, normalment del fitxer .env.'
+      : 'Sense VITE_API_URL: aquests valors venen del teu .env (arrel del repositori o apps/web/) o del desplegament. Edita’l i reinicia el servidor de desenvolupament per aplicar canvis.';
 
   useEffect(() => {
     try {
@@ -56,6 +86,15 @@ export default function App() {
     } catch {}
   }, []);
 
+  useEffect(() => {
+    if (profile === PROFILE_SECONDARY_ID && !financeConfig.spreadsheetId2) {
+      setProfile(PROFILE_PRIMARY_ID);
+      try {
+        localStorage.setItem(PROFILE_KEY, PROFILE_PRIMARY_ID);
+      } catch {}
+    }
+  }, [financeConfig.spreadsheetId2, profile]);
+
   const {
     sheetAccess,
     effectiveProfiles,
@@ -64,7 +103,12 @@ export default function App() {
     loading,
     error,
     refresh,
-  } = useSheetFinanceData({ isTestData, accessToken, profile });
+  } = useSheetFinanceData({ isTestData, accessToken, profile, financeConfig });
+
+  const logout = useCallback(() => {
+    clearAppJwt();
+    googleLogout();
+  }, [googleLogout]);
 
   const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : user;
 
@@ -112,24 +156,39 @@ export default function App() {
   }, [handleTouchMove]);
 
   if (!isTestData && (!user || !accessToken)) {
-    return <LoginScreen onLogin={() => login(PROFILE_EMAILS[profile])} ready={ready} checkingSession={checkingSession} />;
+    return (
+      <LoginScreen
+        onLogin={() => login(PROFILE_EMAILS[profile])}
+        checkingSession={checkingSession}
+        canLogin={canLogin}
+        authError={authError}
+      />
+    );
   }
 
   if (!isTestData && accessToken && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {
+    const primarySid = String(financeConfig.spreadsheetId || '').trim();
+    const hasPrimarySheetId = Boolean(primarySid);
+    const hasSecondarySheetConfigured = Boolean(String(financeConfig.spreadsheetId2 || '').trim());
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="bg-surface-alt/90 rounded-2xl p-8 border border-white/[0.06] shadow-xl text-center max-w-md space-y-4">
-          <p className="text-negative text-lg font-medium">Error al carregar les dades</p>
-          <p className="text-text-secondary text-sm">No tens accés a cap dels fulls de càlcul configurats.</p>
-          <button
-            onClick={logout}
-            className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-brand transition-all duration-200 underline active:opacity-80"
-          >
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Tancar sessió
-          </button>
+      <NoSheetAccessScreen
+        onLogout={logout}
+        hasPrimarySheetId={hasPrimarySheetId}
+        primarySpreadsheetId={primarySid}
+        hasSecondarySheetConfigured={hasSecondarySheetConfigured}
+        userEmail={user?.email}
+        canSaveSpreadsheetViaApi={Boolean(hasApi && backendReady && settings)}
+        patchSettings={patchSettings}
+      />
+    );
+  }
+
+  if (!isTestData && accessToken && hasApi && !backendReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+          <span className="text-text-secondary">Sincronitzant perfil…</span>
         </div>
       </div>
     );
@@ -199,6 +258,31 @@ export default function App() {
             <div className="flex items-center gap-1 sm:gap-2">
               {!isTestData && (
                 <>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsOpen(true)}
+                    className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 hover:scale-110 active:scale-95 text-sm font-medium px-2 hidden sm:inline"
+                    title="Configuració"
+                  >
+                    Configuració
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsOpen(true)}
+                    className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 hover:scale-110 active:scale-95 sm:hidden"
+                    title="Configuració"
+                    aria-label="Configuració"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
                   <button
                     type="button"
                     onClick={refresh}
@@ -306,6 +390,14 @@ export default function App() {
         <Patterns yearComparison={stats.yearComparison} />
       </main>
 
+      <ProfileSettings
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settingsModalValues}
+        onSave={hasPersistedProfile ? patchSettings : undefined}
+        readOnly={!hasPersistedProfile}
+        readOnlySubtitle={!hasPersistedProfile ? settingsReadOnlySubtitle : null}
+      />
     </div>
   );
 }

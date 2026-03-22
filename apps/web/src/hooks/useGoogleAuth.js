@@ -5,6 +5,7 @@ const STORAGE_KEY = 'mt_auth';
 const REFRESH_BEFORE_MS = 20 * 60 * 1000;
 const EXPIRING_SOON_MS = 25 * 60 * 1000;
 const SILENT_CHECK_MS = 3000;
+const GIS_LOAD_TIMEOUT_MS = 15000;
 
 function loadSession() {
   try {
@@ -31,6 +32,7 @@ export default function useGoogleAuth() {
   const [user, setUser] = useState(saved?.user ?? null);
   const [accessToken, setAccessToken] = useState(hasValidToken ? saved?.accessToken ?? null : null);
   const [ready, setReady] = useState(false);
+  const [authError, setAuthError] = useState(null);
   const [tokenClient, setTokenClient] = useState(null);
   const [silentCheckDone, setSilentCheckDone] = useState(!saved?.user || hasValidToken);
   const refreshTimer = useRef(null);
@@ -53,28 +55,51 @@ export default function useGoogleAuth() {
 
   useEffect(() => {
     let interval;
+    let loadTimeout;
+
+    if (!String(GOOGLE_CLIENT_ID || '').trim()) {
+      setAuthError(
+        'Falta VITE_GOOGLE_CLIENT_ID. Afegeix-la al .env (arrel del repositori o apps/web/) i reinicia el servidor de Vite (npm run dev).'
+      );
+      setReady(true);
+      return;
+    }
+
     const setup = () => {
       if (!window.google?.accounts?.oauth2) return false;
 
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: SCOPES,
-        callback: (response) => {
-          if (response?.access_token) {
-            setSilentCheckDone(true);
-            const expiresIn = response.expires_in || 3600;
-            fetchUserInfo(response.access_token).then(userInfo => {
-              const session = saveSession(response.access_token, expiresIn, userInfo);
-              setAccessToken(session.accessToken);
-              setUser(session.user);
-              scheduleRefresh(session.expiresAt, client);
-            });
-          }
-        },
-      });
+      let client;
+      try {
+        client = window.google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: SCOPES,
+          callback: (response) => {
+            if (response?.access_token) {
+              setSilentCheckDone(true);
+              const expiresIn = response.expires_in || 3600;
+              fetchUserInfo(response.access_token).then((userInfo) => {
+                const session = saveSession(response.access_token, expiresIn, userInfo);
+                setAccessToken(session.accessToken);
+                setUser(session.user);
+                scheduleRefresh(session.expiresAt, client);
+              });
+            }
+          },
+        });
+      } catch (e) {
+        if (loadTimeout) clearTimeout(loadTimeout);
+        setAuthError(
+          e?.message ||
+            'No s\'ha pogut iniciar Google Sign-In. Revisa el client ID i els orígens autoritzats a Google Cloud.'
+        );
+        setReady(true);
+        return true;
+      }
+
       clientRef.current = client;
       setTokenClient(client);
       setReady(true);
+      if (loadTimeout) clearTimeout(loadTimeout);
 
       if (hasValidToken && saved?.expiresAt) {
         scheduleRefresh(saved.expiresAt, client);
@@ -82,8 +107,17 @@ export default function useGoogleAuth() {
         trySilentRefresh(client, true);
         silentCheckTimer.current = setTimeout(() => setSilentCheckDone(true), SILENT_CHECK_MS);
       }
-      return client;
+      return true;
     };
+
+    loadTimeout = setTimeout(() => {
+      if (clientRef.current) return;
+      clearInterval(interval);
+      setAuthError(
+        'No s\'ha carregat el script de Google (timeout). Comprova la connexió, desactiva bloquejadors o recarrega.'
+      );
+      setReady(true);
+    }, GIS_LOAD_TIMEOUT_MS);
 
     interval = setInterval(() => {
       if (setup()) clearInterval(interval);
@@ -103,6 +137,7 @@ export default function useGoogleAuth() {
 
     return () => {
       clearInterval(interval);
+      if (loadTimeout) clearTimeout(loadTimeout);
       document.removeEventListener('visibilitychange', onVisibility);
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
       if (silentCheckTimer.current) clearTimeout(silentCheckTimer.current);
@@ -143,6 +178,8 @@ export default function useGoogleAuth() {
     user,
     accessToken,
     ready,
+    authError,
+    canLogin: !!tokenClient,
     login,
     logout,
     isLoggedIn: !!user,

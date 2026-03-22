@@ -9,7 +9,7 @@
     "dev:web": "npm run dev -w money-tracker-web",
     "dev:api": "npm run dev -w money-tracker-api",
     "build": "npm run build -w money-tracker-web",
-    "test": "npm run test -w money-tracker-web",
+    "test": "npm run test -w money-tracker-web && npm run test -w money-tracker-api",
     "test:watch": "npm run test:watch -w money-tracker-web",
     "lint": "npm run lint -w money-tracker-web",
     "preview": "npm run preview -w money-tracker-web",

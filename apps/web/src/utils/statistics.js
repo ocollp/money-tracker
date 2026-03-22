@@ -235,17 +235,22 @@ export function computeStatistics(months, options = {}) {
     paid: initialDebt - Math.abs(m.mortgageDebt),
   }));
 
+  const mortgageEndYear = options.mortgageEndYear ?? MORTGAGE_END_YEAR;
+  const mortgageEndMonth = options.mortgageEndMonth ?? MORTGAGE_END_MONTH;
+  const mortgageMonthlyPaymentOpt = options.mortgageMonthlyPayment ?? MORTGAGE_MONTHLY_PAYMENT;
+  const assumedUnemploymentOpt = options.assumedUnemployment ?? ASSUMED_UNEMPLOYMENT;
+
   const share = options.ownershipShare ?? (OWNERSHIP_SHARE != null && OWNERSHIP_SHARE > 0 ? OWNERSHIP_SHARE : 1);
   let mortgageMonthsRemaining = null;
   if (currentDebt > 0) {
-    if (MORTGAGE_END_YEAR != null && MORTGAGE_END_MONTH != null) {
+    if (mortgageEndYear != null && mortgageEndMonth != null) {
       const now = new Date();
-      const end = new Date(MORTGAGE_END_YEAR, MORTGAGE_END_MONTH - 1, 1);
+      const end = new Date(mortgageEndYear, mortgageEndMonth - 1, 1);
       mortgageMonthsRemaining = Math.max(0, (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()));
     }
   }
-  const monthlyMortgagePayment = currentDebt > 0 && MORTGAGE_MONTHLY_PAYMENT != null ? MORTGAGE_MONTHLY_PAYMENT : 0;
-  const unemployment = ASSUMED_UNEMPLOYMENT ?? 0;
+  const monthlyMortgagePayment = currentDebt > 0 && mortgageMonthlyPaymentOpt != null ? mortgageMonthlyPaymentOpt : 0;
+  const unemployment = assumedUnemploymentOpt ?? 0;
   const runwayExpenseUnemployed = hasHousing && monthlyMortgagePayment > 0
     ? Math.max(0, monthlyMortgagePayment - unemployment)
     : null;
