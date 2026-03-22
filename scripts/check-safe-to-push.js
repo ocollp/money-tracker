@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-/**
- * Ensures .env and public/data.csv are not staged for commit.
- * Usage: node scripts/check-safe-to-push.js
- * (optional: npm run check-safe before git push)
- */
 import { execSync } from 'child_process';
 
 const FORBIDDEN = ['.env', 'public/data.csv'];

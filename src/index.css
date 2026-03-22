@@ -49,7 +49,6 @@ button:active:not(:disabled) {
   transition-duration: 0.1s;
 }
 
-/* Hide scrollbar on mobile but keep touch scroll (e.g. heatmap) */
 @media (max-width: 640px) {
   .scrollbar-hide-mobile {
     scrollbar-width: none;

@@ -2,16 +2,16 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { GOOGLE_CLIENT_ID, SCOPES } from '../config';
 
 const STORAGE_KEY = 'mt_auth';
-const REFRESH_BEFORE_MS = 20 * 60 * 1000; // refresh 20 min before expiry so token is still valid when you come back
-const EXPIRING_SOON_MS = 25 * 60 * 1000;  // when < 25 min left, try refresh on tab focus
-const SILENT_CHECK_MS = 3000;             // wait this long for silent refresh before showing login button
+const REFRESH_BEFORE_MS = 20 * 60 * 1000;
+const EXPIRING_SOON_MS = 25 * 60 * 1000;
+const SILENT_CHECK_MS = 3000;
 
 function loadSession() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
-  } catch { /* ignore */ }
+  } catch {}
   return null;
 }
 
@@ -127,7 +127,7 @@ export default function useGoogleAuth() {
 
   const logout = useCallback(() => {
     if (accessToken) {
-      try { window.google.accounts.oauth2.revoke(accessToken); } catch { /* ignore */ }
+      try { window.google.accounts.oauth2.revoke(accessToken); } catch {}
     }
     localStorage.removeItem(STORAGE_KEY);
     if (refreshTimer.current) clearTimeout(refreshTimer.current);

@@ -28,7 +28,18 @@ Personal finance dashboard: net worth over time, monthly changes, burn rate, run
    npm run dev
    ```
 
+## Tests
+
+```bash
+npm test          # run once (also runs on git commit via Husky)
+npm run test:watch # watch mode while developing
+```
+
+Vitest covers core logic: `parseCSV`, `groupByMonth`, `formatters`, and `computeStatistics` (see `src/utils/*.test.js`).
+
 ## Before you push
+
+**Pre-commit (Husky):** each `git commit` runs `npm test` first. If tests fail, the commit is aborted.
 
 To avoid committing secrets or personal data, run:
 
@@ -36,7 +47,7 @@ To avoid committing secrets or personal data, run:
 npm run check-safe
 ```
 
-This checks that `.env` and `public/data.csv` are not staged. Run it before `git commit` (or add it to a pre-commit hook). Never commit `.env` — use GitHub Actions secrets for deployment.
+This checks that `.env` and `public/data.csv` are not staged. Never commit `.env` — use GitHub Actions secrets for deployment.
 
 ## Deploy (e.g. GitHub Pages)
 

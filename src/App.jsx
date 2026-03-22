@@ -122,7 +122,7 @@ export default function App() {
     setProfile(id);
     try {
       localStorage.setItem(PROFILE_KEY, id);
-    } catch { /* ignore */ }
+    } catch {}
   };
 
   const mainRef = useRef(null);
