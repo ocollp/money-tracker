@@ -2,21 +2,23 @@
 
 Personal finance dashboard: net worth over time, monthly changes, burn rate, runway, heatmap, and insights. Data from Google Sheets; login with Google.
 
+**Monorepo:** `apps/web` (Vite + React) · `apps/api` (Fastify placeholder for future auth & profile API).
+
 ## Setup
 
-1. Clone the repo and install dependencies:
+1. Clone the repo and install dependencies (workspaces install web + api):
 
    ```bash
    npm install
    ```
 
-2. Copy env template and fill in your values:
+2. Copy env template for the **web** app and fill in your values:
 
    ```bash
-   cp .env.example .env
+   cp apps/web/.env.example apps/web/.env
    ```
 
-   Edit `.env` with:
+   Edit `apps/web/.env` with:
    - `VITE_GOOGLE_CLIENT_ID` — Google OAuth client ID (Web application)
    - `VITE_SPREADSHEET_ID` — ID of the first Google Sheet (primary profile)
    - `VITE_SPREADSHEET_ID_2` — (optional) ID of a second Sheet (secondary profile). If set, a profile switcher appears next to the title.
@@ -26,17 +28,18 @@ Personal finance dashboard: net worth over time, monthly changes, burn rate, run
 3. Run locally:
 
    ```bash
-   npm run dev
+   npm run dev          # Vite dev server (apps/web)
+   npm run dev:api      # API placeholder on http://localhost:3001
    ```
 
 ## Tests
 
 ```bash
-npm test          # run once (also runs on git commit via Husky)
+npm test           # run once (also runs on git commit via Husky)
 npm run test:watch # watch mode while developing
 ```
 
-Vitest covers core logic: `parseCSV`, `groupByMonth`, `formatters`, and `computeStatistics` (see `src/utils/*.test.js`).
+Vitest covers core logic under `apps/web/src/utils/*.test.js`.
 
 ## Before you push
 
@@ -48,13 +51,17 @@ To avoid committing secrets or personal data, run:
 npm run check-safe
 ```
 
-This checks that `.env` and `public/data.csv` are not staged. Never commit `.env` — use GitHub Actions secrets for deployment.
+This checks that `.env` / `apps/web/.env` and `public/data.csv` are not staged. Never commit `.env` — use GitHub Actions secrets for deployment.
 
 ## Deploy (e.g. GitHub Pages)
 
 - Add the same env vars as **Repository secrets** (Settings → Secrets and variables → Actions).
-- Push to `main`; the workflow builds and deploys. The site will be at `https://<user>.github.io/<repo>/`.
+- Push to `main`; the workflow builds `apps/web` and deploys. The site will be at `https://<user>.github.io/<repo>/`.
+
+The API (`apps/api`) is not deployed by this workflow; host it separately (Railway, Fly.io, etc.) when you add real endpoints.
 
 ## Stack
 
-React, Vite, Tailwind CSS, Recharts. Google Identity Services + Google Sheets API for auth and data.
+**Web:** React, Vite, Tailwind CSS, Recharts. Google Identity Services + Google Sheets API for auth and data.
+
+**API:** Fastify (skeleton — see `apps/api/README.md`).

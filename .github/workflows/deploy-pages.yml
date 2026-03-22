@@ -41,12 +41,12 @@ jobs:
           VITE_OWNERSHIP_SHARE: ${{ secrets.VITE_OWNERSHIP_SHARE }}
 
       - name: Fix SPA routing for GitHub Pages
-        run: cp dist/index.html dist/404.html
+        run: cp apps/web/dist/index.html apps/web/dist/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: apps/web/dist
 
   deploy:
     needs: build

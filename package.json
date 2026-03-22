@@ -1,37 +1,22 @@
 {
-  "name": "app",
+  "name": "money-tracker",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "dev": "npm run dev -w money-tracker-web",
+    "dev:web": "npm run dev -w money-tracker-web",
+    "dev:api": "npm run dev -w money-tracker-api",
+    "build": "npm run build -w money-tracker-web",
+    "test": "npm run test -w money-tracker-web",
+    "test:watch": "npm run test:watch -w money-tracker-web",
+    "lint": "npm run lint -w money-tracker-web",
+    "preview": "npm run preview -w money-tracker-web",
     "check-safe": "node scripts/check-safe-to-push.js",
     "prepare": "husky"
   },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.2.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "recharts": "^3.7.0",
-    "tailwindcss": "^4.2.0"
-  },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "husky": "^9.1.7",
-    "jsdom": "^26.1.0",
-    "vite": "^7.3.1",
-    "vitest": "^3.2.4"
+    "husky": "^9.1.7"
   }
 }
