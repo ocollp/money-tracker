@@ -15,13 +15,13 @@ export async function fetchSheetData(accessToken, spreadsheetId) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Error ${res.status} al leer el Sheet`);
+    throw new Error(err.error?.message || `Error ${res.status} reading the sheet`);
   }
 
   const data = await res.json();
   const rows = data.values || [];
 
-  if (rows.length < 2) throw new Error('El Sheet está vacío o no tiene datos');
+  if (rows.length < 2) throw new Error('The sheet is empty or has no data');
 
   return sheetRowsToCSV(rows);
 }

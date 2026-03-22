@@ -4,6 +4,11 @@ export const SPREADSHEET_ID_2 = import.meta.env.VITE_SPREADSHEET_ID_2 || '';
 export const SHEET_RANGE = 'A:I';
 export const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 
+export const PROFILE_EMAILS = {
+  olga: import.meta.env.VITE_LOGIN_EMAIL_01 || '',
+  andrea: import.meta.env.VITE_LOGIN_EMAIL_02 || '',
+};
+
 const n = (v) => {
   const s = typeof v === 'string' ? v.trim() : v;
   if (s === '' || s === undefined) return null;

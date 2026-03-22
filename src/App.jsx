@@ -5,7 +5,7 @@ import { formatMoney, formatChange, formatPct } from './utils/formatters';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { fetchSheetData, checkSheetAccess } from './services/sheetsApi';
 import { getTestStats } from './data/testData';
-import { SPREADSHEET_ID, SPREADSHEET_ID_2 } from './config';
+import { SPREADSHEET_ID, SPREADSHEET_ID_2, PROFILE_EMAILS } from './config';
 import LoginScreen from './components/LoginScreen';
 import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
@@ -162,7 +162,7 @@ export default function App() {
   }, [handleTouchMove]);
 
   if (!isTestData && (!user || !accessToken)) {
-    return <LoginScreen onLogin={login} ready={ready} checkingSession={checkingSession} />;
+    return <LoginScreen onLogin={() => login(PROFILE_EMAILS[profile])} ready={ready} checkingSession={checkingSession} />;
   }
 
   if (!isTestData && accessToken && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {

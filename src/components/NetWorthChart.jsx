@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 
-// Always show first and last date at the margins; 1 or 2 in the middle with correct spacing
 function getXAxisTicks(data, isNarrow) {
   if (!data?.length) return [];
   if (data.length <= 3) return data.map((d) => d.date);

@@ -1,12 +1,12 @@
 export default function Heatmap({ data }) {
 
-  const years = [...new Set(data.map(d => d.año))].sort();
+  const years = [...new Set(data.map(d => d.year))].sort();
   const monthNames = ['Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
 
   const grid = {};
   for (const d of data) {
-    if (!grid[d.año]) grid[d.año] = {};
-    grid[d.año][d.mes] = d;
+    if (!grid[d.year]) grid[d.year] = {};
+    grid[d.year][d.monthIdx] = d;
   }
 
   const allValues = data.map(d => d.value);

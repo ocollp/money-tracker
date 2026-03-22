@@ -121,8 +121,8 @@ export default function useGoogleAuth() {
     }
   };
 
-  const login = useCallback(() => {
-    if (tokenClient) tokenClient.requestAccessToken();
+  const login = useCallback((loginHint) => {
+    if (tokenClient) tokenClient.requestAccessToken(loginHint ? { login_hint: loginHint } : {});
   }, [tokenClient]);
 
   const logout = useCallback(() => {

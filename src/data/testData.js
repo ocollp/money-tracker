@@ -2,7 +2,7 @@ import { parseCSV, groupByMonth } from '../utils/parseCSV';
 import { computeStatistics } from '../utils/statistics';
 
 function buildTestCsv() {
-  const lines = ['fecha,mes,año,tipo,categoria,entidad,cantidad'];
+  const lines = ['date,month,year,type,category,entity,amount'];
   let bbva = 180;
   let indexa = 420;
   let revolut = 80;

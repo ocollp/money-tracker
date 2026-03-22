@@ -4,7 +4,6 @@ function totalWealth(m) {
   return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0);
 }
 
-// Fill missing months between first and last so charts show a continuous timeline
 function fillMissingMonths(months) {
   if (months.length <= 1) {
     const tw = months.length ? totalWealth(months[0]) : 0;
@@ -91,7 +90,6 @@ export function computeStatistics(months, options = {}) {
     ? negativeMonths.reduce((s, c) => s + c.value, 0) / negativeMonths.length
     : 0;
 
-  // Runway: P75 of negative months for conservative expense estimate
   const absNegatives = negativeMonths.map(c => Math.abs(c.value)).sort((a, b) => a - b);
   const p75Index = Math.floor(absNegatives.length * 0.75);
   const conservativeExpense = absNegatives.length
@@ -142,7 +140,6 @@ export function computeStatistics(months, options = {}) {
   const bestStreak = findStreak(changes, true);
   const worstStreak = findStreak(changes, false);
 
-  // Distribution: liquid + housing equity per entity (latest month)
   const latestMonth = months[months.length - 1];
   const byEntityHousing = latestMonth.byEntityHousing || {};
   const allEntityNames = [...new Set([
@@ -184,10 +181,9 @@ export function computeStatistics(months, options = {}) {
     date: m.shortLabel,
     key: m.key,
     Cash: m.cashLiquid,
-    Invested: m.invertidoLiquid,
+    Invested: m.investedLiquid,
   }));
 
-  // Total wealth change (liquid + housing equity) so housing investment isn’t treated as spent
   const changesTotal = [];
   for (let i = 1; i < months.length; i++) {
     const liquidChange = liquidTotals[i] - liquidTotals[i - 1];
@@ -209,8 +205,8 @@ export function computeStatistics(months, options = {}) {
     key: c.month.key,
     value: c.value,
     pct: c.pct,
-    año: c.month.date.getFullYear(),
-    mes: c.month.date.getMonth(),
+    year: c.month.date.getFullYear(),
+    monthIdx: c.month.date.getMonth(),
   }));
 
   const hasHousing = months.some(m => m.housingValue > 0);
@@ -242,14 +238,13 @@ export function computeStatistics(months, options = {}) {
     }
   }
   const monthlyMortgagePayment = currentDebt > 0 && MORTGAGE_MONTHLY_PAYMENT != null ? MORTGAGE_MONTHLY_PAYMENT : 0;
-  // Runway if one loses job: mortgage − unemployment; other pays expenses → draw from savings = mortgage − unemployment
   const unemployment = ASSUMED_UNEMPLOYMENT ?? 0;
   const runwayExpenseUnemployed = hasHousing && monthlyMortgagePayment > 0
     ? Math.max(0, monthlyMortgagePayment - unemployment)
     : null;
   const runwayUnemployed = runwayExpenseUnemployed != null && runwayExpenseUnemployed > 0
     ? Math.floor(current / runwayExpenseUnemployed)
-    : runwayExpenseUnemployed === 0 ? null : null; // unemployment covers mortgage
+    : null;
   const runwayExpenseLevelUnemployed = runwayExpenseUnemployed > 0 ? runwayExpenseUnemployed : null;
 
   const fullPropertyValue = latestHousingValue / share;
