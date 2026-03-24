@@ -284,7 +284,7 @@ export default function App() {
       </div>
 
       <header className="sticky top-0 z-20 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 pb-2 sm:pb-3 pt-1 sm:pt-2">
+        <div className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 pb-2 sm:pb-3 pt-1 sm:pt-2">
           <div className="flex items-center justify-between gap-2">
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-text-primary shrink min-w-0">
             Finances <span className="text-brand">personals</span>
@@ -383,7 +383,7 @@ export default function App() {
 
       <main
         ref={mainRef}
-        className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 touch-pan-y flex-1 pb-2"
+        className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4 sm:space-y-6 touch-pan-y flex-1 pb-2"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{ touchAction: effectiveProfiles.length === 2 ? 'pan-y' : undefined }}
@@ -434,7 +434,7 @@ export default function App() {
         <Patterns yearComparison={stats.yearComparison} />
       </main>
 
-      <footer className="max-w-7xl mx-auto w-full px-3 sm:px-6 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+      <footer className="max-w-[1800px] mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
         {isTestData ? (
           <p>Mode test (dades locals)</p>
         ) : (
