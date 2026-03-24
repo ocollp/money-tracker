@@ -28,6 +28,9 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Rebuild native modules for current platform
+        run: npm rebuild
+
       - name: Build
         run: npm run build
         env:
