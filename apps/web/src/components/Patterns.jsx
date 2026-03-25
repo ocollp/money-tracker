@@ -1,12 +1,14 @@
 import { formatMoney } from '../utils/formatters';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 export default function Patterns({ yearComparison }) {
+  const { t } = useI18n();
   const sortedYears = [...yearComparison].sort((a, b) => b.year - a.year);
 
   return (
     <div className="bg-surface-alt/80 rounded-2xl p-5 border border-white/[0.06] shadow-lg shadow-black/10 space-y-5">
       <div>
-        <h3 className="text-lg font-semibold">Evolució per anys</h3>
+        <h3 className="text-lg font-semibold">{t.patternsTitle}</h3>
       </div>
 
       {sortedYears.length > 0 && (

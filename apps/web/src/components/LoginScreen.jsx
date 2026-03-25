@@ -1,114 +1,14 @@
 import { useState } from 'react';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
-const LANGS = ['CAT', 'ES', 'EN'];
-
-const I18N = {
-  CAT: {
-    steps: [
-      {
-        emoji: '📊',
-        title: 'Visualitza les teves finances',
-        description:
-          'Consulta ingressos, despeses i estalvis amb gràfics interactius. Tot connectat al teu full de Google Sheets.',
-      },
-      {
-        emoji: '👥',
-        title: 'Perfils compartits',
-        description:
-          'Gestiona finances conjuntes amb dues persones. Cada perfil té les seves dades i estadístiques independents.',
-      },
-      {
-        emoji: '🔒',
-        title: 'Segur i privat',
-        description:
-          'Les dades es llegeixen directament del teu Google Sheets. No guardem cap dada financera — el teu full, les teves regles.',
-      },
-    ],
-    loginSubtitle: 'Inicia sessió amb el teu compte de Google per connectar amb el teu full de càlcul.',
-    checkingSession: 'Comprovant sessió...',
-    reload: 'Recarregar la pàgina',
-    loginButton: 'Entrar amb Google',
-    loading: 'Carregant...',
-    backToIntro: '← Tornar enrere',
-    back: 'Enrere',
-    next: 'Següent',
-    start: 'Començar',
-    skipToLogin: 'Ja conec l\'app — anar al login →',
-  },
-  ES: {
-    steps: [
-      {
-        emoji: '📊',
-        title: 'Visualiza tus finanzas',
-        description:
-          'Consulta ingresos, gastos y ahorros con gráficos interactivos. Todo conectado a tu hoja de Google Sheets.',
-      },
-      {
-        emoji: '👥',
-        title: 'Perfiles compartidos',
-        description:
-          'Gestiona finanzas conjuntas con dos personas. Cada perfil tiene sus datos y estadísticas independientes.',
-      },
-      {
-        emoji: '🔒',
-        title: 'Seguro y privado',
-        description:
-          'Los datos se leen directamente de tu Google Sheets. No guardamos ningún dato financiero — tu hoja, tus reglas.',
-      },
-    ],
-    loginSubtitle: 'Inicia sesión con tu cuenta de Google para conectar con tu hoja de cálculo.',
-    checkingSession: 'Comprobando sesión...',
-    reload: 'Recargar la página',
-    loginButton: 'Entrar con Google',
-    loading: 'Cargando...',
-    backToIntro: '← Volver atrás',
-    back: 'Atrás',
-    next: 'Siguiente',
-    start: 'Empezar',
-    skipToLogin: 'Ya conozco la app — ir al login →',
-  },
-  EN: {
-    steps: [
-      {
-        emoji: '📊',
-        title: 'Visualize your finances',
-        description:
-          'Check income, expenses and savings with interactive charts. All connected to your Google Sheets spreadsheet.',
-      },
-      {
-        emoji: '👥',
-        title: 'Shared profiles',
-        description:
-          'Manage joint finances with two people. Each profile has its own independent data and statistics.',
-      },
-      {
-        emoji: '🔒',
-        title: 'Secure & private',
-        description:
-          'Data is read directly from your Google Sheets. We don\'t store any financial data — your sheet, your rules.',
-      },
-    ],
-    loginSubtitle: 'Sign in with your Google account to connect with your spreadsheet.',
-    checkingSession: 'Checking session...',
-    reload: 'Reload page',
-    loginButton: 'Sign in with Google',
-    loading: 'Loading...',
-    backToIntro: '← Back to intro',
-    back: 'Back',
-    next: 'Next',
-    start: 'Get started',
-    skipToLogin: 'I know the app — go to login →',
-  },
-};
-
-function LangSwitcher({ lang, onChange }) {
+function LangSwitcher({ lang, setLang, langs }) {
   return (
     <div className="flex items-center justify-center gap-1 rounded-full bg-white/[0.05] border border-white/[0.06] p-0.5">
-      {LANGS.map((l) => (
+      {langs.map((l) => (
         <button
           key={l}
           type="button"
-          onClick={() => onChange(l)}
+          onClick={() => setLang(l)}
           className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide transition-all duration-200 ${
             l === lang
               ? 'bg-brand text-white shadow-sm'
@@ -159,13 +59,12 @@ export default function LoginScreen({
   canLogin = false,
   authError = null,
 }) {
-  const [lang, setLang] = useState('CAT');
+  const { lang, setLang, t, LANGS } = useI18n();
   const [step, setStep] = useState(0);
   const [showLogin, setShowLogin] = useState(false);
 
-  const t = I18N[lang];
-  const isLastStep = step === t.steps.length - 1;
-  const current = t.steps[step];
+  const isLastStep = step === t.onboarding.length - 1;
+  const current = t.onboarding[step];
 
   const handleNext = () => {
     if (isLastStep) {
@@ -186,13 +85,9 @@ export default function LoginScreen({
   return (
     <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
       <div className="bg-surface-alt/95 rounded-3xl border border-white/[0.06] p-8 sm:p-12 max-w-sm w-full text-center shadow-xl shadow-black/30 relative">
-
-        {/* Language switcher */}
         <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-          <LangSwitcher lang={lang} onChange={setLang} />
+          <LangSwitcher lang={lang} setLang={setLang} langs={LANGS} />
         </div>
-
-        {/* Header */}
         <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full overflow-hidden ring-2 ring-white/10 flex items-center justify-center bg-white/5 mb-5">
           <img
             src={`${import.meta.env.BASE_URL}piggy.gif`}
@@ -202,7 +97,7 @@ export default function LoginScreen({
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight text-[#fea4a4] mb-1">
-          Finances personals
+          {t.appTitle}
         </h1>
 
         {showLogin ? (
@@ -264,7 +159,7 @@ export default function LoginScreen({
             </div>
 
             <StepDots
-              total={t.steps.length}
+              total={t.onboarding.length}
               current={step}
               onSelect={setStep}
             />

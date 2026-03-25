@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 const DISTRIBUTION_COLORS = [
   '#ec4899', '#22c55e', '#0ea5e9', '#8b5cf6', '#f59e0b', '#6366f1',
@@ -23,23 +24,25 @@ function getColor(name, index) {
   return ENTITY_COLORS[name] ?? DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
 }
 
-const displayName = (name) => {
-  if (name === 'Efectivo') return 'Efectiu';
-  if (name === 'BBVA - Compte corrent') return 'Compte corrent';
-  return name;
-};
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({ active, payload, formatDisplayName }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0];
   return (
     <div className="bg-surface border border-border rounded-xl px-3 py-2 shadow-xl">
-      <p className="text-xs text-text-secondary">{displayName(d.name)}</p>
+      <p className="text-xs text-text-secondary">{formatDisplayName(d.name)}</p>
       <p className="text-sm font-bold text-text-primary">{formatMoney(d.value)}</p>
     </div>
   );
 };
 
 export default function DistributionChart({ distribution, title }) {
+  const { t } = useI18n();
+  const displayName = (name) => {
+    if (name === 'Efectivo') return t.entityEffective;
+    if (name === 'BBVA - Compte corrent') return 'Compte corrent';
+    return name;
+  };
+
   if (!distribution?.length) return null;
 
   const total = distribution.reduce((s, d) => s + d.value, 0);
@@ -104,11 +107,14 @@ export default function DistributionChart({ distribution, title }) {
                   <Cell key={i} fill={`url(#distGrad-${i})`} />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 50 }} />
+              <Tooltip
+                content={(props) => <CustomTooltip {...props} formatDisplayName={displayName} />}
+                wrapperStyle={{ zIndex: 50 }}
+              />
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-[10px] text-text-secondary">Total</span>
+            <span className="text-[10px] text-text-secondary">{t.distributionTotal}</span>
             <span className="text-sm font-bold text-text-primary">{formatMoney(total)}</span>
           </div>
         </div>

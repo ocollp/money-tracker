@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { formatMoney } from '../utils/formatters';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 function getXAxisTicks(data, isNarrow) {
   if (!data?.length) return [];
@@ -32,6 +33,7 @@ function renderXAxisTick(props, firstDate, lastDate, fontSize) {
 }
 
 export default function MortgageCard({ housing }) {
+  const { t } = useI18n();
   const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
 
   useEffect(() => {
@@ -48,18 +50,18 @@ export default function MortgageCard({ housing }) {
   return (
     <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 space-y-5">
       <div>
-        <h3 className="text-lg font-semibold">Habitatge</h3>
+        <h3 className="text-lg font-semibold">{t.housingTitle}</h3>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <MiniStat label="Valor habitatge" value={formatMoney(housing.fullValue)} hint={formatMoney(housing.value)} />
-        <MiniStat label="Deute total amb el banc" value={formatMoney(housing.fullDebt)} hint={formatMoney(housing.debt)} negative />
-        <MiniStat label="Patrimoni net" value={formatMoney(housing.totalEquity ?? housing.equity)} highlight hint={formatMoney(housing.equity)} />
+        <MiniStat label={t.housingValue} value={formatMoney(housing.fullValue)} hint={formatMoney(housing.value)} />
+        <MiniStat label={t.housingDebt} value={formatMoney(housing.fullDebt)} hint={formatMoney(housing.debt)} negative />
+        <MiniStat label={t.housingEquity} value={formatMoney(housing.totalEquity ?? housing.equity)} highlight hint={formatMoney(housing.equity)} />
       </div>
 
       <div>
         <div className="flex justify-between text-sm mb-1.5">
-          <span className="text-text-secondary">Progrés de la hipoteca</span>
+          <span className="text-text-secondary">{t.mortgageProgress}</span>
           <span className="font-medium text-positive">{debtPaidPct}%</span>
         </div>
         <div className="w-full bg-surface rounded-full h-3 overflow-hidden">
@@ -69,9 +71,9 @@ export default function MortgageCard({ housing }) {
           />
         </div>
         <div className="flex justify-between text-xs text-text-secondary mt-1.5">
-          <span>Quota: {formatMoney(housing.monthlyPayment)}/mes</span>
+          <span>{t.mortgagePayment(formatMoney(housing.monthlyPayment))}</span>
           {housing.monthsRemaining != null && housing.monthsRemaining > 0 && (
-            <span>Queden {housing.monthsRemaining} mesos (~{(housing.monthsRemaining / 12).toFixed(0)} anys)</span>
+            <span>{t.mortgageRemaining(housing.monthsRemaining, (housing.monthsRemaining / 12).toFixed(0))}</span>
           )}
         </div>
       </div>
@@ -144,8 +146,8 @@ export default function MortgageCard({ housing }) {
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-              <Area type="monotone" dataKey="debt" name="Deute" stroke="#ef4444" fill="url(#debtGrad)" strokeWidth={2} dot={false} />
-              <Area type="monotone" dataKey="equity" name="Patrimoni net" stroke="#22c55e" fill="url(#equityGrad)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="debt" name={t.mortgageDebtLabel} stroke="#ef4444" fill="url(#debtGrad)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="equity" name={t.mortgageEquityLabel} stroke="#22c55e" fill="url(#equityGrad)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

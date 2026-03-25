@@ -27,6 +27,7 @@ import CashVsInvestedChart from './components/CashVsInvestedChart';
 import Heatmap from './components/Heatmap';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
+import { useI18n } from './i18n/I18nContext.jsx';
 
 const PROFILE_KEY = 'mt_profile';
 
@@ -55,6 +56,7 @@ function getInitialProfile() {
 }
 
 export default function App() {
+  const { t, lang, setLang, LANGS } = useI18n();
   const isTestData = isTestDataPath();
   const {
     user,
@@ -81,11 +83,9 @@ export default function App() {
     () => (hasPersistedProfile ? settings : financeConfigToSettingsFormShape(financeConfig)),
     [hasPersistedProfile, settings, financeConfig]
   );
-  const settingsReadOnlySubtitle = hasPersistedProfile
-    ? null
-    : hasApi
-      ? 'L’API està definida però no hi ha perfil desat (p. ex. sense MongoDB o error de connexió). Es mostra la configuració efectiva, normalment del fitxer .env.'
-      : 'Sense VITE_API_URL: aquests valors venen del teu .env (arrel del repositori o apps/web/) o del desplegament. Edita’l i reinicia el servidor de desenvolupament per aplicar canvis.';
+  const settingsReadOnlySubtitle = hasPersistedProfile ? null : hasApi
+      ? t.settingsApiNoProfile
+      : t.settingsNoApi;
 
   useEffect(() => {
     try {
@@ -209,7 +209,7 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">Sincronitzant perfil…</span>
+          <span className="text-text-secondary">{t.syncingProfile}</span>
         </div>
       </div>
     );
@@ -220,7 +220,7 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">Comprovant accés...</span>
+          <span className="text-text-secondary">{t.checkingAccess}</span>
         </div>
       </div>
     );
@@ -231,7 +231,7 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">{isTestData ? 'Carregant dades de test...' : 'Carregant dades...'}</span>
+          <span className="text-text-secondary">{isTestData ? t.loadingTestData : t.loadingData}</span>
         </div>
       </div>
     );
@@ -241,7 +241,7 @@ export default function App() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-surface-alt/90 rounded-2xl p-8 border border-white/[0.06] shadow-xl text-center max-w-md space-y-4">
-          <p className="text-negative text-lg font-medium">Error al carregar les dades</p>
+          <p className="text-negative text-lg font-medium">{t.errorLoadingData}</p>
           <p className="text-text-secondary text-sm">{error}</p>
           <button
             onClick={logout}
@@ -250,7 +250,7 @@ export default function App() {
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            Tancar sessió i tornar-ho a provar
+            {t.logoutAndRetry}
           </button>
         </div>
       </div>
@@ -279,7 +279,7 @@ export default function App() {
             className="inline-block w-4 h-4 border-2 border-brand border-t-transparent rounded-full"
             style={{ transform: `rotate(${progress * 250}deg)` }}
           />
-          Deixa anar per actualitzar
+          {t.pullToRefresh}
         </div>
       </div>
 
@@ -287,7 +287,7 @@ export default function App() {
         <div className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 pb-2 sm:pb-3 pt-1 sm:pt-2">
           <div className="flex items-center justify-between gap-2">
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-text-primary shrink min-w-0">
-            Finances <span className="text-brand">personals</span>
+            {t.appTitle}
           </h1>
           <div className="flex items-center justify-end gap-0.5 sm:gap-2 shrink-0">
             {effectiveProfiles.length > 1 && (
@@ -303,6 +303,18 @@ export default function App() {
                 ))}
               </div>
             )}
+            <div className="flex rounded-xl bg-surface-alt/80 border border-white/[0.06] p-0.5 shadow-sm shrink-0">
+              {LANGS.map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setLang(l)}
+                  className={`px-1.5 py-1 sm:px-2 rounded-md text-[10px] sm:text-[11px] font-semibold tracking-wide transition-all duration-200 ${l === lang ? 'bg-brand text-white shadow-sm' : 'text-text-secondary/70 hover:text-text-primary'}`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
             <div className="flex items-center gap-1 sm:gap-2">
               {!isTestData && (
                 <>
@@ -310,8 +322,8 @@ export default function App() {
                     type="button"
                     onClick={() => setSettingsOpen(true)}
                     className="min-h-11 min-w-11 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 active:scale-95 inline-flex items-center justify-center"
-                    title="Configuració"
-                    aria-label="Configuració"
+                    title={t.settings}
+                    aria-label={t.settings}
                   >
                     <SettingsIcon className="w-6 h-6" />
                   </button>
@@ -320,8 +332,8 @@ export default function App() {
                     onClick={refresh}
                     disabled={loading}
                     className="min-h-11 min-w-11 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 active:scale-95 disabled:opacity-50 inline-flex items-center justify-center"
-                    title="Actualitzar dades"
-                    aria-label="Actualitzar dades"
+                    title={t.refreshData}
+                    aria-label={t.refreshData}
                   >
                     <svg className={`w-6 h-6 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -330,8 +342,8 @@ export default function App() {
                   <a
                     href={`${import.meta.env.BASE_URL || ''}test`}
                     className="min-h-11 min-w-11 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 active:scale-95 inline-flex items-center justify-center"
-                    title="Dades de test"
-                    aria-label="Dades de test"
+                    title={t.testData}
+                    aria-label={t.testData}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
@@ -342,8 +354,8 @@ export default function App() {
                       type="button"
                       onClick={logout}
                       className="min-h-11 min-w-11 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 active:scale-95 inline-flex items-center justify-center"
-                      title="Tancar sessió"
-                      aria-label="Tancar sessió"
+                      title={t.logout}
+                      aria-label={t.logout}
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -356,8 +368,8 @@ export default function App() {
                 <a
                   href={import.meta.env.BASE_URL || '/'}
                   className="min-h-11 min-w-11 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-all duration-200 active:scale-95 inline-flex items-center justify-center"
-                  title="Sortir"
-                  aria-label="Sortir"
+                  title={t.exit}
+                  aria-label={t.exit}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -374,7 +386,7 @@ export default function App() {
               <span
                 className={`text-sm font-semibold tabular-nums ${monthDelta != null && monthDelta > 0 ? 'text-positive' : monthDelta != null && monthDelta < 0 ? 'text-negative' : 'text-text-secondary'}`}
               >
-                {formatChange(monthDelta)} <span className="text-text-secondary font-normal text-xs">mes</span>
+                {formatChange(monthDelta)} <span className="text-text-secondary font-normal text-xs">{t.month}</span>
               </span>
             </div>
           </div>
@@ -390,21 +402,21 @@ export default function App() {
       >
         <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${stats.hasHousing ? 'lg:grid-cols-3' : ''}`}>
           <KpiCard
-            title="Mes actual"
+            title={t.kpiCurrentMonth}
             value={formatChange(stats.changeVsPrevTotal ?? stats.changeVsPrev)}
-            subtitle={(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct) != null ? `${formatPct(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct)} respecte al mes anterior` : null}
+            subtitle={(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct) != null ? t.kpiVsPrevMonth(formatPct(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct)) : null}
             trend={stats.changeVsPrevTotal ?? stats.changeVsPrev ?? 0}
           />
           <KpiCard
-            title="Diners i inversions"
+            title={t.kpiMoneyAndInvestments}
             value={formatMoney(stats.current)}
-            subtitle={(stats.changeVsYearPctTotal ?? stats.changeVsYearPct) != null ? `${formatPct(stats.changeVsYearPctTotal ?? stats.changeVsYearPct)} respecte l'any passat` : null}
+            subtitle={(stats.changeVsYearPctTotal ?? stats.changeVsYearPct) != null ? t.kpiVsPrevYear(formatPct(stats.changeVsYearPctTotal ?? stats.changeVsYearPct)) : null}
             trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
           />
           {stats.hasHousing && (
             <KpiCard
               className="col-span-2 lg:col-span-1"
-              title="Patrimoni total"
+              title={t.kpiTotalWealth}
               value={formatMoney(stats.currentTotalWealth)}
               subtitle={null}
               trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
@@ -419,15 +431,15 @@ export default function App() {
             <NetWorthChart
               months={stats.netWorthMonths}
               totals={stats.netWorthTotals}
-              title="Diners i inversions"
+              title={t.netWorthTitle}
               subtitle={null}
-              tooltipLabel="Diners i inversions"
+              tooltipLabel={t.netWorthTooltip}
             />
           </div>
           {stats.hasHousing && (
             <MortgageCard housing={stats.housing} />
           )}
-          <DistributionChart distribution={stats.distribution} title="Repartiment" />
+          <DistributionChart distribution={stats.distribution} title={t.distributionTitle} />
           <CashVsInvestedChart data={stats.cashVsInvested} />
         </div>
 
@@ -436,12 +448,12 @@ export default function App() {
 
       <footer className="max-w-[1800px] mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
         {isTestData ? (
-          <p>Mode test (dades locals)</p>
+          <p>{t.testMode}</p>
         ) : (
           <>
             {updatedLabel ? (
               <p className="text-text-secondary">
-                Dades actualitzades a les{' '}
+                {t.dataUpdatedAt}{' '}
                 <time
                   dateTime={
                     lastUpdatedAt instanceof Date && !Number.isNaN(lastUpdatedAt.getTime())
@@ -453,7 +465,7 @@ export default function App() {
                 </time>
               </p>
             ) : null}
-            <p className="sm:hidden text-text-secondary/80">Arrossega avall des de dalt per actualitzar</p>
+            <p className="sm:hidden text-text-secondary/80">{t.pullDownHint}</p>
           </>
         )}
       </footer>

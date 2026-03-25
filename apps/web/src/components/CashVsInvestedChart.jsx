@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { formatMoney } from '../utils/formatters';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 function getXAxisTicks(data, isNarrow) {
   if (!data?.length) return [];
@@ -32,6 +33,7 @@ function renderXAxisTick(props, firstDate, lastDate, fontSize) {
 }
 
 export default function CashVsInvestedChart({ data }) {
+  const { t } = useI18n();
   const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export default function CashVsInvestedChart({ data }) {
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-3 sm:px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 max-w-full overflow-x-hidden">
-      <h3 className="text-lg font-semibold mb-3 shrink-0">Invertit vs Cash</h3>
+      <h3 className="text-lg font-semibold mb-3 shrink-0">{t.cashVsInvestedTitle}</h3>
       <div className="min-h-[280px] flex-1 min-h-0 touch-none" style={{ touchAction: 'none' }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={chartMargin}>
@@ -106,8 +108,8 @@ export default function CashVsInvestedChart({ data }) {
                 );
               }}
             />
-            <Area type="monotone" dataKey="Invested" name="Invertit" stroke="#6366f1" fill="url(#invGrad)" strokeWidth={2} dot={false} />
-            <Area type="monotone" dataKey="Cash" name="Cash" stroke="#ec4899" fill="url(#cashGrad)" strokeWidth={2} dot={false} />
+            <Area type="monotone" dataKey="Invested" name={t.investedLabel} stroke="#6366f1" fill="url(#invGrad)" strokeWidth={2} dot={false} />
+            <Area type="monotone" dataKey="Cash" name={t.cashLabel} stroke="#ec4899" fill="url(#cashGrad)" strokeWidth={2} dot={false} />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} content={({ payload }) => (
               <div className="flex flex-wrap justify-center gap-4" style={{ fontSize: 12 }}>
                 {payload?.slice().reverse().map((entry) => (

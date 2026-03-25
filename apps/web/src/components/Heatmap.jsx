@@ -1,7 +1,9 @@
-export default function Heatmap({ data }) {
+import { useI18n } from '../i18n/I18nContext.jsx';
 
+export default function Heatmap({ data }) {
+  const { t } = useI18n();
   const years = [...new Set(data.map(d => d.year))].sort();
-  const monthNames = ['Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
+  const monthNames = t.monthsShort;
 
   const grid = {};
   for (const d of data) {
@@ -28,7 +30,7 @@ export default function Heatmap({ data }) {
     <div className="bg-surface-alt/80 rounded-2xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Rendiment mensual</h3>
+          <h3 className="text-lg font-semibold">{t.heatmapTitle}</h3>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1">

@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import SettingsIcon from './icons/SettingsIcon';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 const SHEET_FIELDS = [
-  { key: 'spreadsheetId', label: 'ID full principal (Google Sheets)', type: 'text' },
-  { key: 'spreadsheetId2', label: 'ID segon full (opcional)', type: 'text' },
+  { key: 'spreadsheetId', labelKey: 'sheetIdPrimary', type: 'text' },
+  { key: 'spreadsheetId2', labelKey: 'sheetIdSecondary', type: 'text' },
 ];
 
 const PROFILE_FIELDS = [
-  { key: 'profilePrimaryLabel', label: 'Nom', type: 'text' },
-  { key: 'profileSecondaryLabel', label: 'Nom', type: 'text' },
+  { key: 'profilePrimaryLabel', labelKey: 'profileName', type: 'text' },
+  { key: 'profileSecondaryLabel', labelKey: 'profileName', type: 'text' },
 ];
 
 const EMOJI_KEYS = {
@@ -17,21 +18,21 @@ const EMOJI_KEYS = {
 };
 
 const MORTGAGE_FIELDS = [
-  { key: 'mortgageEndYear', label: 'Any de finalització', type: 'number' },
-  { key: 'mortgageEndMonth', label: 'Mes de finalització (1–12)', type: 'number' },
-  { key: 'mortgageMonthlyPayment', label: 'Quota mensual (€)', type: 'number' },
-  { key: 'ownershipShare', label: 'Quota de propietat (ex. 0,5)', type: 'text' },
+  { key: 'mortgageEndYear', labelKey: 'mortgageEndYear', type: 'number' },
+  { key: 'mortgageEndMonth', labelKey: 'mortgageEndMonth', type: 'number' },
+  { key: 'mortgageMonthlyPayment', labelKey: 'mortgageMonthlyPayment', type: 'number' },
+  { key: 'ownershipShare', labelKey: 'ownershipShare', type: 'text' },
 ];
 
 const OTHER_FIELDS = [
-  { key: 'assumedUnemployment', label: 'Atur assumit (€/mes)', type: 'number' },
+  { key: 'assumedUnemployment', labelKey: 'assumedUnemployment', type: 'number' },
 ];
 
 const ALL_FIELDS = [
   ...SHEET_FIELDS,
   ...PROFILE_FIELDS,
-  { key: EMOJI_KEYS.primary, label: 'Emoji perfil principal', type: 'text' },
-  { key: EMOJI_KEYS.secondary, label: 'Emoji perfil secundari', type: 'text' },
+  { key: EMOJI_KEYS.primary },
+  { key: EMOJI_KEYS.secondary },
   ...MORTGAGE_FIELDS,
   ...OTHER_FIELDS,
 ];
@@ -62,6 +63,7 @@ function buildPatchFromForm(form) {
 }
 
 function EmojiPicker({ value, onChange, disabled }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const inputRef = useRef(null);
@@ -103,7 +105,7 @@ function EmojiPicker({ value, onChange, disabled }) {
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-2 z-10 bg-surface-alt border border-white/[0.08] rounded-xl shadow-xl p-3 w-56">
-          <p className="text-[11px] text-text-secondary mb-2">Escriu o enganxa un emoji:</p>
+          <p className="text-[11px] text-text-secondary mb-2">{t.emojiPickerHint}</p>
           <input
             ref={inputRef}
             type="text"
@@ -112,9 +114,7 @@ function EmojiPicker({ value, onChange, disabled }) {
             onChange={handleInput}
             placeholder="🙂"
           />
-          <p className="text-[10px] text-text-secondary/60 mt-2 text-center">
-            Prem Win+. / Ctrl+Cmd+Espai per obrir el selector del sistema
-          </p>
+          <p className="text-[10px] text-text-secondary/60 mt-2 text-center">{t.emojiSystemHint}</p>
         </div>
       )}
     </div>
@@ -163,6 +163,7 @@ function extractSheetId(raw) {
 }
 
 function SheetIdInput({ label, value, onChange, locked }) {
+  const { t } = useI18n();
   const handlePaste = (e) => {
     const text = e.clipboardData.getData('text');
     const id = extractSheetId(text);
@@ -185,7 +186,7 @@ function SheetIdInput({ label, value, onChange, locked }) {
         onPaste={handlePaste}
         readOnly={locked}
         disabled={locked}
-        placeholder="Enganxa la URL o l'ID del full"
+        placeholder={t.sheetPlaceholder}
         className="w-full rounded-lg bg-surface border border-white/[0.08] px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/40 focus:border-brand/40 focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed font-mono text-xs"
       />
     </label>
@@ -218,6 +219,7 @@ export default function ProfileSettings({
   readOnlySubtitle = null,
   settingsVariant = 'api',
 }) {
+  const { t } = useI18n();
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
@@ -285,7 +287,7 @@ export default function ProfileSettings({
       await onSave(patch);
       onClose();
     } catch (er) {
-      setErr(er.message || 'Error en guardar');
+      setErr(er.message || t.settingsErrorSave);
     } finally {
       setSaving(false);
     }
@@ -310,13 +312,13 @@ export default function ProfileSettings({
         <div className="p-4 sm:p-6 border-b border-white/[0.06] flex justify-between items-center gap-2">
           <h2 id="settings-title" className="text-lg font-semibold text-text-primary flex items-center gap-2">
             <SettingsIcon className="w-5 h-5 shrink-0 text-text-secondary" />
-            Configuració
+            {t.settingsTitle}
           </h2>
           <button
             type="button"
             onClick={onClose}
             className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface shrink-0"
-            aria-label="Tancar"
+            aria-label={t.settingsClose}
           >
             ✕
           </button>
@@ -330,23 +332,18 @@ export default function ProfileSettings({
           )}
           {isLocalDisplay ? (
             <p className="text-sm text-text-secondary border border-brand/20 rounded-lg p-3 bg-brand/5">
-              Pots editar <strong>noms i emojis</strong> dels perfils; es desen al navegador (aquest dispositiu). La
-              resta ve del <code className="text-brand">.env</code> — edita'l i reinicia Vite per canviar fulls o
-              hipoteca.
+              {t.settingsLocalHint}
             </p>
           ) : !readOnlySubtitle ? (
-            <p className="text-sm text-text-secondary">
-              Els valors buits al servidor fan servir el <code className="text-brand">.env</code> o els predeterminats.
-            </p>
+            <p className="text-sm text-text-secondary">{t.settingsApiHint}</p>
           ) : null}
 
-          {/* ── Perfils ── */}
           <section className="space-y-3">
-            <SectionHeader icon="👤" title="Perfils" />
+            <SectionHeader icon="👤" title={t.sectionProfiles} />
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: 'Principal', nameField: PROFILE_FIELDS[0], emojiKey: EMOJI_KEYS.primary },
-                { label: 'Secundari', nameField: PROFILE_FIELDS[1], emojiKey: EMOJI_KEYS.secondary },
+                { label: t.profilePrimary, nameField: PROFILE_FIELDS[0], emojiKey: EMOJI_KEYS.primary },
+                { label: t.profileSecondary, nameField: PROFILE_FIELDS[1], emojiKey: EMOJI_KEYS.secondary },
               ].map(({ label, nameField, emojiKey }) => (
                 <div key={emojiKey} className="rounded-xl bg-surface/50 border border-white/[0.06] p-3 space-y-3">
                   <p className="text-[11px] font-medium text-text-secondary/70 uppercase tracking-wider">{label}</p>
@@ -358,7 +355,7 @@ export default function ProfileSettings({
                     />
                     <div className="flex-1">
                       <FieldInput
-                        label={nameField.label}
+                        label={t[nameField.labelKey]}
                         type={nameField.type}
                         value={form[nameField.key] ?? ''}
                         onChange={(v) => handleChange(nameField.key, v)}
@@ -371,25 +368,24 @@ export default function ProfileSettings({
             </div>
           </section>
 
-          {/* ── Google Sheets ── */}
           <section className="space-y-3">
-            <SectionHeader icon="📊" title="Google Sheets" />
+            <SectionHeader icon="📊" title={t.sectionSheets} />
             <div className="rounded-xl bg-surface/50 border border-white/[0.06] p-3 space-y-3">
               <p className="text-[11px] text-text-secondary/70 leading-relaxed">
-                Enganxa la URL sencera del full i s'extraurà l'ID automàticament.{' '}
+                {t.sheetPasteHint}{' '}
                 <a
                   href="https://docs.google.com/spreadsheets/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand hover:text-brand-light underline underline-offset-2 transition-colors"
                 >
-                  Obre Google Sheets ↗
+                  {t.sheetOpenLink}
                 </a>
               </p>
-              {SHEET_FIELDS.map(({ key, label }) => (
+              {SHEET_FIELDS.map(({ key, labelKey }) => (
                 <SheetIdInput
                   key={key}
-                  label={label}
+                  label={t[labelKey]}
                   value={form[key] ?? ''}
                   onChange={(v) => handleChange(key, v)}
                   locked={sheetsLocked}
@@ -398,14 +394,13 @@ export default function ProfileSettings({
             </div>
           </section>
 
-          {/* ── Hipoteca ── */}
           <section className="space-y-3">
-            <SectionHeader icon="🏠" title="Hipoteca">
+            <SectionHeader icon="🏠" title={t.sectionMortgage}>
               <ToggleSwitch
                 checked={mortgageEnabled}
                 onChange={handleMortgageToggle}
                 disabled={mortgageLocked}
-                label={mortgageEnabled ? 'Activa' : 'Inactiva'}
+                label={mortgageEnabled ? t.mortgageActive : t.mortgageInactive}
               />
             </SectionHeader>
             <div
@@ -417,10 +412,10 @@ export default function ProfileSettings({
             >
               <div className="overflow-hidden">
                 <div className="rounded-xl bg-surface/50 border border-white/[0.06] p-3 space-y-3">
-                  {MORTGAGE_FIELDS.map(({ key, label, type }) => (
+                  {MORTGAGE_FIELDS.map(({ key, labelKey, type }) => (
                     <FieldInput
                       key={key}
-                      label={label}
+                      label={t[labelKey]}
                       type={type}
                       value={form[key] ?? ''}
                       onChange={(v) => handleChange(key, v)}
@@ -432,14 +427,13 @@ export default function ProfileSettings({
             </div>
           </section>
 
-          {/* ── Altres ── */}
           <section className="space-y-3">
-            <SectionHeader icon="⚙️" title="Altres" />
+            <SectionHeader icon="⚙️" title={t.sectionOther} />
             <div className="rounded-xl bg-surface/50 border border-white/[0.06] p-3 space-y-3">
-              {OTHER_FIELDS.map(({ key, label, type }) => (
+              {OTHER_FIELDS.map(({ key, labelKey, type }) => (
                 <FieldInput
                   key={key}
-                  label={label}
+                  label={t[labelKey]}
                   type={type}
                   value={form[key] ?? ''}
                   onChange={(v) => handleChange(key, v)}
@@ -459,7 +453,7 @@ export default function ProfileSettings({
               onClick={onClose}
               className="px-4 py-2 rounded-lg text-sm text-text-secondary hover:bg-surface transition-colors"
             >
-              Tancar
+              {t.settingsClose}
             </button>
             {showSave && (
               <button
@@ -467,7 +461,7 @@ export default function ProfileSettings({
                 disabled={saving}
                 className="px-5 py-2 rounded-lg text-sm font-medium bg-brand text-white hover:bg-brand-dark active:scale-[0.97] transition-all disabled:opacity-50"
               >
-                {saving ? 'Guardant…' : 'Guardar'}
+                {saving ? t.settingsSaving : t.settingsSave}
               </button>
             )}
           </div>
