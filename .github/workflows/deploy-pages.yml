@@ -26,10 +26,7 @@ jobs:
           cache: 'npm'
 
       - name: Install
-        run: npm ci
-
-      - name: Install platform-specific native binaries
-        run: npm install --no-save @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
+        run: npm ci && npm install --no-save @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
 
       - name: Build
         run: npm run build
