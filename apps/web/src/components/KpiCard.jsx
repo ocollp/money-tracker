@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, className = '', highlight = false }) {
+export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, className = '', highlight = false, subtitleColor }) {
   const [showTip, setShowTip] = useState(false);
-  const trendColor = trend > 0 ? 'text-positive' : trend < 0 ? 'text-negative' : 'text-text-secondary';
+  const trendColor = subtitleColor ?? (trend > 0 ? 'text-positive' : trend < 0 ? 'text-negative' : 'text-text-secondary');
   const arrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '';
 
   return (

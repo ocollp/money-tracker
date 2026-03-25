@@ -45,6 +45,7 @@ export const es = {
   kpiCurrentMonth: 'Mes actual',
   kpiMoneyAndInvestments: 'Dinero e inversiones',
   kpiTotalWealth: 'Patrimonio total',
+  kpiTotalWealthDetail: (liquid, housing) => `dinero e inversiones + ${housing} en vivienda`,
   kpiVsPrevMonth: (pct) => `${pct} respecto al mes anterior`,
   kpiVsPrevYear: (pct) => `${pct} respecto al año pasado`,
 

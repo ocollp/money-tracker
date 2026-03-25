@@ -39,6 +39,7 @@ export const ca = {
   kpiCurrentMonth: 'Mes actual',
   kpiMoneyAndInvestments: 'Diners i inversions',
   kpiTotalWealth: 'Patrimoni total',
+  kpiTotalWealthDetail: (liquid, housing) => `diners i inversions + ${housing} en vivenda`,
   kpiVsPrevMonth: (pct) => `${pct} respecte al mes anterior`,
   kpiVsPrevYear: (pct) => `${pct} respecte l'any passat`,
   netWorthTitle: 'Diners i inversions',

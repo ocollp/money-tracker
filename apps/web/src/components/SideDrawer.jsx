@@ -163,7 +163,6 @@ export default function SideDrawer({
       <div className={`flex-1 py-3 space-y-0.5 overflow-y-auto ${collapsed ? 'px-2' : 'px-3'}`}>
         {!isTestData && (
           <>
-            <DrawerItem icon={<RefreshIcon spinning={loading} />} label={t.refreshData} onClick={onRefresh} disabled={loading} collapsed={collapsed} iconColor="text-emerald-400/70" />
             <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={onInsight} collapsed={collapsed} iconColor="text-amber-400/70" disabled={!stats} />
             <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} collapsed={collapsed} iconColor="text-violet-400/70" />
           </>
@@ -217,7 +216,6 @@ export default function SideDrawer({
         <div className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
           {!isTestData && (
             <>
-              <DrawerItem icon={<RefreshIcon spinning={loading} />} label={t.refreshData} onClick={menuAction(onRefresh)} disabled={loading} iconColor="text-emerald-400/70" />
               <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={() => { onInsight?.(); onClose(); }} iconColor="text-amber-400/70" disabled={!stats} />
               <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} onClick={onClose} iconColor="text-violet-400/70" />
             </>

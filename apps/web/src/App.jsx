@@ -366,8 +366,9 @@ export default function App() {
               className="col-span-2 lg:col-span-1"
               title={t.kpiTotalWealth}
               value={formatMoney(stats.currentTotalWealth)}
-              subtitle={null}
-              trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
+              subtitle={t.kpiTotalWealthDetail(formatMoney(stats.current), formatMoney(stats.housing.equity))}
+              trend={0}
+              subtitleColor="text-positive"
             />
           )}
         </section>

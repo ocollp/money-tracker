@@ -45,6 +45,7 @@ export const en = {
   kpiCurrentMonth: 'Current month',
   kpiMoneyAndInvestments: 'Money & investments',
   kpiTotalWealth: 'Total wealth',
+  kpiTotalWealthDetail: (liquid, housing) => `money & investments + ${housing} in housing`,
   kpiVsPrevMonth: (pct) => `${pct} vs previous month`,
   kpiVsPrevYear: (pct) => `${pct} vs last year`,
 
