@@ -1,23 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
-function LangSwitcher({ lang, setLang, langs }) {
+const LANG_LABELS = { CAT: 'Català', ES: 'Español', EN: 'English' };
+
+function LangDropdown({ lang, setLang, langs }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handle = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [open]);
+
   return (
-    <div className="flex items-center justify-center gap-1 rounded-full bg-white/[0.05] border border-white/[0.06] p-0.5">
-      {langs.map((l) => (
-        <button
-          key={l}
-          type="button"
-          onClick={() => setLang(l)}
-          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide transition-all duration-200 ${
-            l === lang
-              ? 'bg-brand text-white shadow-sm'
-              : 'text-text-secondary/70 hover:text-text-primary'
-          }`}
-        >
-          {l}
-        </button>
-      ))}
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-text-secondary/60 hover:text-text-primary hover:bg-white/[0.08] transition-all duration-200"
+        aria-label="Language"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full right-0 mt-2 z-20 bg-surface-alt border border-white/[0.08] rounded-xl shadow-xl overflow-hidden min-w-[140px] animate-[fadeSlideIn_0.15s_ease-out]">
+          {langs.map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => { setLang(l); setOpen(false); }}
+              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm transition-colors duration-150 ${
+                l === lang
+                  ? 'text-brand bg-brand/10 font-medium'
+                  : 'text-text-secondary hover:bg-white/[0.04] hover:text-text-primary'
+              }`}
+            >
+              <span>{LANG_LABELS[l]}</span>
+              {l === lang && (
+                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -61,34 +91,16 @@ export default function LoginScreen({
 }) {
   const { lang, setLang, t, LANGS } = useI18n();
   const [step, setStep] = useState(0);
-  const [showLogin, setShowLogin] = useState(false);
-
-  const isLastStep = step === t.onboarding.length - 1;
   const current = t.onboarding[step];
-
-  const handleNext = () => {
-    if (isLastStep) {
-      setShowLogin(true);
-    } else {
-      setStep((s) => s + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (showLogin) {
-      setShowLogin(false);
-    } else if (step > 0) {
-      setStep((s) => s - 1);
-    }
-  };
 
   return (
     <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
       <div className="bg-surface-alt/95 rounded-3xl border border-white/[0.06] p-8 sm:p-12 max-w-sm w-full text-center shadow-xl shadow-black/30 relative">
         <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-          <LangSwitcher lang={lang} setLang={setLang} langs={LANGS} />
+          <LangDropdown lang={lang} setLang={setLang} langs={LANGS} />
         </div>
-        <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full overflow-hidden ring-2 ring-white/10 flex items-center justify-center bg-white/5 mb-5">
+
+        <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden ring-2 ring-white/10 flex items-center justify-center bg-white/5 mb-4">
           <img
             src={`${import.meta.env.BASE_URL}piggy.gif`}
             alt=""
@@ -96,106 +108,81 @@ export default function LoginScreen({
           />
         </div>
 
-        <h1 className="text-2xl font-bold tracking-tight text-[#fea4a4] mb-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#fea4a4] mb-5">
           {t.appTitle}
         </h1>
 
-        {showLogin ? (
-          <div className="mt-6 space-y-5">
-            <p className="text-sm text-text-secondary leading-relaxed">
-              {t.loginSubtitle}
+        <div className="min-h-[120px] flex flex-col items-center justify-center mb-4">
+          <div
+            key={`${lang}-${step}`}
+            className="flex flex-col items-center gap-2.5 animate-[fadeSlideIn_0.3s_ease-out]"
+          >
+            <span className="text-3xl">{current.emoji}</span>
+            <h2 className="text-sm font-semibold text-text-primary">
+              {current.title}
+            </h2>
+            <p className="text-xs text-text-secondary leading-relaxed px-1">
+              {current.description}
             </p>
+          </div>
+        </div>
 
-            {checkingSession ? (
-              <div className="flex flex-col items-center gap-3 py-2">
-                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                <span className="text-text-secondary text-sm">{t.checkingSession}</span>
-              </div>
-            ) : authError ? (
-              <div className="flex flex-col items-center gap-4">
-                <p className="text-negative text-sm text-left w-full leading-relaxed">{authError}</p>
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold py-2.5 px-4 rounded-xl border border-white/10 transition-all duration-200 active:scale-[0.98]"
-                >
-                  {t.reload}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={onLogin}
-                disabled={!canLogin}
-                className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-3 px-4 rounded-xl border border-emerald-500/30 shadow-lg transition-all duration-200 hover:shadow-xl active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
-              >
-                <GoogleIcon />
-                {canLogin ? t.loginButton : t.loading}
-              </button>
-            )}
+        <StepDots
+          total={t.onboarding.length}
+          current={step}
+          onSelect={setStep}
+        />
 
+        <div className="flex gap-2 mt-4 mb-5">
+          {step > 0 && (
             <button
               type="button"
-              onClick={handleBack}
-              className="text-xs text-text-secondary/60 hover:text-text-secondary transition-colors"
+              onClick={() => setStep((s) => s - 1)}
+              className="w-10 h-10 shrink-0 rounded-xl text-text-secondary bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center"
+              aria-label={t.back}
             >
-              {t.backToIntro}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </button>
-          </div>
-        ) : (
-          <div className="mt-6 space-y-6">
-            <div className="min-h-[140px] flex flex-col items-center justify-center">
-              <div
-                key={`${lang}-${step}`}
-                className="flex flex-col items-center gap-3 animate-[fadeSlideIn_0.3s_ease-out]"
-              >
-                <span className="text-4xl">{current.emoji}</span>
-                <h2 className="text-base font-semibold text-text-primary">
-                  {current.title}
-                </h2>
-                <p className="text-sm text-text-secondary leading-relaxed px-2">
-                  {current.description}
-                </p>
-              </div>
+          )}
+          {step < t.onboarding.length - 1 && (
+            <button
+              type="button"
+              onClick={() => setStep((s) => s + 1)}
+              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white bg-brand hover:bg-brand-light border border-brand/30 transition-all duration-200 active:scale-[0.98]"
+            >
+              {t.next}
+            </button>
+          )}
+        </div>
+
+        <div className="border-t border-white/[0.06] pt-5">
+          {checkingSession ? (
+            <div className="flex flex-col items-center gap-3 py-1">
+              <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+              <span className="text-text-secondary text-xs">{t.checkingSession}</span>
             </div>
-
-            <StepDots
-              total={t.onboarding.length}
-              current={step}
-              onSelect={setStep}
-            />
-
-            <div className="flex gap-3">
-              {step > 0 && (
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-text-secondary bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] transition-all duration-200 active:scale-[0.98]"
-                >
-                  {t.back}
-                </button>
-              )}
+          ) : authError ? (
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-negative text-xs text-left w-full leading-relaxed">{authError}</p>
               <button
                 type="button"
-                onClick={handleNext}
-                className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white transition-all duration-200 active:scale-[0.98] ${
-                  isLastStep
-                    ? 'bg-emerald-600 hover:bg-emerald-500 border border-emerald-500/30 shadow-lg'
-                    : 'bg-brand hover:bg-brand-light border border-brand/30'
-                }`}
+                onClick={() => window.location.reload()}
+                className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold py-2.5 px-4 rounded-xl border border-white/10 transition-all duration-200 active:scale-[0.98]"
               >
-                {isLastStep ? t.start : t.next}
+                {t.reload}
               </button>
             </div>
-
+          ) : (
             <button
-              type="button"
-              onClick={() => setShowLogin(true)}
-              className="text-xs text-text-secondary/60 hover:text-text-secondary transition-colors"
+              onClick={onLogin}
+              disabled={!canLogin}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-3 px-4 rounded-xl border border-emerald-500/30 shadow-lg transition-all duration-200 hover:shadow-xl active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
             >
-              {t.skipToLogin}
+              <GoogleIcon />
+              {canLogin ? t.loginButton : t.loading}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

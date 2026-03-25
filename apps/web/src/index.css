@@ -69,6 +69,24 @@ button:active:not(:disabled) {
   }
 }
 
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (min-width: 640px) {
+  .sidebar-offset {
+    margin-left: var(--sidebar-w, 240px);
+    transition: margin-left 0.3s ease-in-out;
+  }
+}
+
 @media (max-width: 640px) {
   .scrollbar-hide-mobile {
     scrollbar-width: none;

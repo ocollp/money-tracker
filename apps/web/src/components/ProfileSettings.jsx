@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import SettingsIcon from './icons/SettingsIcon';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
-const LANG_LABELS = { CAT: 'Català', ES: 'Español', EN: 'English' };
 
 const SHEET_FIELDS = [
   { key: 'spreadsheetId', labelKey: 'sheetIdPrimary', type: 'text' },
@@ -221,7 +220,7 @@ export default function ProfileSettings({
   readOnlySubtitle = null,
   settingsVariant = 'api',
 }) {
-  const { t, lang, setLang, LANGS } = useI18n();
+  const { t } = useI18n();
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
@@ -425,28 +424,6 @@ export default function ProfileSettings({
                     />
                   ))}
                 </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <SectionHeader icon="🌐" title={t.sectionLanguage} />
-            <div className="rounded-xl bg-surface/50 border border-white/[0.06] p-3">
-              <div className="flex rounded-xl bg-surface border border-white/[0.08] p-0.5">
-                {LANGS.map((l) => (
-                  <button
-                    key={l}
-                    type="button"
-                    onClick={() => setLang(l)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      l === lang
-                        ? 'bg-brand text-white shadow-sm'
-                        : 'text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    {LANG_LABELS[l]}
-                  </button>
-                ))}
               </div>
             </div>
           </section>
