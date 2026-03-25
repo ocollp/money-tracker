@@ -56,7 +56,7 @@ function getInitialProfile() {
 }
 
 export default function App() {
-  const { t, lang, setLang, LANGS } = useI18n();
+  const { t } = useI18n();
   const isTestData = isTestDataPath();
   const {
     user,
@@ -303,18 +303,6 @@ export default function App() {
                 ))}
               </div>
             )}
-            <div className="flex rounded-xl bg-surface-alt/80 border border-white/[0.06] p-0.5 shadow-sm shrink-0">
-              {LANGS.map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => setLang(l)}
-                  className={`px-1.5 py-1 sm:px-2 rounded-md text-[10px] sm:text-[11px] font-semibold tracking-wide transition-all duration-200 ${l === lang ? 'bg-brand text-white shadow-sm' : 'text-text-secondary/70 hover:text-text-primary'}`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
             <div className="flex items-center gap-1 sm:gap-2">
               {!isTestData && (
                 <>

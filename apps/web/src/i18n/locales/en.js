@@ -90,6 +90,7 @@ export const en = {
   sectionProfiles: 'Profiles',
   sectionSheets: 'Google Sheets',
   sectionMortgage: 'Mortgage',
+  sectionLanguage: 'Language',
   sectionOther: 'Other',
   profilePrimary: 'Primary',
   profileSecondary: 'Secondary',

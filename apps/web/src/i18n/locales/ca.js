@@ -79,6 +79,7 @@ export const ca = {
   sectionProfiles: 'Perfils',
   sectionSheets: 'Google Sheets',
   sectionMortgage: 'Hipoteca',
+  sectionLanguage: 'Idioma',
   sectionOther: 'Altres',
   profilePrimary: 'Principal',
   profileSecondary: 'Secundari',
