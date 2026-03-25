@@ -28,8 +28,8 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Rebuild native modules for current platform
-        run: npm rebuild
+      - name: Fix Rollup native binary for Linux
+        run: npm install --no-save @rollup/rollup-linux-x64-gnu
 
       - name: Build
         run: npm run build
