@@ -1,7 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useI18n } from '../i18n/I18nContext.jsx';
-
-const LANG_LABELS = { CAT: 'CA', ES: 'ES', EN: 'EN' };
 
 const COLLAPSED_KEY = 'mt_sidebar_collapsed';
 const EXPANDED_W = 240;
@@ -88,51 +85,7 @@ export default function SideDrawer({
     if (dx < -60) onClose();
   };
 
-  const { lang, setLang, LANGS } = useI18n();
   const menuAction = (fn) => () => { fn(); onClose(); };
-
-  const langSwitcher = (isCollapsed) => {
-    if (isCollapsed) {
-      return (
-        <div className="flex flex-col items-center gap-0.5">
-          {LANGS.map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLang(l)}
-              className={`w-full py-1.5 rounded-lg text-[10px] font-semibold tracking-wide transition-all duration-150 ${
-                l === lang ? 'text-brand bg-brand/10' : 'text-text-secondary/50 hover:text-text-secondary'
-              }`}
-            >
-              {LANG_LABELS[l]}
-            </button>
-          ))}
-        </div>
-      );
-    }
-    return (
-      <div className="space-y-1.5">
-        <p className="px-1 text-[10px] font-semibold uppercase tracking-wider text-text-secondary/40 flex items-center gap-1.5">
-          <span>🌐</span>
-          <span>{t.sectionLanguage}</span>
-        </p>
-        <div className="flex rounded-lg bg-white/[0.03] border border-white/[0.06] p-0.5">
-          {LANGS.map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLang(l)}
-              className={`flex-1 py-1.5 rounded-md text-[11px] font-semibold tracking-wide transition-all duration-150 ${
-                l === lang ? 'bg-brand text-white shadow-sm' : 'text-text-secondary/60 hover:text-text-secondary'
-              }`}
-            >
-              {LANG_LABELS[l]}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  };
 
   const userSection = (isCollapsed, extraClass = '') => {
     if (!user) return null;
@@ -210,7 +163,6 @@ export default function SideDrawer({
       <div className={`flex-1 py-3 space-y-0.5 overflow-y-auto ${collapsed ? 'px-2' : 'px-3'}`}>
         {!isTestData && (
           <>
-            <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
             <DrawerItem icon={<RefreshIcon spinning={loading} />} label={t.refreshData} onClick={onRefresh} disabled={loading} collapsed={collapsed} iconColor="text-emerald-400/70" />
             <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={onInsight} collapsed={collapsed} iconColor="text-amber-400/70" disabled={!stats} />
             <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} collapsed={collapsed} iconColor="text-violet-400/70" />
@@ -222,7 +174,9 @@ export default function SideDrawer({
       </div>
 
       <div className={`border-t border-white/[0.06] space-y-1.5 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
-        {langSwitcher(collapsed)}
+        {!isTestData && (
+          <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
+        )}
         {!isTestData && user && (
           <DrawerItem icon={<LogoutIcon />} label={t.logout} onClick={onLogout} danger collapsed={collapsed} />
         )}
@@ -263,7 +217,6 @@ export default function SideDrawer({
         <div className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
           {!isTestData && (
             <>
-              <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
               <DrawerItem icon={<RefreshIcon spinning={loading} />} label={t.refreshData} onClick={menuAction(onRefresh)} disabled={loading} iconColor="text-emerald-400/70" />
               <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={() => { onInsight?.(); onClose(); }} iconColor="text-amber-400/70" disabled={!stats} />
               <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} onClick={onClose} iconColor="text-violet-400/70" />
@@ -275,7 +228,9 @@ export default function SideDrawer({
         </div>
 
         <div className="px-3 py-3 border-t border-white/[0.06] space-y-1.5" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
-          {langSwitcher(false)}
+          {!isTestData && (
+            <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
+          )}
           {!isTestData && user && (
             <DrawerItem icon={<LogoutIcon />} label={t.logout} onClick={menuAction(onLogout)} danger />
           )}

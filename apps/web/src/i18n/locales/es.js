@@ -103,8 +103,6 @@ export const es = {
   assumedUnemployment: 'Desempleo asumido (€/mes)',
   mortgageActive: 'Activa',
   mortgageInactive: 'Inactiva',
-  emojiPickerHint: 'Escribe o pega un emoji:',
-  emojiSystemHint: 'Pulsa Win+. / Ctrl+Cmd+Espacio para abrir el selector del sistema',
 
   noSheetError: 'Error al cargar los datos',
   noSheetNoAccess: 'Tu cuenta de Google no puede leer la hoja configurada, o el ID no es válido.',

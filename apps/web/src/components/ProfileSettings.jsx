@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import SettingsIcon from './icons/SettingsIcon';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
+const LANG_LABELS = { CAT: 'Català', ES: 'Español', EN: 'English' };
 
 const SHEET_FIELDS = [
   { key: 'spreadsheetId', labelKey: 'sheetIdPrimary', type: 'text' },
@@ -64,25 +65,13 @@ function buildPatchFromForm(form) {
 }
 
 function EmojiPicker({ value, onChange, disabled }) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const handle = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handle);
-    return () => document.removeEventListener('mousedown', handle);
-  }, [open]);
-
-  useEffect(() => {
-    if (open && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [open]);
+  const handleClick = () => {
+    if (disabled || !inputRef.current) return;
+    inputRef.current.value = '';
+    inputRef.current.focus();
+  };
 
   const handleInput = (e) => {
     const raw = e.target.value;
@@ -90,34 +79,28 @@ function EmojiPicker({ value, onChange, disabled }) {
     const last = segments.at(-1)?.segment ?? '';
     if (/\p{Emoji_Presentation}/u.test(last)) {
       onChange(last);
-      setOpen(false);
+      inputRef.current.blur();
     }
+    e.target.value = '';
   };
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative">
       <button
         type="button"
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={handleClick}
         disabled={disabled}
         className="w-12 h-12 rounded-xl bg-surface border border-white/[0.08] text-2xl flex items-center justify-center hover:border-brand/40 hover:bg-surface-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
       >
         {value || '😀'}
       </button>
-      {open && (
-        <div className="absolute top-full left-0 mt-2 z-10 bg-surface-alt border border-white/[0.08] rounded-xl shadow-xl p-3 w-56">
-          <p className="text-[11px] text-text-secondary mb-2">{t.emojiPickerHint}</p>
-          <input
-            ref={inputRef}
-            type="text"
-            className="w-full rounded-lg bg-surface border border-white/[0.08] px-3 py-2.5 text-center text-2xl text-text-primary focus:border-brand/50 focus:outline-none transition-colors"
-            value=""
-            onChange={handleInput}
-            placeholder="🙂"
-          />
-          <p className="text-[10px] text-text-secondary/60 mt-2 text-center">{t.emojiSystemHint}</p>
-        </div>
-      )}
+      <input
+        ref={inputRef}
+        type="text"
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        onChange={handleInput}
+        aria-label="Emoji input"
+      />
     </div>
   );
 }
@@ -220,7 +203,7 @@ export default function ProfileSettings({
   readOnlySubtitle = null,
   settingsVariant = 'api',
 }) {
-  const { t } = useI18n();
+  const { t, lang, setLang, LANGS } = useI18n();
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
@@ -441,6 +424,28 @@ export default function ProfileSettings({
                   locked={fieldLocked(key)}
                 />
               ))}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <SectionHeader icon="🌐" title={t.sectionLanguage} />
+            <div className="rounded-xl bg-surface/50 border border-white/[0.06] p-3">
+              <div className="flex rounded-xl bg-surface border border-white/[0.08] p-0.5">
+                {LANGS.map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => setLang(l)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      l === lang
+                        ? 'bg-brand text-white shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    {LANG_LABELS[l]}
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
 

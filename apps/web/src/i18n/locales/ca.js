@@ -92,8 +92,6 @@ export const ca = {
   assumedUnemployment: 'Atur assumit (€/mes)',
   mortgageActive: 'Activa',
   mortgageInactive: 'Inactiva',
-  emojiPickerHint: 'Escriu o enganxa un emoji:',
-  emojiSystemHint: 'Prem Win+. / Ctrl+Cmd+Espai per obrir el selector del sistema',
   noSheetError: 'Error al carregar les dades',
   noSheetNoAccess: 'El teu compte de Google no pot llegir el full configurat, o l\'ID no és vàlid.',
   noSheetNotConfigured: 'Encara no hi ha cap full de càlcul configurat.',

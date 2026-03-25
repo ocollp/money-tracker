@@ -48,34 +48,31 @@ export default function DistributionChart({ distribution, title }) {
   const total = distribution.reduce((s, d) => s + d.value, 0);
   const recalculated = distribution
     .map(d => ({ ...d, pct: total > 0 ? (d.value / total) * 100 : 0 }))
-    .sort((a, b) => {
-      const aBBVA = a.name.startsWith('BBVA -');
-      const bBBVA = b.name.startsWith('BBVA -');
-      if (aBBVA && !bBBVA) return -1;
-      if (!aBBVA && bBBVA) return 1;
-      if (aBBVA && bBBVA) return b.pct - a.pct;
-      return b.pct - a.pct;
-    });
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+
+  const bbvaCorrent = recalculated.find(d => d.name === 'BBVA - Compte corrent');
+  const bbvaHipoteca = recalculated.find(d => d.name === 'BBVA - Hipoteca');
+  const bbvaGrouped = bbvaCorrent && bbvaHipoteca;
+  const bbvaGroupNames = new Set(bbvaGrouped ? ['BBVA - Compte corrent', 'BBVA - Hipoteca'] : []);
 
   const listItems = [];
+  let bbvaInserted = false;
   for (let i = 0; i < recalculated.length; i++) {
-    const curr = recalculated[i];
-    const next = recalculated[i + 1];
-    const isBBVAPair =
-      (curr.name === 'BBVA - Hipoteca' && next?.name === 'BBVA - Compte corrent') ||
-      (curr.name === 'BBVA - Compte corrent' && next?.name === 'BBVA - Hipoteca');
-    if (isBBVAPair) {
-      const first = curr.value >= next.value ? curr : next;
-      const second = curr.value >= next.value ? next : curr;
-      listItems.push({
-        grouped: true,
-        first,
-        second,
-        combinedPct: curr.pct + next.pct,
-      });
-      i++;
+    const d = recalculated[i];
+    if (bbvaGroupNames.has(d.name)) {
+      if (!bbvaInserted) {
+        const first = Math.abs(bbvaCorrent.value) >= Math.abs(bbvaHipoteca.value) ? bbvaCorrent : bbvaHipoteca;
+        const second = first === bbvaCorrent ? bbvaHipoteca : bbvaCorrent;
+        listItems.push({
+          grouped: true,
+          first,
+          second,
+          combinedPct: bbvaCorrent.pct + bbvaHipoteca.pct,
+        });
+        bbvaInserted = true;
+      }
     } else {
-      listItems.push({ grouped: false, item: curr, index: i });
+      listItems.push({ grouped: false, item: d, index: i });
     }
   }
 
