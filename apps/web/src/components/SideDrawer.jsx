@@ -160,21 +160,21 @@ export default function SideDrawer({
       {userSection(collapsed)}
       {profileSection(collapsed, onSwitchProfile)}
 
-      <div className={`flex-1 py-3 space-y-0.5 overflow-y-auto ${collapsed ? 'px-2' : 'px-3'}`}>
-        {!isTestData && (
-          <>
-            <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={onInsight} collapsed={collapsed} iconColor="text-amber-400/70" disabled={!stats} />
-            <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} collapsed={collapsed} iconColor="text-violet-400/70" />
-          </>
-        )}
+      <div className={`flex-1 ${collapsed ? 'px-2' : 'px-3'}`}>
         {isTestData && (
-          <DrawerItem icon={<ExitIcon />} label={t.exit} href={import.meta.env.BASE_URL || '/'} collapsed={collapsed} iconColor="text-sky-400/70" />
+          <div className="py-3">
+            <DrawerItem icon={<ExitIcon />} label={t.exit} href={import.meta.env.BASE_URL || '/'} collapsed={collapsed} iconColor="text-sky-400/70" />
+          </div>
         )}
       </div>
 
       <div className={`border-t border-white/[0.06] space-y-1.5 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
         {!isTestData && (
-          <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
+          <>
+            <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={onInsight} collapsed={collapsed} iconColor="text-amber-400/70" disabled={!stats} />
+            <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} collapsed={collapsed} iconColor="text-violet-400/70" />
+            <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
+          </>
         )}
         {!isTestData && user && (
           <DrawerItem icon={<LogoutIcon />} label={t.logout} onClick={onLogout} danger collapsed={collapsed} />
@@ -213,21 +213,21 @@ export default function SideDrawer({
         {userSection(false, 'mb-1')}
         {profileSection(false, (id) => menuAction(() => onSwitchProfile(id))())}
 
-        <div className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-          {!isTestData && (
-            <>
-              <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={() => { onInsight?.(); onClose(); }} iconColor="text-amber-400/70" disabled={!stats} />
-              <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} onClick={onClose} iconColor="text-violet-400/70" />
-            </>
-          )}
+        <div className="flex-1 px-3">
           {isTestData && (
-            <DrawerItem icon={<ExitIcon />} label={t.exit} href={import.meta.env.BASE_URL || '/'} onClick={onClose} iconColor="text-sky-400/70" />
+            <div className="py-3">
+              <DrawerItem icon={<ExitIcon />} label={t.exit} href={import.meta.env.BASE_URL || '/'} onClick={onClose} iconColor="text-sky-400/70" />
+            </div>
           )}
         </div>
 
         <div className="px-3 py-3 border-t border-white/[0.06] space-y-1.5" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
           {!isTestData && (
-            <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
+            <>
+              <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={() => { onInsight?.(); onClose(); }} iconColor="text-amber-400/70" disabled={!stats} />
+              <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} onClick={onClose} iconColor="text-violet-400/70" />
+              <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
+            </>
           )}
           {!isTestData && user && (
             <DrawerItem icon={<LogoutIcon />} label={t.logout} onClick={menuAction(onLogout)} danger />
