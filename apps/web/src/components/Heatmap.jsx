@@ -2,7 +2,7 @@ import { useI18n } from '../i18n/I18nContext.jsx';
 
 export default function Heatmap({ data }) {
   const { t } = useI18n();
-  const years = [...new Set(data.map(d => d.year))].sort();
+  const years = [...new Set(data.map(d => d.year))].sort((a, b) => b - a);
   const monthNames = t.monthsShort;
 
   const grid = {};
