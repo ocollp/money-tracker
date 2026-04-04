@@ -5,10 +5,11 @@ import {
   OWNERSHIP_SHARE,
   ASSUMED_UNEMPLOYMENT,
   PROFILE_SECONDARY_ID,
+  TRAVEL_MONTHLY_SAVING,
 } from '../config.js';
 
 function totalWealth(m) {
-  return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0);
+  return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0) + (m.travelFund || 0);
 }
 
 function fillMissingMonths(months) {
@@ -216,6 +217,18 @@ export function computeStatistics(months, options = {}) {
     monthIdx: c.month.date.getMonth(),
   }));
 
+  const hasTravel = months.some(m => m.travelFund !== 0);
+  const travelEvolution = months.map(m => ({
+    date: m.shortLabel,
+    key: m.key,
+    fund: m.travelFund,
+  }));
+  const latestTravelFund = latestMonth.travelFund || 0;
+  const prevTravelFund = months.length > 1 ? (months[months.length - 2].travelFund || 0) : 0;
+  const travelMonthlySaving = options.travelMonthlySaving ?? TRAVEL_MONTHLY_SAVING ?? 0;
+  const myHalfSaving = travelMonthlySaving / 2;
+  const travelSpentLastMonth = Math.max(0, (prevTravelFund + myHalfSaving) - latestTravelFund);
+
   const hasHousing = months.some(m => m.housingValue > 0);
   const latestHousingValue = latestMonth.housingValue;
   const latestMortgageDebt = latestMonth.mortgageDebt;
@@ -356,6 +369,12 @@ export function computeStatistics(months, options = {}) {
     netWorthMonths: filledMonths,
     netWorthTotals: filledLiquidTotals,
     netWorthTotalWealth: filledTotalWealth,
+    hasTravel,
+    travel: {
+      current: latestTravelFund,
+      spentLastMonth: travelSpentLastMonth,
+      evolution: travelEvolution,
+    },
     hasHousing,
     housing: {
       fullValue: fullPropertyValue,

@@ -59,6 +59,9 @@ export const es = {
   heatmapTitle: 'Rendimiento mensual',
   patternsTitle: 'Evolución por años',
 
+  travelTitle: 'Fondo de viajes',
+  travelCurrentFund: 'Saldo actual',
+  travelSpentLastMonth: 'Gastado últimos 30 días',
   housingTitle: 'Vivienda',
   housingValue: 'Valor vivienda',
   housingDebt: 'Deuda total con el banco',

@@ -35,3 +35,4 @@ export const MORTGAGE_END_MONTH = n(import.meta.env.VITE_MORTGAGE_END_MONTH);
 export const MORTGAGE_MONTHLY_PAYMENT = n(import.meta.env.VITE_MORTGAGE_MONTHLY_PAYMENT);
 export const OWNERSHIP_SHARE = n(import.meta.env.VITE_OWNERSHIP_SHARE);
 export const ASSUMED_UNEMPLOYMENT = n(import.meta.env.VITE_ASSUMED_UNEMPLOYMENT) ?? 1000;
+export const TRAVEL_MONTHLY_SAVING = n(import.meta.env.VITE_TRAVEL_MONTHLY_SAVING) ?? 600;

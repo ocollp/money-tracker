@@ -19,8 +19,9 @@ export function parseCSV(text) {
     if (amount === null || isNaN(amount)) continue;
 
     const isHousing = category === 'Vivienda personal' || category === 'Hipoteca';
+    const isTravel = category === 'Cuenta compartida flexible';
 
-    rows.push({ date, month, year, type, category, entity, amount, isHousing });
+    rows.push({ date, month, year, type, category, entity, amount, isHousing, isTravel });
   }
 
   return rows;
@@ -46,6 +47,7 @@ export function groupByMonth(rows) {
         investedLiquid: 0,
         housingValue: 0,
         mortgageDebt: 0,
+        travelFund: 0,
         byEntity: {},
         byEntityLiquid: {},
         byEntityHousing: {},
@@ -62,6 +64,8 @@ export function groupByMonth(rows) {
       if (!m.byEntityHousing[row.entity]) m.byEntityHousing[row.entity] = { value: 0, debt: 0 };
       if (row.category === 'Vivienda personal') m.byEntityHousing[row.entity].value = row.amount;
       if (row.category === 'Hipoteca') m.byEntityHousing[row.entity].debt = row.amount;
+    } else if (row.isTravel) {
+      m.travelFund = row.amount;
     } else {
       m.liquidTotal += row.amount;
       m.byEntityLiquid[row.entity] = (m.byEntityLiquid[row.entity] || 0) + row.amount;
@@ -69,14 +73,16 @@ export function groupByMonth(rows) {
 
     if (row.type === 'Cash') {
       m.cash += row.amount;
-      if (!row.isHousing) m.cashLiquid += row.amount;
+      if (!row.isHousing && !row.isTravel) m.cashLiquid += row.amount;
     } else {
       m.invested += row.amount;
-      if (!row.isHousing) m.investedLiquid += row.amount;
+      if (!row.isHousing && !row.isTravel) m.investedLiquid += row.amount;
     }
 
-    m.byEntity[row.entity] = (m.byEntity[row.entity] || 0) + row.amount;
-    m.byCategory[row.category] = (m.byCategory[row.category] || 0) + row.amount;
+    if (!row.isTravel) {
+      m.byEntity[row.entity] = (m.byEntity[row.entity] || 0) + row.amount;
+      m.byCategory[row.category] = (m.byCategory[row.category] || 0) + row.amount;
+    }
   }
 
   return Object.values(months).sort((a, b) => a.date - b.date);

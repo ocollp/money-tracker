@@ -32,7 +32,7 @@ function renderXAxisTick(props, firstDate, lastDate, fontSize) {
   );
 }
 
-export default function MortgageCard({ housing }) {
+export default function TravelCard({ travel }) {
   const { t } = useI18n();
   const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
 
@@ -43,41 +43,23 @@ export default function MortgageCard({ housing }) {
     return () => mql.removeEventListener('change', onChange);
   }, []);
 
-  const debtPaidPct = housing.initialDebt > 0
-    ? ((housing.totalPaid / housing.initialDebt) * 100).toFixed(1)
-    : 0;
+  const chartData = travel.evolution
+    .filter(d => d.fund !== 0)
+    .map(d => ({ ...d, fund: d.fund * 2 }));
+  const hasChart = chartData.length > 1;
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 space-y-5">
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-lg font-semibold">{t.housingTitle}</h3>
-        <span className="text-lg font-bold text-negative">{formatMoney(housing.fullDebt)}</span>
-      </div>
-
       <div>
-        <div className="flex justify-between text-sm mb-1.5">
-          <span className="text-text-secondary">{t.mortgageProgress}</span>
-          <span className="font-medium text-positive">{debtPaidPct}%</span>
-        </div>
-        <div className="w-full bg-surface rounded-full h-3 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700"
-            style={{ width: `${debtPaidPct}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-xs text-text-secondary mt-1.5">
-          <span>{t.mortgagePayment(formatMoney(housing.monthlyPayment))}</span>
-          {housing.monthsRemaining != null && housing.monthsRemaining > 0 && (
-            <span>{t.mortgageRemaining(housing.monthsRemaining, (housing.monthsRemaining / 12).toFixed(0))}</span>
-          )}
-        </div>
+        <h3 className="text-lg font-semibold">{t.travelTitle}</h3>
+        <span className="text-sm font-bold text-positive">{formatMoney(travel.current * 2)}</span>
       </div>
 
-      {housing.evolution.length > 1 && (
+      {hasChart && (
         <div className="h-52 touch-none" style={{ touchAction: 'none' }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={housing.evolution}
+              data={chartData}
               margin={{
                 top: 5,
                 right: narrow ? 16 : 12,
@@ -86,32 +68,32 @@ export default function MortgageCard({ housing }) {
               }}
             >
               <defs>
-                <linearGradient id="debtGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+                <linearGradient id="travelGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis
                 dataKey="date"
                 axisLine={false}
                 tickLine={false}
-                ticks={getXAxisTicks(housing.evolution, narrow)}
+                ticks={getXAxisTicks(chartData, narrow)}
                 padding={{ left: 8, right: 8 }}
                 tick={(props) => renderXAxisTick(
                   props,
-                  housing.evolution[0]?.date,
-                  housing.evolution[housing.evolution.length - 1]?.date,
+                  chartData[0]?.date,
+                  chartData[chartData.length - 1]?.date,
                   narrow ? 10 : 11
                 )}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
+                tickFormatter={v => `${(v / 1000).toFixed(1)}k`}
                 width={40}
                 tick={(props) => {
                   const { y, payload } = props;
-                  const text = `${(payload.value / 1000).toFixed(0)}k`;
+                  const text = `${(payload.value / 1000).toFixed(1)}k`;
                   return (
                     <text x={0} y={y} dy={4} textAnchor="start" fill="#94a3b8" fontSize={11}>
                       {text}
@@ -120,23 +102,27 @@ export default function MortgageCard({ housing }) {
                 }}
               />
               <Tooltip
-                contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 12 }}
-                labelStyle={{ color: '#94a3b8' }}
                 content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null;
                   return (
                     <div className="rounded-xl px-3 py-2" style={{ background: '#1e293b', border: '1px solid #334155' }}>
-                      <div className="text-xs font-medium mb-1.5" style={{ color: '#94a3b8' }}>{label}</div>
-                      {payload.map((p) => (
-                        <div key={p.dataKey} className="text-sm" style={{ color: p.color }}>
-                          {p.name}: {formatMoney(p.value)}
-                        </div>
-                      ))}
+                      <div className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>{label}</div>
+                      <div className="text-sm font-semibold" style={{ color: '#f59e0b' }}>
+                        {formatMoney(payload[0].value)}
+                      </div>
                     </div>
                   );
                 }}
               />
-              <Area type="monotone" dataKey="debt" stroke="#ef4444" fill="url(#debtGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#ef4444' }} />
+              <Area
+                type="monotone"
+                dataKey="fund"
+                stroke="#f59e0b"
+                fill="url(#travelGrad)"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, fill: '#f59e0b' }}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -144,4 +130,3 @@ export default function MortgageCard({ housing }) {
     </div>
   );
 }
-

@@ -23,10 +23,10 @@ import SideDrawer, { useSidebarLayout } from './components/SideDrawer';
 import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
 import DistributionChart from './components/DistributionChart';
-import CashVsInvestedChart from './components/CashVsInvestedChart';
 import Heatmap from './components/Heatmap';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
+import TravelCard from './components/TravelCard';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { generateInsight } from './utils/insights.js';
 
@@ -73,6 +73,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [insightToast, setInsightToast] = useState(null);
+  const [selectedEntity, setSelectedEntity] = useState(null);
   const insightTimer = useRef(null);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
@@ -146,6 +147,17 @@ export default function App() {
     saveLocalProfileDisplay(patch);
     setLocalProfileUiTick((t) => t + 1);
   }, []);
+
+  const entityNetWorth = useMemo(() => {
+    if (!selectedEntity || !stats) return null;
+    return {
+      months: stats.entityEvolution.map(e => ({
+        shortLabel: e.date,
+        key: e.key,
+      })),
+      totals: stats.entityEvolution.map(e => e[selectedEntity] || 0),
+    };
+  }, [selectedEntity, stats]);
 
   const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : user;
 
@@ -376,20 +388,27 @@ export default function App() {
         <Heatmap data={stats.heatmap} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:items-stretch">
-          <div className={`h-full min-h-0 ${stats.hasHousing ? '' : 'lg:col-span-2'}`}>
-            <NetWorthChart
-              months={stats.netWorthMonths}
-              totals={stats.netWorthTotals}
-              title={t.netWorthTitle}
-              subtitle={null}
-              tooltipLabel={t.netWorthTooltip}
-            />
-          </div>
+          {stats.hasTravel && (
+            <TravelCard travel={stats.travel} />
+          )}
           {stats.hasHousing && (
             <MortgageCard housing={stats.housing} />
           )}
-          <DistributionChart distribution={stats.distribution} title={t.distributionTitle} />
-          <CashVsInvestedChart data={stats.cashVsInvested} />
+          <div className={`h-full min-h-0 ${stats.hasHousing || stats.hasTravel ? '' : 'lg:col-span-2'}`}>
+            <NetWorthChart
+              months={entityNetWorth ? entityNetWorth.months : stats.netWorthMonths}
+              totals={entityNetWorth ? entityNetWorth.totals : stats.netWorthTotals}
+              title={selectedEntity || t.netWorthTitle}
+              subtitle={null}
+              tooltipLabel={selectedEntity || t.netWorthTooltip}
+            />
+          </div>
+          <DistributionChart
+            distribution={stats.distribution}
+            title={t.distributionTitle}
+            selectedEntity={selectedEntity}
+            onSelectEntity={setSelectedEntity}
+          />
         </div>
 
         <Patterns yearComparison={stats.yearComparison} />

@@ -35,7 +35,7 @@ const CustomTooltip = ({ active, payload, formatDisplayName }) => {
   );
 };
 
-export default function DistributionChart({ distribution, title }) {
+export default function DistributionChart({ distribution, title, selectedEntity, onSelectEntity }) {
   const { t } = useI18n();
   const displayName = (name) => {
     if (name === 'Efectivo') return t.entityEffective;
@@ -99,9 +99,18 @@ export default function DistributionChart({ distribution, title }) {
                 cx="50%" cy="50%" innerRadius={52} outerRadius={80}
                 strokeWidth={0}
                 paddingAngle={3}
+                style={{ cursor: 'pointer' }}
+                onClick={(_, i) => {
+                  const name = recalculated[i]?.name;
+                  if (name && onSelectEntity) onSelectEntity(selectedEntity === name ? null : name);
+                }}
               >
-                {recalculated.map((_, i) => (
-                  <Cell key={i} fill={`url(#distGrad-${i})`} />
+                {recalculated.map((d, i) => (
+                  <Cell
+                    key={i}
+                    fill={`url(#distGrad-${i})`}
+                    opacity={selectedEntity && selectedEntity !== d.name ? 0.3 : 1}
+                  />
                 ))}
               </Pie>
               <Tooltip
@@ -118,7 +127,9 @@ export default function DistributionChart({ distribution, title }) {
         <div className="flex flex-col gap-3 w-full">
           {listItems.map((entry) =>
             entry.grouped ? (
-              <div key="bbva-group" className="space-y-1">
+              <div key="bbva-group" className="space-y-1 cursor-pointer transition-opacity duration-200"
+                style={{ opacity: selectedEntity && selectedEntity !== entry.first.name && selectedEntity !== entry.second.name ? 0.35 : 1 }}
+                onClick={() => onSelectEntity?.(selectedEntity === entry.first.name ? null : entry.first.name)}>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: ENTITY_COLORS[entry.first.name], opacity: 0.9 }} />
@@ -166,7 +177,11 @@ export default function DistributionChart({ distribution, title }) {
                 const d = entry.item;
                 const c = getColor(d.name, entry.index);
                 return (
-                  <div key={d.name} className="space-y-1">
+                  <div
+                    key={d.name}
+                    className="space-y-1 cursor-pointer transition-opacity duration-200"
+                    style={{ opacity: selectedEntity && selectedEntity !== d.name ? 0.35 : 1 }}
+                    onClick={() => onSelectEntity?.(selectedEntity === d.name ? null : d.name)}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c, opacity: 0.9 }} />

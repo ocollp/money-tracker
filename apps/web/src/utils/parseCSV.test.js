@@ -19,6 +19,7 @@ describe('parseCSV', () => {
       entity: 'Bank',
       amount: 1000,
       isHousing: false,
+      isTravel: false,
     });
     expect(rows[1].amount).toBe(1100);
   });
