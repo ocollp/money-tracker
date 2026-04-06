@@ -4,7 +4,6 @@ import {
   MORTGAGE_MONTHLY_PAYMENT,
   OWNERSHIP_SHARE,
   ASSUMED_UNEMPLOYMENT,
-  PROFILE_SECONDARY_ID,
   TRAVEL_MONTHLY_SAVING,
 } from '../config.js';
 
@@ -47,7 +46,6 @@ function fillMissingMonths(months) {
 
 export function computeStatistics(months, options = {}) {
   if (!months.length) return null;
-  const { profileId } = options;
 
   const { filledMonths, filledLiquidTotals, filledTotalWealth } = fillMissingMonths(months);
 
@@ -162,7 +160,7 @@ export function computeStatistics(months, options = {}) {
     const housing = byEntityHousing[name];
     const equity = housing ? (housing.value || 0) + (housing.debt || 0) : 0;
     const value = liquid + equity;
-    if (profileId === PROFILE_SECONDARY_ID && name === 'BBVA' && liquid > 0 && equity !== 0) {
+    if (name === 'BBVA' && liquid > 0 && equity !== 0) {
       distributionRaw.push({ name: 'BBVA - Compte corrent', value: liquid });
       distributionRaw.push({ name: 'BBVA - Hipoteca', value: equity });
     } else {

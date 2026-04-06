@@ -70,7 +70,8 @@ export default function DistributionChart({ distribution, title, selectedEntity,
   const { t } = useI18n();
   const displayName = (name) => {
     if (name === 'Efectivo') return t.entityEffective;
-    if (name === 'BBVA - Compte corrent') return 'Compte corrent';
+    if (name === 'BBVA - Compte corrent') return t.distributionBbvaChecking;
+    if (name === 'BBVA - Hipoteca') return t.distributionBbvaMortgage;
     return name;
   };
 
@@ -103,8 +104,8 @@ export default function DistributionChart({ distribution, title, selectedEntity,
     const d = recalculated[i];
     if (bbvaGroupNames.has(d.name)) {
       if (!bbvaInserted) {
-        const first = Math.abs(bbvaCorrent.value) >= Math.abs(bbvaHipoteca.value) ? bbvaCorrent : bbvaHipoteca;
-        const second = first === bbvaCorrent ? bbvaHipoteca : bbvaCorrent;
+        const first = bbvaCorrent;
+        const second = bbvaHipoteca;
         listItems.push({
           grouped: true,
           first,
@@ -198,10 +199,13 @@ export default function DistributionChart({ distribution, title, selectedEntity,
           {listItems.map((entry) =>
             entry.grouped ? (
               <div key="bbva-group"
-                className="space-y-1 cursor-pointer rounded-xl px-2 sm:px-2.5 py-2 sm:py-2 min-h-[44px] -mx-1 transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.06]"
+                className="space-y-1.5 cursor-pointer rounded-xl px-2 sm:px-2.5 py-2 sm:py-2 min-h-[44px] -mx-1 transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.06]"
                 style={{ opacity: selectedEntity && selectedEntity !== entry.first.name && selectedEntity !== entry.second.name ? 0.3 : 1 }}
                 onClick={() => onSelectEntity?.(selectedEntity === entry.first.name ? null : entry.first.name)}
                 onDoubleClick={clearFilter}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary/80 px-0.5">
+                  {t.distributionBbvaGroup ?? 'BBVA'}
+                </p>
                 <div className="flex items-center justify-between gap-1.5 sm:gap-2">
                   <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: ENTITY_COLORS[entry.first.name] }} />
