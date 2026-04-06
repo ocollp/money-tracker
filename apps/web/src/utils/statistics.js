@@ -229,6 +229,12 @@ export function computeStatistics(months, options = {}) {
   const myHalfSaving = travelMonthlySaving / 2;
   const travelSpentLastMonth = Math.max(0, (prevTravelFund + myHalfSaving) - latestTravelFund);
 
+  let travelPace = 'on_track';
+  if (travelMonthlySaving > 0) {
+    if (travelSpentLastMonth > travelMonthlySaving) travelPace = 'over';
+    else if (travelSpentLastMonth > myHalfSaving * 1.5) travelPace = 'watch';
+  }
+
   const hasHousing = months.some(m => m.housingValue > 0);
   const latestHousingValue = latestMonth.housingValue;
   const latestMortgageDebt = latestMonth.mortgageDebt;
@@ -275,6 +281,25 @@ export function computeStatistics(months, options = {}) {
   const fullPropertyValue = latestHousingValue / share;
   const fullDebt = currentDebt / share;
   const totalEquity = share > 0 && share < 1 ? housingEquity / share : housingEquity;
+
+  const calendarYear = new Date().getFullYear();
+  let mortgagePrincipalPaidYtd = null;
+  if (hasHousing && currentDebt > 0 && mortgageMonths.length) {
+    let debtAtYearStart = null;
+    for (const m of months) {
+      if (m.date.getFullYear() === calendarYear) {
+        debtAtYearStart = Math.abs(m.mortgageDebt);
+        break;
+      }
+    }
+    if (debtAtYearStart == null) {
+      const prevYear = months.filter(m => m.date.getFullYear() === calendarYear - 1);
+      if (prevYear.length) debtAtYearStart = Math.abs(prevYear[prevYear.length - 1].mortgageDebt);
+    }
+    if (debtAtYearStart != null) {
+      mortgagePrincipalPaidYtd = Math.max(0, debtAtYearStart - currentDebt);
+    }
+  }
 
   const positiveMonths = normalChanges.filter(c => c.value > 0);
   const savingsRate = positiveMonths.length
@@ -370,10 +395,18 @@ export function computeStatistics(months, options = {}) {
     netWorthTotals: filledLiquidTotals,
     netWorthTotalWealth: filledTotalWealth,
     hasTravel,
+    dataAsOf: {
+      label: latestMonth.label,
+      shortLabel: latestMonth.shortLabel,
+      key: latestMonth.key,
+    },
     travel: {
       current: latestTravelFund,
       spentLastMonth: travelSpentLastMonth,
       evolution: travelEvolution,
+      pace: travelPace,
+      monthlySavingTotal: travelMonthlySaving,
+      myHalfSaving,
     },
     hasHousing,
     housing: {
@@ -388,6 +421,7 @@ export function computeStatistics(months, options = {}) {
       monthlyPayment: monthlyMortgagePayment,
       monthsRemaining: mortgageMonthsRemaining,
       evolution: mortgageEvolution,
+      principalPaidYtd: mortgagePrincipalPaidYtd,
     },
   };
 }

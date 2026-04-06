@@ -4,6 +4,7 @@ import { getDb } from './db.js';
 import { registerAuth } from './plugins/auth.js';
 import { authRoutes } from './routes/auth.js';
 import { meRoutes } from './routes/me.js';
+import { sheetsRoutes } from './routes/sheets.js';
 
 export async function buildApp(opts = {}) {
   const fastify = Fastify({ logger: opts.logger ?? true });
@@ -20,6 +21,7 @@ export async function buildApp(opts = {}) {
   await registerAuth(fastify);
   await fastify.register(authRoutes, { prefix: '/auth' });
   await fastify.register(meRoutes, { prefix: '/me' });
+  await fastify.register(sheetsRoutes, { prefix: '/sheets' });
 
   fastify.get('/health', async () => ({
     ok: true,

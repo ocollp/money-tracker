@@ -1,38 +1,68 @@
+import { useState, useEffect } from 'react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 export default function Heatmap({ data }) {
   const { t } = useI18n();
-  const years = [...new Set(data.map(d => d.year))].sort((a, b) => b - a);
+  const rows = Array.isArray(data) ? data : [];
+  const [open, setOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 640px)').matches : true
+  );
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 640px)');
+    const onChange = () => {
+      if (mql.matches) setOpen(true);
+    };
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  const years = [...new Set(rows.map(d => d.year))].sort((a, b) => b - a);
   const monthNames = t.monthsShort;
 
   const grid = {};
-  for (const d of data) {
+  for (const d of rows) {
     if (!grid[d.year]) grid[d.year] = {};
     grid[d.year][d.monthIdx] = d;
   }
 
-  const allValues = data.map(d => d.value);
-  const maxAbs = Math.max(Math.abs(Math.min(...allValues)), Math.abs(Math.max(...allValues)), 1);
+  const absValues = rows.map(d => Math.abs(d.value)).sort((a, b) => a - b);
+  const p90 = absValues.length > 0 ? absValues[Math.floor(absValues.length * 0.9)] : 1;
+  const scaleMax = Math.max(p90, 1);
 
   const getCellStyle = (value) => {
     if (value == null) return { backgroundColor: 'rgba(148, 163, 184, 0.05)' };
-    const intensity = Math.min(Math.abs(value) / maxAbs, 1);
+    const intensity = Math.min(Math.abs(value) / scaleMax, 1);
     const alpha = 0.2 + intensity * 0.65;
     if (value > 0) return { backgroundColor: `rgba(34, 197, 94, ${alpha})`, boxShadow: intensity > 0.5 ? `0 0 8px rgba(34, 197, 94, ${intensity * 0.3})` : 'none' };
     if (value < 0) return { backgroundColor: `rgba(239, 68, 68, ${alpha})`, boxShadow: intensity > 0.5 ? `0 0 8px rgba(239, 68, 68, ${intensity * 0.3})` : 'none' };
     return { backgroundColor: 'rgba(148, 163, 184, 0.08)' };
   };
 
-  const positiveMonths = data.filter(d => d.value > 0).length;
-  const negativeMonths = data.filter(d => d.value < 0).length;
+  const positiveMonths = rows.filter(d => d.value > 0).length;
+  const negativeMonths = rows.filter(d => d.value < 0).length;
 
   return (
     <div className="bg-surface-alt/80 rounded-2xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
-      <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-        <div>
+      <div className="px-5 pt-5 pb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <h3 className="text-lg font-semibold">{t.heatmapTitle}</h3>
+          <button
+            type="button"
+            className="sm:hidden shrink-0 min-w-11 min-h-11 -mr-2 rounded-xl flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-white/[0.06] transition-colors"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            aria-label={open ? (t.sectionCollapse ?? 'Amaga') : (t.sectionExpand ?? 'Mostra')}
+          >
+            <svg
+              className={`w-5 h-5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-xs shrink-0">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-positive inline-block" />
             <span className="text-positive font-semibold">{positiveMonths} ↑</span>
@@ -44,7 +74,11 @@ export default function Heatmap({ data }) {
         </div>
       </div>
 
-      <div className="px-2 sm:px-5 pb-2 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile -mx-1 sm:mx-0 max-w-full">
+      <div
+        className={`px-2 sm:px-5 pb-2 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile -mx-1 sm:mx-0 max-w-full ${
+          open ? '' : 'hidden sm:block'
+        }`}
+      >
         <table className="w-full min-w-0 sm:min-w-0 border-separate max-w-full" style={{ borderSpacing: '3px 4px' }}>
           <thead>
             <tr>

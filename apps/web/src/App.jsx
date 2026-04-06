@@ -26,7 +26,6 @@ import DistributionChart from './components/DistributionChart';
 import Heatmap from './components/Heatmap';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
-import TravelCard from './components/TravelCard';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { generateInsight } from './utils/insights.js';
 
@@ -78,7 +77,7 @@ export default function App() {
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
 
-  const { settings, backendReady, patchSettings, hasApi } = useBackendProfile(accessToken);
+  const { settings, backendReady, patchSettings, hasApi, apiUser } = useBackendProfile(accessToken);
   const hasPersistedProfile = settings != null;
   const financeConfig = useMemo(() => {
     const base = buildFinanceConfig(settings);
@@ -127,11 +126,6 @@ export default function App() {
     loading,
   });
 
-  const logout = useCallback(() => {
-    clearAppJwt();
-    googleLogout();
-  }, [googleLogout]);
-
   const showInsight = useCallback(() => {
     if (!stats) return;
     const msg = generateInsight(stats, t);
@@ -159,7 +153,7 @@ export default function App() {
     };
   }, [selectedEntity, stats]);
 
-  const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : user;
+  const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : (apiUser || user);
 
   const switchProfile = (id) => {
     setProfile(id);
@@ -204,7 +198,7 @@ export default function App() {
     return () => el.removeEventListener('touchmove', handleTouchMove);
   }, [handleTouchMove]);
 
-  if (!isTestData && (!user || !accessToken)) {
+  if (!isTestData && !user) {
     return (
       <LoginScreen
         onLogin={() => login(PROFILE_EMAILS[profile])}
@@ -215,24 +209,24 @@ export default function App() {
     );
   }
 
-  if (!isTestData && accessToken && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {
+  if (!isTestData && user && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {
     const primarySid = String(financeConfig.spreadsheetId || '').trim();
     const hasPrimarySheetId = Boolean(primarySid);
     const hasSecondarySheetConfigured = Boolean(String(financeConfig.spreadsheetId2 || '').trim());
     return (
       <NoSheetAccessScreen
-        onLogout={logout}
+        onLogout={() => { googleLogout(); clearAppJwt(); }}
         hasPrimarySheetId={hasPrimarySheetId}
         primarySpreadsheetId={primarySid}
         hasSecondarySheetConfigured={hasSecondarySheetConfigured}
-        userEmail={user?.email}
+        userEmail={effectiveUser?.email}
         canSaveSpreadsheetViaApi={Boolean(hasApi && backendReady && settings)}
         patchSettings={patchSettings}
       />
     );
   }
 
-  if (!isTestData && accessToken && hasApi && !backendReady) {
+  if (!isTestData && hasApi && !backendReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -243,7 +237,7 @@ export default function App() {
     );
   }
 
-  if (!isTestData && accessToken && sheetAccess === null) {
+  if (!isTestData && user && sheetAccess === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -272,7 +266,7 @@ export default function App() {
           <p className="text-negative text-lg font-medium">{t.errorLoadingData}</p>
           <p className="text-text-secondary text-sm">{error}</p>
           <button
-            onClick={logout}
+            onClick={() => { googleLogout(); clearAppJwt(); }}
             className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-brand transition-all duration-200 underline active:opacity-80"
           >
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -286,7 +280,10 @@ export default function App() {
   }
 
   const updatedLabel = formatUpdatedClock(lastUpdatedAt);
-  const monthDelta = stats.changeVsPrevTotal ?? stats.changeVsPrev;
+
+  const kpiCount = 2 + (stats.hasTravel ? 1 : 0) + (stats.hasHousing ? 1 : 0);
+  const kpiLgCols =
+    kpiCount >= 4 ? 'lg:grid-cols-4' : kpiCount === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2';
 
   return (
     <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
@@ -340,16 +337,6 @@ export default function App() {
             })()}
           </div>
 
-          <div className="sm:hidden mt-2 pt-2 border-t border-white/[0.06] space-y-1">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-              <span className="text-base font-bold text-text-primary tabular-nums">{formatMoney(stats.current)}</span>
-              <span
-                className={`text-sm font-semibold tabular-nums ${monthDelta != null && monthDelta > 0 ? 'text-positive' : monthDelta != null && monthDelta < 0 ? 'text-negative' : 'text-text-secondary'}`}
-              >
-                {formatChange(monthDelta)} <span className="text-text-secondary font-normal text-xs">{t.month}</span>
-              </span>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -360,7 +347,7 @@ export default function App() {
         onTouchEnd={handleTouchEnd}
         style={{ touchAction: effectiveProfiles.length === 2 ? 'pan-y' : undefined }}
       >
-        <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${stats.hasHousing ? 'lg:grid-cols-3' : ''}`}>
+        <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${kpiLgCols}`}>
           <KpiCard
             title={t.kpiCurrentMonth}
             value={formatChange(stats.changeVsPrevTotal ?? stats.changeVsPrev)}
@@ -373,14 +360,27 @@ export default function App() {
             subtitle={(stats.changeVsYearPctTotal ?? stats.changeVsYearPct) != null ? t.kpiVsPrevYear(formatPct(stats.changeVsYearPctTotal ?? stats.changeVsYearPct)) : null}
             trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
           />
+          {stats.hasTravel && stats.travel && (
+            <KpiCard
+              className={stats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
+              title={t.travelTitle}
+              value={formatMoney((stats.travel.current ?? 0) * 2)}
+              subtitle={
+                (stats.travel.spentLastMonth ?? 0) > 0
+                  ? `${t.travelSpentLastMonth}: ${formatMoney((stats.travel.spentLastMonth ?? 0) * 2)}`
+                  : null
+              }
+              trend={0}
+              subtitleColor={(stats.travel.spentLastMonth ?? 0) > 0 ? 'text-negative' : undefined}
+            />
+          )}
           {stats.hasHousing && (
             <KpiCard
-              className="col-span-2 lg:col-span-1"
+              className={kpiCount === 3 ? 'col-span-2 lg:col-span-1' : ''}
               title={t.kpiTotalWealth}
               value={formatMoney(stats.currentTotalWealth)}
-              subtitle={t.kpiTotalWealthDetail(formatMoney(stats.current), formatMoney(stats.housing.equity))}
+              subtitle={null}
               trend={0}
-              subtitleColor="text-positive"
             />
           )}
         </section>
@@ -388,13 +388,10 @@ export default function App() {
         <Heatmap data={stats.heatmap} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:items-stretch">
-          {stats.hasTravel && (
-            <TravelCard travel={stats.travel} />
-          )}
           {stats.hasHousing && (
             <MortgageCard housing={stats.housing} />
           )}
-          <div className={`h-full min-h-0 ${stats.hasHousing || stats.hasTravel ? '' : 'lg:col-span-2'}`}>
+          <div className={`h-full min-h-0 ${stats.hasHousing ? '' : 'lg:col-span-2'}`}>
             <NetWorthChart
               months={entityNetWorth ? entityNetWorth.months : stats.netWorthMonths}
               totals={entityNetWorth ? entityNetWorth.totals : stats.netWorthTotals}
@@ -408,6 +405,7 @@ export default function App() {
             title={t.distributionTitle}
             selectedEntity={selectedEntity}
             onSelectEntity={setSelectedEntity}
+            entityEvolution={stats.entityEvolution}
           />
         </div>
 
@@ -460,7 +458,7 @@ export default function App() {
         onSwitchProfile={switchProfile}
         onSettings={() => setSettingsOpen(true)}
         onRefresh={refresh}
-        onLogout={logout}
+        onLogout={() => { googleLogout(); clearAppJwt(); }}
         loading={loading}
         isTestData={isTestData}
         t={t}

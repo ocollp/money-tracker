@@ -3,6 +3,16 @@ import { buildApp } from '../src/app.js';
 import { clearTestDb, setTestDb } from '../src/db.js';
 import { createMemoryDb } from './helpers/memoryDb.js';
 
+vi.mock('../src/lib/googleTokens.js', () => ({
+  exchangeCodeForTokens: vi.fn().mockResolvedValue({
+    accessToken: 'mock-google-access-token',
+    refreshToken: 'mock-refresh-token',
+    expiresAt: Date.now() + 3600 * 1000,
+  }),
+  refreshAccessToken: vi.fn(),
+  getValidAccessToken: vi.fn(),
+}));
+
 describe('app', () => {
   let app;
 
@@ -36,7 +46,7 @@ describe('app', () => {
         const res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { accessToken: 'any' },
+          payload: { code: 'any' },
         });
         expect(res.statusCode).toBe(503);
         expect(JSON.parse(res.body).error).toBe('database_not_configured');
@@ -51,14 +61,40 @@ describe('app', () => {
     });
 
     describe('POST /auth/google', () => {
-      it('returns 400 when accessToken is missing', async () => {
+      it('returns 400 when code and accessToken are missing', async () => {
         const res = await app.inject({
           method: 'POST',
           url: '/auth/google',
           payload: {},
         });
         expect(res.statusCode).toBe(400);
-        expect(JSON.parse(res.body).error).toBe('accessToken_required');
+        expect(JSON.parse(res.body).error).toBe('code_or_accessToken_required');
+      });
+
+      it('accepts accessToken (implicit flow) and returns JWT + user', async () => {
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+              sub: 'sub-implicit',
+              email: 'implicit@test.com',
+              name: 'Implicit',
+              picture: null,
+            }),
+          })
+        );
+
+        const res = await app.inject({
+          method: 'POST',
+          url: '/auth/google',
+          payload: { accessToken: 'ya29.mock-access-token' },
+        });
+        expect(res.statusCode).toBe(200);
+        const body = JSON.parse(res.body);
+        expect(body.token).toBeTruthy();
+        expect(body.user.email).toBe('implicit@test.com');
+        expect(body.settings.spreadsheetId).toBeNull();
       });
 
       it('returns 401 invalid_google_token when userinfo fails', async () => {
@@ -74,7 +110,7 @@ describe('app', () => {
         const res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { accessToken: 'bad' },
+          payload: { code: 'bad' },
         });
         expect(res.statusCode).toBe(401);
         expect(JSON.parse(res.body).error).toBe('invalid_google_token');
@@ -97,7 +133,7 @@ describe('app', () => {
         const res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { accessToken: 'good-token' },
+          payload: { code: 'good-code' },
         });
         expect(res.statusCode).toBe(200);
         const body = JSON.parse(res.body);
@@ -124,7 +160,7 @@ describe('app', () => {
         let res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { accessToken: 't1' },
+          payload: { code: 'c1' },
         });
         expect(res.statusCode).toBe(200);
 
@@ -141,7 +177,7 @@ describe('app', () => {
         res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { accessToken: 't2' },
+          payload: { code: 'c2' },
         });
         expect(res.statusCode).toBe(200);
         const body = JSON.parse(res.body);
@@ -182,7 +218,7 @@ describe('app', () => {
         const authRes = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { accessToken: 'tok' },
+          payload: { code: 'tok' },
         });
         const { token } = JSON.parse(authRes.body);
 
@@ -216,7 +252,7 @@ describe('app', () => {
         const authRes = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { accessToken: 'tok' },
+          payload: { code: 'tok' },
         });
         const { token } = JSON.parse(authRes.body);
 
@@ -246,7 +282,7 @@ describe('app', () => {
         const authRes = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { accessToken: 'tok' },
+          payload: { code: 'tok' },
         });
         const { token } = JSON.parse(authRes.body);
 

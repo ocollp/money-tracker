@@ -1,54 +1,22 @@
-import { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
-function getXAxisTicks(data, isNarrow) {
-  if (!data?.length) return [];
-  if (data.length <= 3) return data.map((d) => d.date);
-  const first = data[0].date;
-  const last = data[data.length - 1].date;
-  const n = data.length;
-  if (isNarrow) {
-    const mid = data[Math.floor(n / 2)].date;
-    return [first, mid, last];
-  }
-  const mid1 = data[Math.floor(n / 3)].date;
-  const mid2 = data[Math.floor((2 * n) / 3)].date;
-  return [first, mid1, mid2, last];
-}
-
-function renderXAxisTick(props, firstDate, lastDate, fontSize) {
-  const { x, y, payload } = props;
-  const isFirst = payload.value === firstDate;
-  const isLast = payload.value === lastDate;
-  const textAnchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <text x={0} y={0} dy={8} textAnchor={textAnchor} fill="#94a3b8" fontSize={fontSize}>
-        {payload.value}
-      </text>
-    </g>
-  );
-}
-
 export default function MortgageCard({ housing }) {
   const { t } = useI18n();
-  const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
-
-  useEffect(() => {
-    const mql = window.matchMedia('(max-width: 640px)');
-    const onChange = (e) => setNarrow(e.matches);
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, []);
 
   const debtPaidPct = housing.initialDebt > 0
     ? ((housing.totalPaid / housing.initialDebt) * 100).toFixed(1)
     : 0;
 
+  const years = housing.monthsRemaining != null && housing.monthsRemaining > 0
+    ? Math.floor(housing.monthsRemaining / 12)
+    : null;
+  const remainingMonths = housing.monthsRemaining != null
+    ? housing.monthsRemaining % 12
+    : null;
+
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 space-y-5">
+    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-4 border border-white/[0.06] shadow-lg shadow-black/10 space-y-4">
       <div className="flex items-baseline justify-between">
         <h3 className="text-lg font-semibold">{t.housingTitle}</h3>
         <span className="text-lg font-bold text-negative">{formatMoney(housing.fullDebt)}</span>
@@ -57,91 +25,51 @@ export default function MortgageCard({ housing }) {
       <div>
         <div className="flex justify-between text-sm mb-1.5">
           <span className="text-text-secondary">{t.mortgageProgress}</span>
-          <span className="font-medium text-positive">{debtPaidPct}%</span>
+          <span className="font-semibold text-positive">{debtPaidPct}%</span>
         </div>
-        <div className="w-full bg-surface rounded-full h-3 overflow-hidden">
+        <div className="w-full bg-surface rounded-full h-3.5 overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700"
+            className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700 relative"
             style={{ width: `${debtPaidPct}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-xs text-text-secondary mt-1.5">
-          <span>{t.mortgagePayment(formatMoney(housing.monthlyPayment))}</span>
-          {housing.monthsRemaining != null && housing.monthsRemaining > 0 && (
-            <span>{t.mortgageRemaining(housing.monthsRemaining, (housing.monthsRemaining / 12).toFixed(0))}</span>
-          )}
+          >
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent to-white/20" />
+          </div>
         </div>
       </div>
 
-      {housing.evolution.length > 1 && (
-        <div className="h-52 touch-none" style={{ touchAction: 'none' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={housing.evolution}
-              margin={{
-                top: 5,
-                right: narrow ? 16 : 12,
-                bottom: 12,
-                left: 0,
-              }}
-            >
-              <defs>
-                <linearGradient id="debtGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="date"
-                axisLine={false}
-                tickLine={false}
-                ticks={getXAxisTicks(housing.evolution, narrow)}
-                padding={{ left: 8, right: 8 }}
-                tick={(props) => renderXAxisTick(
-                  props,
-                  housing.evolution[0]?.date,
-                  housing.evolution[housing.evolution.length - 1]?.date,
-                  narrow ? 10 : 11
-                )}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
-                width={40}
-                tick={(props) => {
-                  const { y, payload } = props;
-                  const text = `${(payload.value / 1000).toFixed(0)}k`;
-                  return (
-                    <text x={0} y={y} dy={4} textAnchor="start" fill="#94a3b8" fontSize={11}>
-                      {text}
-                    </text>
-                  );
-                }}
-              />
-              <Tooltip
-                contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 12 }}
-                labelStyle={{ color: '#94a3b8' }}
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  return (
-                    <div className="rounded-xl px-3 py-2" style={{ background: '#1e293b', border: '1px solid #334155' }}>
-                      <div className="text-xs font-medium mb-1.5" style={{ color: '#94a3b8' }}>{label}</div>
-                      {payload.map((p) => (
-                        <div key={p.dataKey} className="text-sm" style={{ color: p.color }}>
-                          {p.name}: {formatMoney(p.value)}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }}
-              />
-              <Area type="monotone" dataKey="debt" stroke="#ef4444" fill="url(#debtGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#ef4444' }} />
-            </AreaChart>
-          </ResponsiveContainer>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]">
+          <p className="text-[11px] text-text-secondary mb-0.5">{t.housingValue}</p>
+          <p className="text-sm font-bold text-text-primary">{formatMoney(housing.fullValue)}</p>
         </div>
+        <div className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]">
+          <p className="text-[11px] text-text-secondary mb-0.5">{t.housingEquity}</p>
+          <p className="text-sm font-bold text-positive">{formatMoney(housing.totalEquity ?? housing.equity)}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-sm pt-1 border-t border-white/[0.04]">
+        <div className="flex items-center gap-2 text-text-secondary">
+          <svg className="w-4 h-4 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+          </svg>
+          <span>{t.mortgagePayment(formatMoney(housing.monthlyPayment))}</span>
+        </div>
+        {years != null && (
+          <div className="flex items-center gap-2 text-text-secondary">
+            <svg className="w-4 h-4 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{t.mortgageRemaining(housing.monthsRemaining, years)}</span>
+          </div>
+        )}
+      </div>
+
+      {housing.principalPaidYtd != null && housing.principalPaidYtd > 0 && typeof t.mortgagePaidYtd === 'function' && (
+        <p className="text-[11px] text-text-secondary pt-1 border-t border-white/[0.04]">
+          {t.mortgagePaidYtd(formatMoney(housing.principalPaidYtd))}
+        </p>
       )}
     </div>
   );
 }
-
