@@ -98,8 +98,6 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
     const idx = data.findIndex(d => d.date === label);
     const prev = idx > 0 ? data[idx - 1].total : null;
     const diff = prev != null ? val - prev : null;
-    const maxInView = data.length ? Math.max(...data.map((d) => d.total)) : 0;
-    const pctOfMax = maxInView > 0 ? (val / maxInView) * 100 : null;
     return (
       <div
         className="rounded-xl px-3.5 py-2.5 shadow-xl backdrop-blur-sm"
@@ -107,11 +105,6 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
       >
         <div className="text-[11px] font-medium mb-1" style={{ color: '#94a3b8' }}>{label}</div>
         <div className="text-sm font-bold" style={{ color: '#f1f5f9' }}>{formatMoney(val)}</div>
-        {pctOfMax != null && typeof t.netWorthTooltipPctOfMax === 'function' && (
-          <div className="text-[10px] mt-0.5" style={{ color: '#64748b' }}>
-            {t.netWorthTooltipPctOfMax(pctOfMax.toFixed(0))}
-          </div>
-        )}
         {diff != null && typeof t.netWorthTooltipVsPrev === 'function' && (
           <div className="text-[11px] font-medium mt-0.5" style={{ color: diff >= 0 ? '#4ade80' : '#f87171' }}>
             {t.netWorthTooltipVsPrev(formatChange(diff))}

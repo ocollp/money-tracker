@@ -36,7 +36,7 @@ export const ca = {
   logout: 'Tancar sessió',
   exit: 'Sortir',
   month: 'mes',
-  kpiCurrentMonth: 'Últim mes',
+  kpiCurrentMonth: 'Mes actual',
   kpiMoneyAndInvestments: 'Diners i inversions',
   kpiTotalWealth: 'Patrimoni total',
   kpiVsPrevMonth: (pct) => `${pct} respecte al mes anterior`,

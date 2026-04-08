@@ -329,9 +329,8 @@ export default function App() {
               const active = effectiveProfiles.find((p) => p.id === effectiveProfile);
               if (!active) return null;
               return (
-                <span className="sm:hidden inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary shrink-0">
-                  <span>{active.emoji}</span>
-                  <span>{active.name}</span>
+                <span className="sm:hidden text-xl shrink-0" aria-label={active.name}>
+                  {active.emoji}
                 </span>
               );
             })()}

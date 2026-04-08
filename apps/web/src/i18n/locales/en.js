@@ -42,7 +42,7 @@ export const en = {
   exit: 'Exit',
   month: 'month',
 
-  kpiCurrentMonth: 'Last month',
+  kpiCurrentMonth: 'Current month',
   kpiMoneyAndInvestments: 'Money & investments',
   kpiTotalWealth: 'Total wealth',
   kpiVsPrevMonth: (pct) => `${pct} vs previous month`,
