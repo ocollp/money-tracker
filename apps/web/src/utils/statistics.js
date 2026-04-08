@@ -161,8 +161,8 @@ export function computeStatistics(months, options = {}) {
     const equity = housing ? (housing.value || 0) + (housing.debt || 0) : 0;
     const value = liquid + equity;
     if (name === 'BBVA' && liquid > 0 && equity !== 0) {
-      distributionRaw.push({ name: 'BBVA - Compte corrent', value: liquid });
-      distributionRaw.push({ name: 'BBVA - Hipoteca', value: equity });
+      distributionRaw.push({ name: 'Compte corrent BBVA', value: liquid });
+      distributionRaw.push({ name: 'Hipoteca BBVA', value: equity });
     } else {
       distributionRaw.push({ name, value });
     }

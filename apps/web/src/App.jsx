@@ -352,12 +352,14 @@ export default function App() {
             value={formatChange(stats.changeVsPrevTotal ?? stats.changeVsPrev)}
             subtitle={(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct) != null ? t.kpiVsPrevMonth(formatPct(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct)) : null}
             trend={stats.changeVsPrevTotal ?? stats.changeVsPrev ?? 0}
+            icon="🗓️"
           />
           <KpiCard
             title={t.kpiMoneyAndInvestments}
             value={formatMoney(stats.current)}
             subtitle={(stats.changeVsYearPctTotal ?? stats.changeVsYearPct) != null ? t.kpiVsPrevYear(formatPct(stats.changeVsYearPctTotal ?? stats.changeVsYearPct)) : null}
             trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
+            icon="💰"
           />
           {stats.hasTravel && stats.travel && (
             <KpiCard
@@ -371,6 +373,7 @@ export default function App() {
               }
               trend={0}
               subtitleColor={(stats.travel.spentLastMonth ?? 0) > 0 ? 'text-negative' : undefined}
+              icon="✈️"
             />
           )}
           {stats.hasHousing && (
@@ -380,6 +383,7 @@ export default function App() {
               value={formatMoney(stats.currentTotalWealth)}
               subtitle={null}
               trend={0}
+              icon="💸"
             />
           )}
         </section>

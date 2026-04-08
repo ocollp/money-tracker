@@ -47,6 +47,9 @@ export const en = {
   kpiTotalWealth: 'Total wealth',
   kpiVsPrevMonth: (pct) => `${pct} vs previous month`,
   kpiVsPrevYear: (pct) => `${pct} vs last year`,
+  streakPositive: (n) => `${n} positive ${n === 1 ? 'month' : 'months'} in a row`,
+  streakNegative: (n) => `${n} ${n === 1 ? 'month' : 'months'} down`,
+  projection1yLabel: (change) => `In 12 months: ~${change}`,
 
   netWorthTitle: 'Money & investments',
   netWorthTooltip: 'Money & investments',
@@ -83,9 +86,10 @@ export const en = {
   housingValue: 'Property value',
   housingDebt: 'Total bank debt',
   housingEquity: 'Net equity',
+  housingEquityMine: 'My share',
   mortgageProgress: 'Mortgage progress',
   mortgagePayment: (amount) => `Payment: ${amount}/mo`,
-  mortgageRemaining: (months, years) => `${years} years remaining (${months} months)`,
+  mortgageRemaining: (months) => `${months} months remaining`,
   mortgageDebtLabel: 'Debt',
   mortgageEquityLabel: 'Net equity',
 

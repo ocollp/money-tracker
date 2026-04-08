@@ -10,14 +10,14 @@ const DISTRIBUTION_COLORS = [
 
 const ENTITY_COLORS = {
   BBVA: '#004481',
-  'BBVA - Compte corrent': '#f97316',
-  'BBVA - Hipoteca': '#004481',
+  'Compte corrent BBVA': '#60a5fa',
+  'Hipoteca BBVA': '#004481',
   Revolut: '#facc15',
   'Trade Republic': '#8b5cf6',
   Urbanitae: '#16a34a',
   Efectivo: '#ec4899',
   Indexa: '#22c55e',
-  'Indexa Capital': '#22c55e',
+  'Indexa Capital': '#38bdf8',
   Fundeen: '#f97316',
 };
 
@@ -70,8 +70,6 @@ export default function DistributionChart({ distribution, title, selectedEntity,
   const { t } = useI18n();
   const displayName = (name) => {
     if (name === 'Efectivo') return t.entityEffective;
-    if (name === 'BBVA - Compte corrent') return t.distributionBbvaChecking;
-    if (name === 'BBVA - Hipoteca') return t.distributionBbvaMortgage;
     return name;
   };
 
@@ -93,31 +91,7 @@ export default function DistributionChart({ distribution, title, selectedEntity,
     .map(d => ({ ...d, pct: total > 0 ? (d.value / total) * 100 : 0 }))
     .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
 
-  const bbvaCorrent = recalculated.find(d => d.name === 'BBVA - Compte corrent');
-  const bbvaHipoteca = recalculated.find(d => d.name === 'BBVA - Hipoteca');
-  const bbvaGrouped = bbvaCorrent && bbvaHipoteca;
-  const bbvaGroupNames = new Set(bbvaGrouped ? ['BBVA - Compte corrent', 'BBVA - Hipoteca'] : []);
-
-  const listItems = [];
-  let bbvaInserted = false;
-  for (let i = 0; i < recalculated.length; i++) {
-    const d = recalculated[i];
-    if (bbvaGroupNames.has(d.name)) {
-      if (!bbvaInserted) {
-        const first = bbvaCorrent;
-        const second = bbvaHipoteca;
-        listItems.push({
-          grouped: true,
-          first,
-          second,
-          combinedPct: bbvaCorrent.pct + bbvaHipoteca.pct,
-        });
-        bbvaInserted = true;
-      }
-    } else {
-      listItems.push({ grouped: false, item: d, index: i });
-    }
-  }
+  const listItems = recalculated.map((d, i) => ({ item: d, index: i }));
 
   const clearFilter = () => onSelectEntity?.(null);
 
@@ -195,97 +169,40 @@ export default function DistributionChart({ distribution, title, selectedEntity,
             <span className="text-sm font-bold text-text-primary">{formatMoney(total)}</span>
           </div>
         </div>
-        <div className="flex flex-col gap-2.5 w-full">
-          {listItems.map((entry) =>
-            entry.grouped ? (
-              <div key="bbva-group"
-                className="space-y-1.5 cursor-pointer rounded-xl px-2 sm:px-2.5 py-2 sm:py-2 min-h-[44px] -mx-1 transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.06]"
-                style={{ opacity: selectedEntity && selectedEntity !== entry.first.name && selectedEntity !== entry.second.name ? 0.3 : 1 }}
-                onClick={() => onSelectEntity?.(selectedEntity === entry.first.name ? null : entry.first.name)}
-                onDoubleClick={clearFilter}>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary/80 px-0.5">
-                  {t.distributionBbvaGroup ?? 'BBVA'}
-                </p>
+        <div className="flex flex-col gap-1 w-full">
+          {listItems.map(({ item: d, index }) => {
+            const c = getColor(d.name, index);
+            return (
+              <div
+                key={d.name}
+                className="space-y-0.5 cursor-pointer rounded-xl px-2 sm:px-2.5 py-1.5 -mx-1 transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.06]"
+                style={{ opacity: selectedEntity && selectedEntity !== d.name ? 0.3 : 1 }}
+                onClick={() => onSelectEntity?.(selectedEntity === d.name ? null : d.name)}
+                onDoubleClick={clearFilter}
+              >
                 <div className="flex items-center justify-between gap-1.5 sm:gap-2">
                   <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: ENTITY_COLORS[entry.first.name] }} />
-                    <span className="text-text-secondary text-xs sm:text-sm truncate">{displayName(entry.first.name)}</span>
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: c }} />
+                    <span className="text-text-secondary text-xs sm:text-sm truncate">{displayName(d.name)}</span>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <MiniSparkline data={sparklines[entry.first.name]} color={ENTITY_COLORS[entry.first.name]} />
-                    <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(entry.first.value)}</span>
-                    <span className="text-[10px] sm:text-xs text-text-secondary w-7 sm:w-9 text-right tabular-nums">{entry.first.pct.toFixed(0)}%</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: ENTITY_COLORS[entry.second.name] }} />
-                    <span className="text-text-secondary text-xs sm:text-sm truncate">{displayName(entry.second.name)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <MiniSparkline data={sparklines[entry.second.name]} color={ENTITY_COLORS[entry.second.name]} />
-                    <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(entry.second.value)}</span>
-                    <span className="text-[10px] sm:text-xs text-text-secondary w-7 sm:w-9 text-right tabular-nums">{entry.second.pct.toFixed(0)}%</span>
+                    <MiniSparkline data={sparklines[d.name]} color={c} />
+                    <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(d.value)}</span>
+                    <span className="text-[10px] sm:text-xs text-text-secondary w-7 sm:w-9 text-right tabular-nums">{d.pct.toFixed(0)}%</span>
                   </div>
                 </div>
                 <div className="w-full bg-surface rounded-full h-1.5 overflow-hidden">
                   <div
-                    className="h-full rounded-full flex transition-all duration-700"
-                    style={{ width: `${entry.combinedPct}%` }}
-                  >
-                    <div
-                      className="h-full rounded-l-full"
-                      style={{
-                        width: `${(entry.first.pct / entry.combinedPct) * 100}%`,
-                        background: `linear-gradient(90deg, ${ENTITY_COLORS[entry.first.name]}80, ${ENTITY_COLORS[entry.first.name]})`,
-                      }}
-                    />
-                    <div
-                      className="h-full rounded-r-full"
-                      style={{
-                        width: `${(entry.second.pct / entry.combinedPct) * 100}%`,
-                        background: `linear-gradient(90deg, ${ENTITY_COLORS[entry.second.name]}80, ${ENTITY_COLORS[entry.second.name]})`,
-                      }}
-                    />
-                  </div>
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${d.pct}%`,
+                      background: `linear-gradient(90deg, ${c}80, ${c})`,
+                    }}
+                  />
                 </div>
               </div>
-            ) : (
-              (() => {
-                const d = entry.item;
-                const c = getColor(d.name, entry.index);
-                return (
-                  <div
-                    key={d.name}
-                    className="space-y-1 cursor-pointer rounded-xl px-2 sm:px-2.5 py-2 sm:py-2 min-h-[44px] -mx-1 transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.06]"
-                    style={{ opacity: selectedEntity && selectedEntity !== d.name ? 0.3 : 1 }}
-                    onClick={() => onSelectEntity?.(selectedEntity === d.name ? null : d.name)}
-                    onDoubleClick={clearFilter}>
-                    <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-                      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: c }} />
-                        <span className="text-text-secondary text-xs sm:text-sm truncate">{displayName(d.name)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                        <MiniSparkline data={sparklines[d.name]} color={c} />
-                        <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(d.value)}</span>
-                        <span className="text-[10px] sm:text-xs text-text-secondary w-7 sm:w-9 text-right tabular-nums">{d.pct.toFixed(0)}%</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-surface rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{
-                          width: `${d.pct}%`,
-                          background: `linear-gradient(90deg, ${c}80, ${c})`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })()
-            )
-          )}
+            );
+          })}
         </div>
       </div>
     </div>
