@@ -198,7 +198,7 @@ export default function App() {
     return () => el.removeEventListener('touchmove', handleTouchMove);
   }, [handleTouchMove]);
 
-  if (!isTestData && !user) {
+  if (!isTestData && (!user || needsRefresh)) {
     return (
       <LoginScreen
         onLogin={() => login(PROFILE_EMAILS[profile])}
