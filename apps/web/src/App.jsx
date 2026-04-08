@@ -388,10 +388,7 @@ export default function App() {
         <Heatmap data={stats.heatmap} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:items-stretch">
-          {stats.hasHousing && (
-            <MortgageCard housing={stats.housing} />
-          )}
-          <div className={`h-full min-h-0 ${stats.hasHousing ? '' : 'lg:col-span-2'}`}>
+          <div className="h-full min-h-0">
             <NetWorthChart
               months={entityNetWorth ? entityNetWorth.months : stats.netWorthMonths}
               totals={entityNetWorth ? entityNetWorth.totals : stats.netWorthTotals}
@@ -408,6 +405,10 @@ export default function App() {
             entityEvolution={stats.entityEvolution}
           />
         </div>
+
+        {stats.hasHousing && (
+          <MortgageCard housing={stats.housing} />
+        )}
 
         <Patterns yearComparison={stats.yearComparison} />
       </main>

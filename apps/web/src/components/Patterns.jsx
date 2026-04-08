@@ -1,47 +1,19 @@
-import { useState, useEffect } from 'react';
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 export default function Patterns({ yearComparison }) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(min-width: 640px)').matches : true
-  );
-  useEffect(() => {
-    const mql = window.matchMedia('(min-width: 640px)');
-    const onChange = () => {
-      if (mql.matches) setOpen(true);
-    };
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, []);
   const sortedYears = [...(yearComparison || [])].sort((a, b) => b.year - a.year);
   const best = Math.max(...sortedYears.map(y => Math.abs(y.total)), 1);
 
   return (
     <div className="bg-surface-alt/80 rounded-2xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
-      <div className="px-5 pt-5 pb-4 flex items-center justify-between gap-2">
+      <div className="px-5 pt-5 pb-4">
         <h3 className="text-lg font-semibold">{t.patternsTitle}</h3>
-        <button
-          type="button"
-          className="sm:hidden shrink-0 min-w-11 min-h-11 -mr-2 rounded-xl flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-white/[0.06] transition-colors"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          aria-label={open ? (t.sectionCollapse ?? 'Amaga') : (t.sectionExpand ?? 'Mostra')}
-        >
-          <svg
-            className={`w-5 h-5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
       </div>
 
       {sortedYears.length > 0 && (
-        <div className={`px-5 pb-5 space-y-2 ${open ? '' : 'hidden sm:block'}`}>
+        <div className="px-5 pb-5 space-y-2">
           {sortedYears.map((y) => {
             const barWidth = best > 0 ? (Math.abs(y.total) / best) * 100 : 0;
             const isPositive = y.total >= 0;

@@ -1,20 +1,8 @@
-import { useState, useEffect } from 'react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 export default function Heatmap({ data }) {
   const { t } = useI18n();
   const rows = Array.isArray(data) ? data : [];
-  const [open, setOpen] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(min-width: 640px)').matches : true
-  );
-  useEffect(() => {
-    const mql = window.matchMedia('(min-width: 640px)');
-    const onChange = () => {
-      if (mql.matches) setOpen(true);
-    };
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, []);
   const years = [...new Set(rows.map(d => d.year))].sort((a, b) => b - a);
   const monthNames = t.monthsShort;
 
@@ -43,25 +31,7 @@ export default function Heatmap({ data }) {
   return (
     <div className="bg-surface-alt/80 rounded-2xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
       <div className="px-5 pt-5 pb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <h3 className="text-lg font-semibold">{t.heatmapTitle}</h3>
-          <button
-            type="button"
-            className="sm:hidden shrink-0 min-w-11 min-h-11 -mr-2 rounded-xl flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-white/[0.06] transition-colors"
-            onClick={() => setOpen((o) => !o)}
-            aria-expanded={open}
-            aria-label={open ? (t.sectionCollapse ?? 'Amaga') : (t.sectionExpand ?? 'Mostra')}
-          >
-            <svg
-              className={`w-5 h-5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
+        <h3 className="text-lg font-semibold">{t.heatmapTitle}</h3>
         <div className="flex items-center gap-3 text-xs shrink-0">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-positive inline-block" />
@@ -74,11 +44,7 @@ export default function Heatmap({ data }) {
         </div>
       </div>
 
-      <div
-        className={`px-2 sm:px-5 pb-2 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile -mx-1 sm:mx-0 max-w-full ${
-          open ? '' : 'hidden sm:block'
-        }`}
-      >
+      <div className="px-2 sm:px-5 pb-2 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile -mx-1 sm:mx-0 max-w-full">
         <table className="w-full min-w-0 sm:min-w-0 border-separate max-w-full" style={{ borderSpacing: '3px 4px' }}>
           <thead>
             <tr>
