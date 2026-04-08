@@ -47,7 +47,7 @@ const RANGE_KEYS = ['3', '6', '12', 'all'];
 
 export default function NetWorthChart({ months, totals, title = 'Patrimoni', subtitle = 'Diners i inversions', tooltipLabel = 'Patrimoni' }) {
   const { t } = useI18n();
-  const [range, setRange] = useState('all');
+  const [range, setRange] = useState('12');
   const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
   const [animKey, setAnimKey] = useState(0);
   const prevTitleRef = useRef(title);

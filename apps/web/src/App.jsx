@@ -388,9 +388,14 @@ export default function App() {
           )}
         </section>
 
-        <Heatmap data={stats.heatmap} />
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:items-stretch">
+          <DistributionChart
+            distribution={stats.distribution}
+            title={t.distributionTitle}
+            selectedEntity={selectedEntity}
+            onSelectEntity={setSelectedEntity}
+            entityEvolution={stats.entityEvolution}
+          />
           <div className="h-full min-h-0">
             <NetWorthChart
               months={entityNetWorth ? entityNetWorth.months : stats.netWorthMonths}
@@ -400,14 +405,9 @@ export default function App() {
               tooltipLabel={selectedEntity || t.netWorthTooltip}
             />
           </div>
-          <DistributionChart
-            distribution={stats.distribution}
-            title={t.distributionTitle}
-            selectedEntity={selectedEntity}
-            onSelectEntity={setSelectedEntity}
-            entityEvolution={stats.entityEvolution}
-          />
         </div>
+
+        <Heatmap data={stats.heatmap} />
 
         {stats.hasHousing && (
           <MortgageCard housing={stats.housing} />

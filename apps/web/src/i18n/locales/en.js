@@ -60,9 +60,10 @@ export const en = {
   cashLabel: 'Cash',
   heatmapTitle: 'Monthly performance',
   patternsTitle: 'Yearly evolution',
-  patternsCurrentYear: 'Current',
+  patternsCurrentYear: 'in progress',
   patternsMonths: 'months',
   patternsPerMonth: 'mo',
+  patternsPositiveMonths: (n, total) => `${n} of ${total} months positive`,
 
   travelTitle: 'Travel fund',
   travelCurrentFund: 'Current balance',

@@ -60,9 +60,10 @@ export const es = {
   cashLabel: 'Efectivo',
   heatmapTitle: 'Rendimiento mensual',
   patternsTitle: 'Evolución por años',
-  patternsCurrentYear: 'Actual',
+  patternsCurrentYear: 'en curso',
   patternsMonths: 'meses',
   patternsPerMonth: 'mes',
+  patternsPositiveMonths: (n, total) => `${n} de ${total} meses positivos`,
 
   travelTitle: 'Fondo de viajes',
   travelCurrentFund: 'Saldo actual',
