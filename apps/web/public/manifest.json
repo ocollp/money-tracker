@@ -4,8 +4,8 @@
   "description": "Seguiment de finances personals",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1e293b",
-  "theme_color": "#1e293b",
+  "background_color": "#282828",
+  "theme_color": "#282828",
   "orientation": "portrait",
   "icons": [
     {
