@@ -2,14 +2,14 @@
   "name": "Finances personals",
   "short_name": "Finances",
   "description": "Seguiment de finances personals",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#282828",
   "theme_color": "#282828",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/piggy-icon.png",
+      "src": "./piggy-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
