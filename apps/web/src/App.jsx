@@ -61,8 +61,10 @@ export default function App() {
   const {
     user,
     accessToken,
+    appJwt,
     login,
     logout: googleLogout,
+    clearAuth,
     needsRefresh,
     checkingSession,
     canLogin,
@@ -77,7 +79,7 @@ export default function App() {
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
 
-  const { settings, backendReady, patchSettings, hasApi, apiUser } = useBackendProfile(accessToken);
+  const { settings, backendReady, patchSettings, hasApi, apiUser } = useBackendProfile(accessToken, appJwt, clearAuth);
   const hasPersistedProfile = settings != null;
   const financeConfig = useMemo(() => {
     const base = buildFinanceConfig(settings);
@@ -118,7 +120,7 @@ export default function App() {
     error,
     refresh,
     lastUpdatedAt,
-  } = useSheetFinanceData({ isTestData, accessToken, profile, financeConfig });
+  } = useSheetFinanceData({ isTestData, accessToken, appJwt, profile, financeConfig });
 
   const { pullPx, progress, isPulling } = usePullToRefresh({
     onRefresh: refresh,
@@ -144,12 +146,35 @@ export default function App() {
 
   const entityNetWorth = useMemo(() => {
     if (!selectedEntity || !stats) return null;
+
+    const liquidTotals = stats.entityEvolution.map(e => e[selectedEntity] || 0);
+    const hasLiquidData = liquidTotals.some(v => v !== 0);
+
+    if (hasLiquidData) {
+      return {
+        months: stats.entityEvolution.map(e => ({ shortLabel: e.date, key: e.key })),
+        totals: liquidTotals,
+      };
+    }
+
+    // Entity not in liquid evolution — try housing data (e.g. "Hipoteca BBVA" → BBVA in byEntityHousing)
+    const housingKey = selectedEntity.replace(/^Hipoteca\s+|^Compte corrent\s+/i, '').trim();
+    const housingTotals = stats.months.map(m => {
+      const h = m.byEntityHousing?.[housingKey] || m.byEntityHousing?.[selectedEntity];
+      if (!h) return 0;
+      return (h.value || 0) + (h.debt || 0);
+    });
+    const hasHousingData = housingTotals.some(v => v !== 0);
+    if (hasHousingData) {
+      return {
+        months: stats.months.map(m => ({ shortLabel: m.shortLabel, key: m.key })),
+        totals: housingTotals,
+      };
+    }
+
     return {
-      months: stats.entityEvolution.map(e => ({
-        shortLabel: e.date,
-        key: e.key,
-      })),
-      totals: stats.entityEvolution.map(e => e[selectedEntity] || 0),
+      months: stats.entityEvolution.map(e => ({ shortLabel: e.date, key: e.key })),
+      totals: liquidTotals,
     };
   }, [selectedEntity, stats]);
 

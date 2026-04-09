@@ -106,9 +106,10 @@ export default function DistributionChart({ distribution, title, selectedEntity,
           <button
             type="button"
             onClick={clearFilter}
-            className="text-xs font-semibold px-3 py-2 min-h-10 rounded-xl bg-brand/15 text-brand border border-brand/30 hover:bg-brand/25 transition-colors"
+            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary transition-all duration-150 flex items-center gap-1.5"
           >
-            {t.distributionAllEntities ?? 'All'}
+            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            {t.distributionAllEntities ?? 'Totes'}
           </button>
         )}
       </div>

@@ -1,17 +1,19 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { parseCSV, groupByMonth } from '../utils/parseCSV';
 import { computeStatistics } from '../utils/statistics';
-import { fetchSheetData, checkSheetAccess } from '../services/sheetsApi';
-import { getTestStats } from '../data/testData';
 import {
-  PROFILE_PRIMARY_ID,
-  PROFILE_SECONDARY_ID,
-} from '../config';
+  fetchSheetData,
+  checkSheetAccess,
+  fetchSheetDataViaBackend,
+  checkSheetAccessViaBackend,
+} from '../services/sheetsApi';
+import { getTestStats } from '../data/testData';
+import { PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID, API_URL } from '../config';
 import { financeConfigToStatsOptions } from '../lib/mergeFinanceConfig.js';
 
 const POLL_INTERVAL_MS = 45 * 1000;
 
-export function useSheetFinanceData({ isTestData, accessToken, profile, financeConfig }) {
+export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, financeConfig }) {
   const sid1 = financeConfig.spreadsheetId;
   const sid2 = financeConfig.spreadsheetId2;
   const labels = financeConfig.profileLabels;
@@ -20,6 +22,9 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
     () => financeConfigToStatsOptions(financeConfig),
     [financeConfig]
   );
+
+  // True when we should use the backend proxy instead of calling Google directly
+  const useBackend = Boolean(appJwt && API_URL);
 
   const PROFILE_PRIMARY = useMemo(
     () => ({
@@ -65,6 +70,7 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
   const currentSheetId =
     effectiveProfiles.find((p) => p.id === effectiveProfile)?.sheetId || sid1;
 
+  // Test data
   useEffect(() => {
     if (!isTestData) return;
     setSheetAccess({ id1: true, id2: false });
@@ -72,40 +78,55 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
     setLastUpdatedAt(new Date());
   }, [isTestData]);
 
-  useEffect(() => {
-    if (isTestData || !accessToken) {
-      if (!isTestData) setSheetAccess(null);
-      return;
-    }
-    let cancelled = false;
-    Promise.all([
-      checkSheetAccess(accessToken, sid1),
-      sid2 ? checkSheetAccess(accessToken, sid2) : Promise.resolve(false),
-    ]).then(([id1, id2]) => {
-      if (!cancelled) setSheetAccess({ id1: !!id1, id2: !!id2 });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [accessToken, isTestData, sid1, sid2]);
-
+  // Check sheet access
   useEffect(() => {
     if (isTestData) return;
-    if (!accessToken || !sheetAccess || !currentSheetId) return;
+    if (!useBackend && !accessToken) {
+      setSheetAccess(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    if (useBackend) {
+      Promise.all([
+        checkSheetAccessViaBackend(appJwt, sid1, API_URL),
+        sid2 ? checkSheetAccessViaBackend(appJwt, sid2, API_URL) : Promise.resolve(false),
+      ]).then(([id1, id2]) => {
+        if (!cancelled) setSheetAccess({ id1: !!id1, id2: !!id2 });
+      });
+    } else {
+      Promise.all([
+        checkSheetAccess(accessToken, sid1),
+        sid2 ? checkSheetAccess(accessToken, sid2) : Promise.resolve(false),
+      ]).then(([id1, id2]) => {
+        if (!cancelled) setSheetAccess({ id1: !!id1, id2: !!id2 });
+      });
+    }
+
+    return () => { cancelled = true; };
+  }, [accessToken, appJwt, useBackend, isTestData, sid1, sid2]);
+
+  // Fetch sheet data
+  useEffect(() => {
+    if (isTestData) return;
+    if (!sheetAccess || !currentSheetId) return;
+    if (!useBackend && !accessToken) return;
     if (!sheetAccess.id1 && !sheetAccess.id2) return;
 
     setLoading(true);
     setError(null);
     setStats(null);
 
-    fetchSheetData(accessToken, currentSheetId)
+    const fetchData = useBackend
+      ? () => fetchSheetDataViaBackend(appJwt, currentSheetId, API_URL)
+      : () => fetchSheetData(accessToken, currentSheetId);
+
+    fetchData()
       .then((csvText) => {
         const rows = parseCSV(csvText);
         const months = groupByMonth(rows);
-        const s = computeStatistics(months, {
-          ...statsOpts,
-          profileId: effectiveProfile,
-        });
+        const s = computeStatistics(months, { ...statsOpts, profileId: effectiveProfile });
         setStats(s);
         setLastUpdatedAt(new Date());
       })
@@ -113,6 +134,8 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
       .finally(() => setLoading(false));
   }, [
     accessToken,
+    appJwt,
+    useBackend,
     sheetAccess,
     currentSheetId,
     fetchKey,
@@ -121,24 +144,30 @@ export function useSheetFinanceData({ isTestData, accessToken, profile, financeC
     statsOpts,
   ]);
 
+  // Poll for updates
   useEffect(() => {
-    if (isTestData || !accessToken || !currentSheetId || !stats) return;
+    if (isTestData) return;
+    if (!useBackend && !accessToken) return;
+    if (!currentSheetId || !stats) return;
+
+    const fetchData = useBackend
+      ? () => fetchSheetDataViaBackend(appJwt, currentSheetId, API_URL)
+      : () => fetchSheetData(accessToken, currentSheetId);
+
     const intervalId = setInterval(() => {
-      fetchSheetData(accessToken, currentSheetId)
+      fetchData()
         .then((csvText) => {
           const rows = parseCSV(csvText);
           const months = groupByMonth(rows);
-          const s = computeStatistics(months, {
-            ...statsOpts,
-            profileId: effectiveProfile,
-          });
+          const s = computeStatistics(months, { ...statsOpts, profileId: effectiveProfile });
           setStats(s);
           setLastUpdatedAt(new Date());
         })
         .catch(() => {});
     }, POLL_INTERVAL_MS);
+
     return () => clearInterval(intervalId);
-  }, [isTestData, accessToken, currentSheetId, effectiveProfile, stats, statsOpts]);
+  }, [isTestData, accessToken, appJwt, useBackend, currentSheetId, effectiveProfile, stats, statsOpts]);
 
   const refresh = useCallback(() => {
     setFetchKey((k) => k + 1);
