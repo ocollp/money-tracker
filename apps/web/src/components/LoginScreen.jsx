@@ -52,25 +52,6 @@ function LangDropdown({ lang, setLang, langs }) {
   );
 }
 
-function StepDots({ total, current, onSelect }) {
-  return (
-    <div className="flex items-center justify-center gap-2">
-      {Array.from({ length: total }, (_, i) => (
-        <button
-          key={i}
-          type="button"
-          onClick={() => onSelect(i)}
-          className={`rounded-full transition-all duration-300 ${
-            i === current
-              ? 'w-6 h-2 bg-brand'
-              : 'w-2 h-2 bg-white/20 hover:bg-white/30'
-          }`}
-          aria-label={`Step ${i + 1}`}
-        />
-      ))}
-    </div>
-  );
-}
 
 function GoogleIcon() {
   return (
@@ -90,8 +71,6 @@ export default function LoginScreen({
   authError = null,
 }) {
   const { lang, setLang, t, LANGS } = useI18n();
-  const [step, setStep] = useState(0);
-  const current = t.onboarding[step];
 
   return (
     <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
@@ -108,52 +87,9 @@ export default function LoginScreen({
           />
         </div>
 
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#fea4a4] mb-5">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#fea4a4] mb-6">
           {t.appTitle}
         </h1>
-
-        <div className="min-h-[120px] flex flex-col items-center justify-center mb-4">
-          <div
-            key={`${lang}-${step}`}
-            className="flex flex-col items-center gap-2.5 animate-[fadeSlideIn_0.3s_ease-out]"
-          >
-            <span className="text-3xl">{current.emoji}</span>
-            <h2 className="text-sm font-semibold text-text-primary">
-              {current.title}
-            </h2>
-            <p className="text-xs text-text-secondary leading-relaxed px-1">
-              {current.description}
-            </p>
-          </div>
-        </div>
-
-        <StepDots
-          total={t.onboarding.length}
-          current={step}
-          onSelect={setStep}
-        />
-
-        <div className="flex gap-2 mt-4 mb-5">
-          {step > 0 && (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s - 1)}
-              className="w-10 h-10 shrink-0 rounded-xl text-text-secondary bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center"
-              aria-label={t.back}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
-          )}
-          {step < t.onboarding.length - 1 && (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s + 1)}
-              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white bg-brand hover:bg-brand-light border border-brand/30 transition-all duration-200 active:scale-[0.98]"
-            >
-              {t.next}
-            </button>
-          )}
-        </div>
 
         <div className="border-t border-white/[0.06] pt-5">
           {checkingSession ? (
