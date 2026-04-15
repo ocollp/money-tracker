@@ -18,6 +18,7 @@ import {
 } from './config';
 import LoginScreen from './components/LoginScreen';
 import NoSheetAccessScreen from './components/NoSheetAccessScreen';
+import { usePasskey } from './hooks/usePasskey.js';
 import ProfileSettings from './components/ProfileSettings';
 import SideDrawer, { useSidebarLayout } from './components/SideDrawer';
 import KpiCard from './components/KpiCard';
@@ -63,8 +64,10 @@ export default function App() {
     accessToken,
     appJwt,
     login,
+    loginWithPasskeyResult,
     logout: googleLogout,
     clearAuth,
+    isLoggedIn,
     needsRefresh,
     checkingSession,
     canLogin,
@@ -79,6 +82,7 @@ export default function App() {
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
 
+  const passkey = usePasskey({ onLoginSuccess: loginWithPasskeyResult });
   const { settings, backendReady, patchSettings, hasApi, apiUser } = useBackendProfile(accessToken, appJwt, clearAuth);
   const hasPersistedProfile = settings != null;
   const financeConfig = useMemo(() => {
@@ -223,13 +227,14 @@ export default function App() {
     return () => el.removeEventListener('touchmove', handleTouchMove);
   }, [handleTouchMove]);
 
-  if (!isTestData && (!user || needsRefresh)) {
+  if (!isTestData && (!isLoggedIn || needsRefresh)) {
     return (
       <LoginScreen
         onLogin={() => login(PROFILE_EMAILS[profile])}
         checkingSession={checkingSession}
         canLogin={canLogin}
         authError={authError}
+        passkey={passkey}
       />
     );
   }
@@ -420,6 +425,8 @@ export default function App() {
             selectedEntity={selectedEntity}
             onSelectEntity={setSelectedEntity}
             entityEvolution={stats.entityEvolution}
+            hasHousing={stats.hasHousing}
+            hasTravel={stats.hasTravel}
           />
           <div className="h-full min-h-0">
             <NetWorthChart
@@ -493,6 +500,7 @@ export default function App() {
         t={t}
         stats={stats}
         onInsight={showInsight}
+        passkey={passkey}
       />
 
       {insightToast && (

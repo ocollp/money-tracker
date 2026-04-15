@@ -1,24 +1,25 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 const DISTRIBUTION_COLORS = [
-  '#ec4899', '#22c55e', '#0ea5e9', '#8b5cf6', '#f59e0b', '#6366f1',
-  '#14b8a6', '#a855f7', '#64748b',
+  '#3b82f6', '#10b981', '#a78bfa', '#f59e0b', '#ec4899',
+  '#06b6d4', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316',
 ];
 
 const ENTITY_COLORS = {
-  BBVA: '#004481',
-  'Compte corrent BBVA': '#60a5fa',
-  'Hipoteca BBVA': '#004481',
-  Revolut: '#facc15',
+  BBVA: '#2563eb',
+  'Compte corrent BBVA': '#3b82f6',
+  'Hipoteca BBVA': '#1d4ed8',
+  Revolut: '#eab308',
   'Trade Republic': '#8b5cf6',
-  Urbanitae: '#16a34a',
+  Urbanitae: '#10b981',
   Efectivo: '#ec4899',
   Indexa: '#22c55e',
-  'Indexa Capital': '#38bdf8',
+  'Indexa Capital': '#06b6d4',
   Fundeen: '#f97316',
+  'Fons de viatges': '#a78bfa',
 };
 
 function getColor(name, index) {
@@ -66,12 +67,37 @@ function MiniSparkline({ data, color, width = 48, height = 18 }) {
   );
 }
 
-export default function DistributionChart({ distribution, title, selectedEntity, onSelectEntity, entityEvolution }) {
+function ToggleButton({ active, onClick, children, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 ${
+        active
+          ? 'bg-white/[0.08] border-white/[0.12] text-text-primary'
+          : 'bg-white/[0.02] border-white/[0.05] text-text-secondary/30'
+      }`}
+      aria-label={label}
+      title={label}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function DistributionChart({ distribution, title, selectedEntity, onSelectEntity, entityEvolution, hasHousing, hasTravel }) {
   const { t } = useI18n();
+  const [showHousing, setShowHousing] = useState(true);
+  const [showTravel, setShowTravel] = useState(true);
+
   const displayName = (name) => {
     if (name === 'Efectivo') return t.entityEffective;
+    if (name === 'Fons de viatges') return t.travelFundLabel ?? 'Fons de viatges';
     return name;
   };
+
+  const isHidden = (d) =>
+    (!showHousing && d.isHousing) || (!showTravel && d.isTravel);
 
   const sparklines = useMemo(() => {
     if (!entityEvolution?.length) return {};
@@ -86,9 +112,11 @@ export default function DistributionChart({ distribution, title, selectedEntity,
 
   if (!distribution?.length) return null;
 
-  const total = distribution.reduce((s, d) => s + d.value, 0);
+  const visibleTotal = distribution
+    .filter(d => !isHidden(d))
+    .reduce((s, d) => s + d.value, 0);
   const recalculated = distribution
-    .map(d => ({ ...d, pct: total > 0 ? (d.value / total) * 100 : 0 }))
+    .map(d => ({ ...d, pct: visibleTotal > 0 ? (d.value / visibleTotal) * 100 : 0, hidden: isHidden(d) }))
     .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
 
   const listItems = recalculated.map((d, i) => ({ item: d, index: i }));
@@ -102,16 +130,36 @@ export default function DistributionChart({ distribution, title, selectedEntity,
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3 shrink-0">
         <h3 className="text-lg font-semibold">{title}</h3>
-        {selectedEntity && onSelectEntity && (
-          <button
-            type="button"
-            onClick={clearFilter}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary transition-all duration-150 flex items-center gap-1.5"
-          >
-            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            {t.distributionAllEntities ?? 'Totes'}
-          </button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {selectedEntity && onSelectEntity && (
+            <button
+              type="button"
+              onClick={clearFilter}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary transition-all duration-150 flex items-center gap-1.5"
+            >
+              <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              {t.distributionAllEntities ?? 'Totes'}
+            </button>
+          )}
+          {hasHousing && (
+            <ToggleButton
+              active={showHousing}
+              onClick={() => setShowHousing(v => !v)}
+              label={t.toggleHousing ?? 'Habitatge'}
+            >
+              <span className="text-sm leading-none">🏠</span>
+            </ToggleButton>
+          )}
+          {hasTravel && (
+            <ToggleButton
+              active={showTravel}
+              onClick={() => setShowTravel(v => !v)}
+              label={t.toggleTravel ?? 'Viatges'}
+            >
+              <span className="text-sm leading-none">✈️</span>
+            </ToggleButton>
+          )}
+        </div>
       </div>
       {selectedEntity && (
         <p className="text-[11px] text-text-secondary mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
@@ -123,22 +171,11 @@ export default function DistributionChart({ distribution, title, selectedEntity,
         >
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <defs>
-                {recalculated.map((d, i) => {
-                  const c = getColor(d.name, i);
-                  return (
-                    <radialGradient key={i} id={`distGrad-${i}`} cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor={c} stopOpacity={0.95} />
-                      <stop offset="100%" stopColor={c} stopOpacity={0.55} />
-                    </radialGradient>
-                  );
-                })}
-              </defs>
               <Pie
                 data={recalculated} dataKey="value" nameKey="name"
                 cx="50%" cy="50%" innerRadius={52} outerRadius={80}
                 strokeWidth={0}
-                paddingAngle={3}
+                paddingAngle={0}
                 style={{ cursor: 'pointer' }}
                 onClick={(_, i) => {
                   const name = recalculated[i]?.name;
@@ -151,15 +188,15 @@ export default function DistributionChart({ distribution, title, selectedEntity,
                 {recalculated.map((d, i) => (
                   <Cell
                     key={i}
-                    fill={`url(#distGrad-${i})`}
-                    opacity={selectedEntity && selectedEntity !== d.name ? 0.25 : 1}
+                    fill={getColor(d.name, i)}
+                    opacity={d.hidden ? 0.12 : (selectedEntity && selectedEntity !== d.name ? 0.25 : 1)}
                     style={{ transition: 'opacity 0.3s ease' }}
                   />
                 ))}
               </Pie>
               <Tooltip
                 content={(props) => (
-                  <CustomTooltip {...props} formatDisplayName={displayName} total={total} t={t} />
+                  <CustomTooltip {...props} formatDisplayName={displayName} total={visibleTotal} t={t} />
                 )}
                 wrapperStyle={{ zIndex: 50 }}
               />
@@ -167,7 +204,7 @@ export default function DistributionChart({ distribution, title, selectedEntity,
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] text-text-secondary">{t.distributionTotal}</span>
-            <span className="text-sm font-bold text-text-primary">{formatMoney(total)}</span>
+            <span className="text-sm font-bold text-text-primary">{formatMoney(visibleTotal)}</span>
           </div>
         </div>
         <div className="flex flex-col gap-1 w-full">
@@ -177,7 +214,7 @@ export default function DistributionChart({ distribution, title, selectedEntity,
               <div
                 key={d.name}
                 className="space-y-0.5 cursor-pointer rounded-xl px-2 sm:px-2.5 py-1.5 -mx-1 transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.06]"
-                style={{ opacity: selectedEntity && selectedEntity !== d.name ? 0.3 : 1 }}
+                style={{ opacity: d.hidden ? 0.2 : (selectedEntity && selectedEntity !== d.name ? 0.3 : 1) }}
                 onClick={() => onSelectEntity?.(selectedEntity === d.name ? null : d.name)}
                 onDoubleClick={clearFilter}
               >

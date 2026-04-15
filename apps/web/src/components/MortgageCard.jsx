@@ -10,6 +10,8 @@ export default function MortgageCard({ housing }) {
 
   const showMyShare = housing.totalEquity != null && housing.equity != null
     && Math.round(housing.totalEquity) !== Math.round(housing.equity);
+  const showMyDebt = showMyShare && housing.fullDebt != null && housing.debt != null
+    && Math.round(housing.fullDebt) !== Math.round(housing.debt);
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-5 border border-white/[0.06] shadow-lg shadow-black/10 gap-4">
@@ -19,6 +21,9 @@ export default function MortgageCard({ housing }) {
         <div>
           <p className="text-[11px] text-text-secondary mb-1">{t.housingDebt}</p>
           <p className="text-base sm:text-xl font-bold tracking-tight text-negative">{formatMoney(housing.fullDebt)}</p>
+          {showMyDebt && (
+            <p className="text-[10px] text-text-secondary/70 mt-0.5">{formatMoney(housing.debt)}</p>
+          )}
         </div>
         <div>
           <p className="text-[11px] text-text-secondary mb-1">{t.housingEquity}</p>

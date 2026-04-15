@@ -162,17 +162,12 @@ export function computeStatistics(months, options = {}) {
     const value = liquid + equity;
     if (name === 'BBVA' && liquid > 0 && equity !== 0) {
       distributionRaw.push({ name: 'Compte corrent BBVA', value: liquid });
-      distributionRaw.push({ name: 'Hipoteca BBVA', value: equity });
+      distributionRaw.push({ name: 'Hipoteca BBVA', value: equity, isHousing: true });
     } else {
-      distributionRaw.push({ name, value });
+      distributionRaw.push({ name, value, isHousing: equity !== 0 });
     }
   }
-  const distribution = distributionRaw
-    .map((d) => ({
-      ...d,
-      pct: totalForDistribution !== 0 ? (d.value / totalForDistribution) * 100 : 0,
-    }))
-    .sort((a, b) => b.value - a.value);
+  const distribution = distributionRaw.map((d) => ({ ...d, pct: 0 }));
 
   const allEntitiesLiquid = [...new Set(months.flatMap(m => Object.keys(m.byEntityLiquid)))];
   const entityEvolution = months.map(m => {
@@ -222,6 +217,14 @@ export function computeStatistics(months, options = {}) {
     fund: m.travelFund,
   }));
   const latestTravelFund = latestMonth.travelFund || 0;
+  if (latestTravelFund !== 0) {
+    distribution.push({ name: 'Fons de viatges', value: latestTravelFund, isTravel: true, pct: 0 });
+  }
+  const totalWithTravel = distribution.reduce((s, d) => s + d.value, 0);
+  for (const d of distribution) {
+    d.pct = totalWithTravel !== 0 ? (d.value / totalWithTravel) * 100 : 0;
+  }
+  distribution.sort((a, b) => b.value - a.value);
   const prevTravelFund = months.length > 1 ? (months[months.length - 2].travelFund || 0) : 0;
   const travelMonthlySaving = options.travelMonthlySaving ?? TRAVEL_MONTHLY_SAVING ?? 0;
   const myHalfSaving = travelMonthlySaving / 2;
