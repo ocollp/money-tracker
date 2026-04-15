@@ -65,6 +65,7 @@ export default function SideDrawer({
   t,
   stats,
   onInsight,
+  onAddMonth,
   passkey,
 }) {
   const touchStart = useRef({ x: 0, y: 0 });
@@ -176,6 +177,14 @@ export default function SideDrawer({
       <div className={`border-t border-white/[0.06] space-y-1.5 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
         {!isTestData && (
           <>
+            <DrawerItem
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v16m8-8H4" /></svg>}
+              label={t.addMonth ?? 'Afegir mes'}
+              onClick={onAddMonth}
+              collapsed={collapsed}
+              iconColor="text-emerald-400/70"
+              disabled={!stats}
+            />
             <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={onInsight} collapsed={collapsed} iconColor="text-amber-400/70" disabled={!stats} />
             <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} collapsed={collapsed} iconColor="text-violet-400/70" />
             <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />

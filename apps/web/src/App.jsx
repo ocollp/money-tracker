@@ -15,6 +15,7 @@ import {
   PROFILE_PRIMARY_ID,
   PROFILE_SECONDARY_ID,
   SPREADSHEET_ID_2,
+  API_URL,
 } from './config';
 import LoginScreen from './components/LoginScreen';
 import NoSheetAccessScreen from './components/NoSheetAccessScreen';
@@ -27,6 +28,7 @@ import DistributionChart from './components/DistributionChart';
 import Heatmap from './components/Heatmap';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
+import AddMonthModal from './components/AddMonthModal';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { generateInsight } from './utils/insights.js';
 
@@ -78,6 +80,7 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [insightToast, setInsightToast] = useState(null);
   const [selectedEntity, setSelectedEntity] = useState(null);
+  const [addMonthOpen, setAddMonthOpen] = useState(false);
   const insightTimer = useRef(null);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
@@ -472,6 +475,17 @@ export default function App() {
         )}
       </footer>
 
+      {addMonthOpen && stats && (
+        <AddMonthModal
+          months={stats.months}
+          spreadsheetId={financeConfig.spreadsheetId}
+          appJwt={appJwt}
+          apiUrl={API_URL}
+          onClose={() => setAddMonthOpen(false)}
+          onSaved={refresh}
+        />
+      )}
+
       <ProfileSettings
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -500,6 +514,7 @@ export default function App() {
         t={t}
         stats={stats}
         onInsight={showInsight}
+        onAddMonth={() => { setAddMonthOpen(true); setDrawerOpen(false); }}
         passkey={passkey}
       />
 

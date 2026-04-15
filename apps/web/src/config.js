@@ -4,7 +4,7 @@ export const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 export const SPREADSHEET_ID_2 = import.meta.env.VITE_SPREADSHEET_ID_2 || '';
 export const SHEET_RANGE = 'A:I';
 export const SCOPES =
-  'https://www.googleapis.com/auth/spreadsheets.readonly openid email profile https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+  'https://www.googleapis.com/auth/spreadsheets openid email profile https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 export const PROFILE_PRIMARY_ID = 'primary';
 export const PROFILE_SECONDARY_ID = 'secondary';

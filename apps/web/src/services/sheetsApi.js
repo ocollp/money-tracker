@@ -51,3 +51,21 @@ export async function fetchSheetDataViaBackend(appJwt, spreadsheetId, apiUrl) {
 
   return await res.text();
 }
+
+export async function appendRowsViaBackend(appJwt, spreadsheetId, rows, apiUrl) {
+  const res = await fetch(`${apiUrl}/sheets/${spreadsheetId}/append`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${appJwt}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ rows }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Error ${res.status}`);
+  }
+
+  return await res.json();
+}
