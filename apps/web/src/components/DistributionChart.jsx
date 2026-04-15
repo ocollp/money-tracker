@@ -116,9 +116,13 @@ export default function DistributionChart({ distribution, title, selectedEntity,
     .filter(d => !isHidden(d))
     .reduce((s, d) => s + d.value, 0);
   const recalculated = distribution
-    .map(d => ({ ...d, pct: visibleTotal > 0 ? (d.value / visibleTotal) * 100 : 0, hidden: isHidden(d) }))
+    .map(d => {
+      const hidden = isHidden(d);
+      return { ...d, pct: !hidden && visibleTotal > 0 ? (d.value / visibleTotal) * 100 : 0, hidden };
+    })
     .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
 
+  const pieData = recalculated.filter(d => !d.hidden);
   const listItems = recalculated.map((d, i) => ({ item: d, index: i }));
 
   const clearFilter = () => onSelectEntity?.(null);
@@ -172,24 +176,24 @@ export default function DistributionChart({ distribution, title, selectedEntity,
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={recalculated} dataKey="value" nameKey="name"
+                data={pieData} dataKey="value" nameKey="name"
                 cx="50%" cy="50%" innerRadius={52} outerRadius={80}
                 strokeWidth={0}
                 paddingAngle={0}
                 style={{ cursor: 'pointer' }}
                 onClick={(_, i) => {
-                  const name = recalculated[i]?.name;
+                  const name = pieData[i]?.name;
                   if (name && onSelectEntity) onSelectEntity(selectedEntity === name ? null : name);
                 }}
                 isAnimationActive={true}
                 animationDuration={600}
                 animationEasing="ease-out"
               >
-                {recalculated.map((d, i) => (
+                {pieData.map((d, i) => (
                   <Cell
                     key={i}
                     fill={getColor(d.name, i)}
-                    opacity={d.hidden ? 0.12 : (selectedEntity && selectedEntity !== d.name ? 0.25 : 1)}
+                    opacity={selectedEntity && selectedEntity !== d.name ? 0.25 : 1}
                     style={{ transition: 'opacity 0.3s ease' }}
                   />
                 ))}

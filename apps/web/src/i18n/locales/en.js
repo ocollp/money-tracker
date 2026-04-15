@@ -1,5 +1,6 @@
 export const en = {
   appTitle: 'Personal finances',
+  appSubtitle: 'Your personal finance overview',
 
   onboarding: [
     {

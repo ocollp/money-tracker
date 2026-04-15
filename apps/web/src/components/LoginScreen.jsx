@@ -73,72 +73,81 @@ export default function LoginScreen({
 }) {
   const { lang, setLang, t, LANGS } = useI18n();
 
+  const autoTriggered = useRef(false);
+  useEffect(() => {
+    if (autoTriggered.current) return;
+    if (checkingSession) return;
+    if (!passkey?.supported || !passkey.hasRegistered) return;
+    if (passkey.authenticating) return;
+    autoTriggered.current = true;
+    const timer = setTimeout(() => passkey.authenticate(), 800);
+    return () => clearTimeout(timer);
+  }, [checkingSession, passkey]);
+
   return (
-    <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
-      <div className="bg-surface-alt/95 rounded-3xl border border-white/[0.06] p-8 sm:p-12 max-w-sm w-full text-center shadow-xl shadow-black/30 relative">
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-          <LangDropdown lang={lang} setLang={setLang} langs={LANGS} />
-        </div>
+    <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex flex-col items-center justify-center px-6 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
+      <div className="absolute top-5 right-5">
+        <LangDropdown lang={lang} setLang={setLang} langs={LANGS} />
+      </div>
 
-        <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden ring-2 ring-white/10 flex items-center justify-center bg-white/5 mb-4">
-          <img
-            src={`${import.meta.env.BASE_URL}piggy.gif`}
-            alt=""
-            className="w-full h-full object-cover object-[52%_48%]"
-          />
-        </div>
+      <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden flex items-center justify-center bg-white/[0.04] mb-5">
+        <img
+          src={`${import.meta.env.BASE_URL}piggy.gif`}
+          alt=""
+          className="w-full h-full object-cover object-[52%_48%]"
+        />
+      </div>
 
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#fea4a4] mb-6">
-          {t.appTitle}
-        </h1>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-secondary mb-10">
+        {t.appTitle}
+      </h1>
 
-        <div className="border-t border-white/[0.06] pt-5">
-          {checkingSession ? (
-            <div className="flex flex-col items-center gap-3 py-1">
-              <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-              <span className="text-text-secondary text-xs">{t.checkingSession}</span>
-            </div>
-          ) : authError ? (
-            <div className="flex flex-col items-center gap-3">
-              <p className="text-negative text-xs text-left w-full leading-relaxed">{authError}</p>
+      <div className="w-full max-w-xs">
+        {checkingSession ? (
+          <div className="flex flex-col items-center gap-3 py-1">
+            <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+            <span className="text-text-secondary text-xs">{t.checkingSession}</span>
+          </div>
+        ) : authError ? (
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-negative text-xs text-left w-full leading-relaxed">{authError}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="w-full flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.1] text-text-primary text-sm font-medium py-3 px-4 rounded-xl transition-all duration-200 active:scale-[0.98]"
+            >
+              {t.reload}
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {passkey?.supported && passkey.hasRegistered && (
               <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold py-2.5 px-4 rounded-xl border border-white/10 transition-all duration-200 active:scale-[0.98]"
+                onClick={passkey.authenticate}
+                disabled={passkey.authenticating}
+                className="w-full flex items-center justify-center gap-2 bg-white/[0.05] text-text-secondary text-sm font-medium py-3 px-4 rounded-xl hover:bg-white/[0.08] hover:text-text-primary transition-all duration-200 active:scale-[0.97] disabled:opacity-40"
               >
-                {t.reload}
+                <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 12h.01M15 12h.01M9.5 15.5a3.5 3.5 0 005 0M7 3.5A1.5 1.5 0 003.5 5v2M17 3.5A1.5 1.5 0 0120.5 5v2M7 20.5A1.5 1.5 0 003.5 19v-2M17 20.5A1.5 1.5 0 0020.5 19v-2" /></svg>
+                {passkey.authenticating ? t.loading : (t.loginFaceId ?? 'Entrar amb Face ID')}
               </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {passkey?.supported && passkey.hasRegistered && (
-                <button
-                  onClick={passkey.authenticate}
-                  disabled={passkey.authenticating}
-                  className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-3 px-4 rounded-xl border border-emerald-500/30 shadow-lg transition-all duration-200 hover:shadow-xl active:scale-[0.98] disabled:opacity-40"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h.01M15 12h.01M9.5 15.5a3.5 3.5 0 005 0M7 3.5A1.5 1.5 0 003.5 5v2M17 3.5A1.5 1.5 0 0120.5 5v2M7 20.5A1.5 1.5 0 003.5 19v-2M17 20.5A1.5 1.5 0 0020.5 19v-2" /></svg>
-                  {passkey.authenticating ? t.loading : (t.loginFaceId ?? 'Entrar amb Face ID')}
-                </button>
-              )}
-              <button
-                onClick={onLogin}
-                disabled={!canLogin}
-                className={`w-full flex items-center justify-center gap-2 text-sm font-semibold py-3 px-4 rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${
-                  passkey?.supported && passkey.hasRegistered
-                    ? 'bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary'
-                    : 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30 shadow-lg hover:shadow-xl'
-                }`}
-              >
-                <GoogleIcon />
-                {canLogin ? t.loginButton : t.loading}
-              </button>
-              {passkey?.error && (
-                <p className="text-negative text-xs">{passkey.error}</p>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+            <button
+              onClick={onLogin}
+              disabled={!canLogin}
+              className={`w-full flex items-center justify-center gap-2.5 text-sm font-medium py-3.5 px-4 rounded-xl transition-all duration-200 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${
+                passkey?.supported && passkey.hasRegistered
+                  ? 'bg-white/[0.05] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary'
+                  : 'bg-white/[0.08] text-text-primary border border-white/[0.1] hover:bg-white/[0.12]'
+              }`}
+            >
+              <GoogleIcon />
+              {canLogin ? t.loginButton : t.loading}
+            </button>
+            {passkey?.error && (
+              <p className="text-negative text-xs mt-1">{passkey.error}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

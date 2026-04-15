@@ -1,5 +1,6 @@
 export const ca = {
   appTitle: 'Finances personals',
+  appSubtitle: 'El teu resum financer personal',
   onboarding: [
     {
       emoji: '📊',

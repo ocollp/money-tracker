@@ -17,7 +17,10 @@ function rpId() {
 function expectedOrigins() {
   const env = process.env.WEBAUTHN_ORIGIN;
   if (env) return env.split(',').map(s => s.trim()).filter(Boolean);
-  return [`https://${rpId()}`];
+  const id = rpId();
+  const origins = [`https://${id}`];
+  if (id === 'localhost') origins.push('http://localhost:5173', 'http://localhost:5174');
+  return origins;
 }
 
 // In-memory challenge store (per-user, short-lived).
@@ -138,8 +141,7 @@ export async function webauthnRoutes(fastify) {
       userVerification: 'preferred',
     });
 
-    const challengeKey = `auth:${options.challenge}`;
-    setChallenge(challengeKey, options.challenge);
+    setChallenge(`auth:${options.challenge}`, options.challenge);
 
     return options;
   });
@@ -165,19 +167,16 @@ export async function webauthnRoutes(fastify) {
       return reply.code(401).send({ error: 'credential_not_found' });
     }
 
-    const expectedChallenge = getChallenge(`auth:${request.body.response?.clientDataJSON
-      ? undefined : null}`);
-
-    // Try all recent challenges (the challenge key depends on the original challenge value)
-    let matchedChallenge = null;
-    for (const [k, v] of challenges) {
-      if (k.startsWith('auth:')) {
-        matchedChallenge = v.challenge;
-        challenges.delete(k);
-        break;
-      }
+    let clientChallenge;
+    try {
+      const clientDataJSON = Buffer.from(request.body.response.clientDataJSON, 'base64url');
+      const clientData = JSON.parse(clientDataJSON.toString('utf8'));
+      clientChallenge = clientData.challenge;
+    } catch {
+      return reply.code(400).send({ error: 'invalid_client_data' });
     }
 
+    const matchedChallenge = getChallenge(`auth:${clientChallenge}`);
     if (!matchedChallenge) {
       return reply.code(400).send({ error: 'challenge_expired' });
     }
