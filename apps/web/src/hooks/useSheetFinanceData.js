@@ -23,8 +23,24 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     [financeConfig]
   );
 
-  // True when we should use the backend proxy instead of calling Google directly
-  const useBackend = Boolean(appJwt && API_URL);
+  // ── Single source of truth: do we have a valid auth credential? ──
+  // Every effect below gates on `authReady` — nothing runs without it.
+  const useBackend = Boolean(API_URL && appJwt);
+  const authReady = isTestData || (useBackend ? Boolean(appJwt) : Boolean(accessToken));
+
+  const checkAccess = useMemo(() => {
+    if (!authReady || isTestData) return null;
+    return useBackend
+      ? (sid) => checkSheetAccessViaBackend(appJwt, sid, API_URL)
+      : (sid) => checkSheetAccess(accessToken, sid);
+  }, [authReady, useBackend, appJwt, accessToken, isTestData]);
+
+  const fetchData = useMemo(() => {
+    if (!authReady || isTestData) return null;
+    return useBackend
+      ? (sid) => fetchSheetDataViaBackend(appJwt, sid, API_URL)
+      : (sid) => fetchSheetData(accessToken, sid);
+  }, [authReady, useBackend, appJwt, accessToken, isTestData]);
 
   const PROFILE_PRIMARY = useMemo(
     () => ({
@@ -70,7 +86,6 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   const currentSheetId =
     effectiveProfiles.find((p) => p.id === effectiveProfile)?.sheetId || sid1;
 
-  // Test data
   useEffect(() => {
     if (!isTestData) return;
     setSheetAccess({ id1: true, id2: false });
@@ -78,51 +93,30 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     setLastUpdatedAt(new Date());
   }, [isTestData]);
 
-  // Check sheet access
   useEffect(() => {
     if (isTestData) return;
-    if (!useBackend && !accessToken) {
-      setSheetAccess(null);
-      return;
-    }
+    if (!checkAccess) { setSheetAccess(null); return; }
 
     let cancelled = false;
-
-    if (useBackend) {
-      Promise.all([
-        checkSheetAccessViaBackend(appJwt, sid1, API_URL),
-        sid2 ? checkSheetAccessViaBackend(appJwt, sid2, API_URL) : Promise.resolve(false),
-      ]).then(([id1, id2]) => {
-        if (!cancelled) setSheetAccess({ id1: !!id1, id2: !!id2 });
-      });
-    } else {
-      Promise.all([
-        checkSheetAccess(accessToken, sid1),
-        sid2 ? checkSheetAccess(accessToken, sid2) : Promise.resolve(false),
-      ]).then(([id1, id2]) => {
-        if (!cancelled) setSheetAccess({ id1: !!id1, id2: !!id2 });
-      });
-    }
-
+    Promise.all([
+      checkAccess(sid1),
+      sid2 ? checkAccess(sid2) : Promise.resolve(false),
+    ]).then(([id1, id2]) => {
+      if (!cancelled) setSheetAccess({ id1: !!id1, id2: !!id2 });
+    });
     return () => { cancelled = true; };
-  }, [accessToken, appJwt, useBackend, isTestData, sid1, sid2]);
+  }, [checkAccess, isTestData, sid1, sid2]);
 
-  // Fetch sheet data
   useEffect(() => {
-    if (isTestData) return;
+    if (isTestData || !fetchData) return;
     if (!sheetAccess || !currentSheetId) return;
-    if (!useBackend && !accessToken) return;
     if (!sheetAccess.id1 && !sheetAccess.id2) return;
 
     setLoading(true);
     setError(null);
     setStats(null);
 
-    const fetchData = useBackend
-      ? () => fetchSheetDataViaBackend(appJwt, currentSheetId, API_URL)
-      : () => fetchSheetData(accessToken, currentSheetId);
-
-    fetchData()
+    fetchData(currentSheetId)
       .then((csvText) => {
         const rows = parseCSV(csvText);
         const months = groupByMonth(rows);
@@ -132,30 +126,14 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [
-    accessToken,
-    appJwt,
-    useBackend,
-    sheetAccess,
-    currentSheetId,
-    fetchKey,
-    effectiveProfile,
-    isTestData,
-    statsOpts,
-  ]);
+  }, [fetchData, sheetAccess, currentSheetId, fetchKey, effectiveProfile, isTestData, statsOpts]);
 
-  // Poll for updates
   useEffect(() => {
-    if (isTestData) return;
-    if (!useBackend && !accessToken) return;
+    if (isTestData || !fetchData) return;
     if (!currentSheetId || !stats) return;
 
-    const fetchData = useBackend
-      ? () => fetchSheetDataViaBackend(appJwt, currentSheetId, API_URL)
-      : () => fetchSheetData(accessToken, currentSheetId);
-
     const intervalId = setInterval(() => {
-      fetchData()
+      fetchData(currentSheetId)
         .then((csvText) => {
           const rows = parseCSV(csvText);
           const months = groupByMonth(rows);
@@ -167,11 +145,9 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [isTestData, accessToken, appJwt, useBackend, currentSheetId, effectiveProfile, stats, statsOpts]);
+  }, [fetchData, currentSheetId, effectiveProfile, stats, isTestData, statsOpts]);
 
-  const refresh = useCallback(() => {
-    setFetchKey((k) => k + 1);
-  }, []);
+  const refresh = useCallback(() => { setFetchKey((k) => k + 1); }, []);
 
   return {
     sheetAccess,

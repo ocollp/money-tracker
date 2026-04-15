@@ -253,7 +253,15 @@ export default function useGoogleAuth() {
     }
   }, [gisClient]);
 
-  // Clears session state and storage; called on logout or JWT expiry
+  // Called by usePasskey after successful WebAuthn login — sets session without Google
+  const loginWithPasskeyResult = useCallback((data) => {
+    if (!data?.token || !data?.user) return;
+    saveBackendSession(data.user, data.token);
+    setUser(data.user);
+    setAppJwt(data.token);
+    setAuthError(null);
+  }, []);
+
   const clearAuth = useCallback(() => {
     if (USE_BACKEND) {
       clearBackendSession();
@@ -282,6 +290,7 @@ export default function useGoogleAuth() {
     authError,
     canLogin: !!gisClient,
     login,
+    loginWithPasskeyResult,
     logout: clearAuth,
     clearAuth,
     isLoggedIn: USE_BACKEND ? (!!user && !!appJwt) : !!user,

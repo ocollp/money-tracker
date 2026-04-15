@@ -5,6 +5,7 @@ import { registerAuth } from './plugins/auth.js';
 import { authRoutes } from './routes/auth.js';
 import { meRoutes } from './routes/me.js';
 import { sheetsRoutes } from './routes/sheets.js';
+import { webauthnRoutes } from './routes/webauthn.js';
 
 export async function buildApp(opts = {}) {
   const fastify = Fastify({ logger: opts.logger ?? true });
@@ -22,6 +23,7 @@ export async function buildApp(opts = {}) {
   await fastify.register(authRoutes, { prefix: '/auth' });
   await fastify.register(meRoutes, { prefix: '/me' });
   await fastify.register(sheetsRoutes, { prefix: '/sheets' });
+  await fastify.register(webauthnRoutes, { prefix: '/auth/webauthn' });
 
   fastify.get('/health', async () => ({
     ok: true,

@@ -44,6 +44,10 @@ const InsightIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
 );
 
+const FaceIdIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12h.01M15 12h.01M9.5 15.5a3.5 3.5 0 005 0M7 3.5A1.5 1.5 0 003.5 5v2M17 3.5A1.5 1.5 0 0120.5 5v2M7 20.5A1.5 1.5 0 003.5 19v-2M17 20.5A1.5 1.5 0 0020.5 19v-2" /></svg>
+);
+
 export default function SideDrawer({
   open,
   onClose,
@@ -61,6 +65,7 @@ export default function SideDrawer({
   t,
   stats,
   onInsight,
+  passkey,
 }) {
   const touchStart = useRef({ x: 0, y: 0 });
 
@@ -176,6 +181,16 @@ export default function SideDrawer({
             <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
           </>
         )}
+        {!isTestData && user && passkey?.supported && !passkey.hasRegistered && (
+          <DrawerItem
+            icon={<FaceIdIcon />}
+            label={t.registerFaceId ?? 'Activar Face ID'}
+            onClick={passkey.register}
+            collapsed={collapsed}
+            iconColor="text-emerald-400/70"
+            disabled={passkey.registering}
+          />
+        )}
         {!isTestData && user && (
           <DrawerItem icon={<LogoutIcon />} label={t.logout} onClick={onLogout} danger collapsed={collapsed} />
         )}
@@ -228,6 +243,15 @@ export default function SideDrawer({
               <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} onClick={onClose} iconColor="text-violet-400/70" />
               <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
             </>
+          )}
+          {!isTestData && user && passkey?.supported && !passkey.hasRegistered && (
+            <DrawerItem
+              icon={<FaceIdIcon />}
+              label={t.registerFaceId ?? 'Activar Face ID'}
+              onClick={() => { passkey.register(); onClose(); }}
+              iconColor="text-emerald-400/70"
+              disabled={passkey.registering}
+            />
           )}
           {!isTestData && user && (
             <DrawerItem icon={<LogoutIcon />} label={t.logout} onClick={menuAction(onLogout)} danger />

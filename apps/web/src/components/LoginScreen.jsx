@@ -69,6 +69,7 @@ export default function LoginScreen({
   checkingSession = false,
   canLogin = false,
   authError = null,
+  passkey,
 }) {
   const { lang, setLang, t, LANGS } = useI18n();
 
@@ -109,14 +110,33 @@ export default function LoginScreen({
               </button>
             </div>
           ) : (
-            <button
-              onClick={onLogin}
-              disabled={!canLogin}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-3 px-4 rounded-xl border border-emerald-500/30 shadow-lg transition-all duration-200 hover:shadow-xl active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
-            >
-              <GoogleIcon />
-              {canLogin ? t.loginButton : t.loading}
-            </button>
+            <div className="flex flex-col gap-3">
+              {passkey?.supported && passkey.hasRegistered && (
+                <button
+                  onClick={passkey.authenticate}
+                  disabled={passkey.authenticating}
+                  className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-3 px-4 rounded-xl border border-emerald-500/30 shadow-lg transition-all duration-200 hover:shadow-xl active:scale-[0.98] disabled:opacity-40"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h.01M15 12h.01M9.5 15.5a3.5 3.5 0 005 0M7 3.5A1.5 1.5 0 003.5 5v2M17 3.5A1.5 1.5 0 0120.5 5v2M7 20.5A1.5 1.5 0 003.5 19v-2M17 20.5A1.5 1.5 0 0020.5 19v-2" /></svg>
+                  {passkey.authenticating ? t.loading : (t.loginFaceId ?? 'Entrar amb Face ID')}
+                </button>
+              )}
+              <button
+                onClick={onLogin}
+                disabled={!canLogin}
+                className={`w-full flex items-center justify-center gap-2 text-sm font-semibold py-3 px-4 rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${
+                  passkey?.supported && passkey.hasRegistered
+                    ? 'bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30 shadow-lg hover:shadow-xl'
+                }`}
+              >
+                <GoogleIcon />
+                {canLogin ? t.loginButton : t.loading}
+              </button>
+              {passkey?.error && (
+                <p className="text-negative text-xs">{passkey.error}</p>
+              )}
+            </div>
           )}
         </div>
       </div>
