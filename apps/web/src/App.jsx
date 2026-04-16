@@ -29,6 +29,7 @@ import Heatmap from './components/Heatmap';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
+import InvestmentEvolutionChart from './components/InvestmentEvolutionChart';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { generateInsight } from './utils/insights.js';
 
@@ -184,6 +185,25 @@ export default function App() {
       totals: liquidTotals,
     };
   }, [selectedEntity, stats]);
+
+  const entityChange = useMemo(() => {
+    if (!selectedEntity || !entityNetWorth) return null;
+    const t = entityNetWorth.totals;
+    if (t.length < 2) return null;
+    const current = t[t.length - 1];
+    const prev = t[t.length - 2];
+    const change = current - prev;
+    const pct = prev !== 0 ? (change / Math.abs(prev)) * 100 : null;
+    return { change, pct, current };
+  }, [selectedEntity, entityNetWorth]);
+
+  const investmentSubEntities = useMemo(() => {
+    if (!stats?.allSubEntities) return [];
+    const investmentKeywords = ['Acciones', 'Cryptos', 'Crowfunding', 'Fondo indexado', 'Plan de pensiones'];
+    return stats.allSubEntities.filter(se =>
+      investmentKeywords.some(kw => se.startsWith(kw))
+    );
+  }, [stats]);
 
   const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : (apiUser || user);
 
@@ -382,16 +402,18 @@ export default function App() {
         <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${kpiLgCols}`}>
           <KpiCard
             title={t.kpiCurrentMonth}
-            value={formatChange(stats.changeVsPrevTotal ?? stats.changeVsPrev)}
-            subtitle={(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct) != null ? t.kpiVsPrevMonth(formatPct(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct)) : null}
-            trend={stats.changeVsPrevTotal ?? stats.changeVsPrev ?? 0}
+            value={formatChange(entityChange ? entityChange.change : (stats.changeVsPrevTotal ?? stats.changeVsPrev))}
+            subtitle={entityChange
+              ? (entityChange.pct != null ? t.kpiVsPrevMonth(formatPct(entityChange.pct)) : null)
+              : ((stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct) != null ? t.kpiVsPrevMonth(formatPct(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct)) : null)}
+            trend={entityChange ? entityChange.change : (stats.changeVsPrevTotal ?? stats.changeVsPrev ?? 0)}
             icon="🗓️"
           />
           <KpiCard
             title={t.kpiMoneyAndInvestments}
-            value={formatMoney(stats.current)}
-            subtitle={(stats.changeVsYearPctTotal ?? stats.changeVsYearPct) != null ? t.kpiVsPrevYear(formatPct(stats.changeVsYearPctTotal ?? stats.changeVsYearPct)) : null}
-            trend={stats.changeVsYearTotal ?? stats.changeVsYear ?? 0}
+            value={formatMoney(entityChange ? entityChange.current : stats.current)}
+            subtitle={(stats.changeVsYearPctTotal ?? stats.changeVsYearPct) != null && !entityChange ? t.kpiVsPrevYear(formatPct(stats.changeVsYearPctTotal ?? stats.changeVsYearPct)) : null}
+            trend={entityChange ? entityChange.change : (stats.changeVsYearTotal ?? stats.changeVsYear ?? 0)}
             icon="💰"
           />
           {stats.hasTravel && stats.travel && (
@@ -435,12 +457,22 @@ export default function App() {
             <NetWorthChart
               months={entityNetWorth ? entityNetWorth.months : stats.netWorthMonths}
               totals={entityNetWorth ? entityNetWorth.totals : stats.netWorthTotals}
-              title={selectedEntity || t.netWorthTitle}
+              title={t.netWorthTitle}
               subtitle={null}
               tooltipLabel={selectedEntity || t.netWorthTooltip}
+              selectedEntity={selectedEntity}
+              onClearEntity={() => setSelectedEntity(null)}
             />
           </div>
         </div>
+
+        {investmentSubEntities.length > 0 && stats.subEntityEvolution && (
+          <InvestmentEvolutionChart
+            data={stats.subEntityEvolution}
+            subEntities={investmentSubEntities}
+            title={t.investmentEvolutionTitle ?? 'Evolució inversions'}
+          />
+        )}
 
         <Heatmap data={stats.heatmap} />
 
@@ -478,7 +510,7 @@ export default function App() {
       {addMonthOpen && stats && (
         <AddMonthModal
           months={stats.months}
-          spreadsheetId={financeConfig.spreadsheetId}
+          spreadsheetId={effectiveProfile === PROFILE_SECONDARY_ID ? financeConfig.spreadsheetId2 : financeConfig.spreadsheetId}
           appJwt={appJwt}
           apiUrl={API_URL}
           onClose={() => setAddMonthOpen(false)}

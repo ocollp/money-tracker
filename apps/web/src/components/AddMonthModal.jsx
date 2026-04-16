@@ -16,7 +16,16 @@ function nextMonth(lastMonth) {
   return m > 12 ? { month: 1, year: y + 1 } : { month: m, year: y };
 }
 
-function formatDate(month, year) {
+function detectDateFormat(lastMonth) {
+  const sample = lastMonth?.entries?.[0]?.date || '';
+  if (sample.includes('-')) return 'dd-mm-yy';
+  return 'd/mm/yyyy';
+}
+
+function formatDate(month, year, format) {
+  if (format === 'dd-mm-yy') {
+    return `01-${String(month).padStart(2, '0')}-${String(year).slice(2)}`;
+  }
   return `1/${String(month).padStart(2, '0')}/${year}`;
 }
 
@@ -24,6 +33,7 @@ export default function AddMonthModal({ months, spreadsheetId, appJwt, apiUrl, o
   const { t } = useI18n();
   const lastMonth = months?.[months.length - 1];
   const target = nextMonth(lastMonth);
+  const dateFormat = detectDateFormat(lastMonth);
 
   const initialRows = useMemo(() => {
     if (!lastMonth?.entries?.length) return [];
@@ -54,7 +64,7 @@ export default function AddMonthModal({ months, spreadsheetId, appJwt, apiUrl, o
     setSaving(true);
     setError(null);
 
-    const date = formatDate(target.month, target.year);
+    const date = formatDate(target.month, target.year, dateFormat);
     const payload = rows.map(r => ({
       date,
       month: target.month,

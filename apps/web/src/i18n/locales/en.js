@@ -84,6 +84,7 @@ export const en = {
   travelFundLabel: 'Travel Fund',
   toggleHousing: 'Housing',
   toggleTravel: 'Travel',
+  investmentEvolutionTitle: 'Investment evolution',
   addMonth: 'Add month',
   addMonthTitle: 'Add month',
   addMonthSave: 'Save',

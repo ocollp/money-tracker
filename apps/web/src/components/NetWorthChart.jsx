@@ -45,7 +45,7 @@ function CustomCursor({ points, height }) {
 
 const RANGE_KEYS = ['3', '6', '12', 'all'];
 
-export default function NetWorthChart({ months, totals, title = 'Patrimoni', subtitle = 'Diners i inversions', tooltipLabel = 'Patrimoni' }) {
+export default function NetWorthChart({ months, totals, title = 'Patrimoni', subtitle = 'Diners i inversions', tooltipLabel = 'Patrimoni', selectedEntity, onClearEntity }) {
   const { t } = useI18n();
   const [range, setRange] = useState('12');
   const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
@@ -124,7 +124,19 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
   return (
     <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-3 sm:px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 max-w-full overflow-x-hidden">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 mb-3 shrink-0">
-        <h3 className="text-lg font-semibold transition-all duration-300">{title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold transition-all duration-300">{title}</h3>
+          {selectedEntity && onClearEntity && (
+            <button
+              type="button"
+              onClick={onClearEntity}
+              className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary transition-all duration-150 flex items-center gap-1.5"
+            >
+              {selectedEntity}
+              <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          )}
+        </div>
         <div
           className="flex flex-wrap gap-1 p-0.5 rounded-xl bg-surface/80 border border-white/[0.06] self-start"
           role="group"
