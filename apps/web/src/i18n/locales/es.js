@@ -84,7 +84,6 @@ export const es = {
   travelFundLabel: 'Fondo de viajes',
   toggleHousing: 'Vivienda',
   toggleTravel: 'Viajes',
-  investmentEvolutionTitle: 'Evolución inversiones',
   addMonth: 'Añadir mes',
   addMonthTitle: 'Añadir mes',
   addMonthSave: 'Guardar',

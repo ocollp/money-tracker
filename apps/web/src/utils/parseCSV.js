@@ -52,7 +52,6 @@ export function groupByMonth(rows) {
         byEntityLiquid: {},
         byEntityHousing: {},
         byCategory: {},
-        bySubEntity: {},
       };
     }
     const m = months[key];
@@ -70,8 +69,6 @@ export function groupByMonth(rows) {
     } else {
       m.liquidTotal += row.amount;
       m.byEntityLiquid[row.entity] = (m.byEntityLiquid[row.entity] || 0) + row.amount;
-      const subKey = `${row.category} ${row.entity}`.trim();
-      m.bySubEntity[subKey] = (m.bySubEntity[subKey] || 0) + row.amount;
     }
 
     if (row.type === 'Cash') {

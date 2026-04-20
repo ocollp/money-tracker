@@ -29,7 +29,6 @@ import Heatmap from './components/Heatmap';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
-import InvestmentEvolutionChart from './components/InvestmentEvolutionChart';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { generateInsight } from './utils/insights.js';
 
@@ -196,14 +195,6 @@ export default function App() {
     const pct = prev !== 0 ? (change / Math.abs(prev)) * 100 : null;
     return { change, pct, current };
   }, [selectedEntity, entityNetWorth]);
-
-  const investmentSubEntities = useMemo(() => {
-    if (!stats?.allSubEntities) return [];
-    const investmentKeywords = ['Acciones', 'Cryptos', 'Crowfunding', 'Fondo indexado', 'Plan de pensiones'];
-    return stats.allSubEntities.filter(se =>
-      investmentKeywords.some(kw => se.startsWith(kw))
-    );
-  }, [stats]);
 
   const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : (apiUser || user);
 
@@ -465,14 +456,6 @@ export default function App() {
             />
           </div>
         </div>
-
-        {investmentSubEntities.length > 0 && stats.subEntityEvolution && (
-          <InvestmentEvolutionChart
-            data={stats.subEntityEvolution}
-            subEntities={investmentSubEntities}
-            title={t.investmentEvolutionTitle ?? 'Evolució inversions'}
-          />
-        )}
 
         <Heatmap data={stats.heatmap} />
 

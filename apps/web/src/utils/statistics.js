@@ -178,15 +178,6 @@ export function computeStatistics(months, options = {}) {
     return point;
   });
 
-  const allSubEntities = [...new Set(months.flatMap(m => Object.keys(m.bySubEntity || {})))];
-  const subEntityEvolution = months.map(m => {
-    const point = { date: m.shortLabel, key: m.key };
-    for (const se of allSubEntities) {
-      point[se] = (m.bySubEntity || {})[se] || 0;
-    }
-    return point;
-  });
-
   const cashVsInvested = months.map(m => ({
     date: m.shortLabel,
     key: m.key,
@@ -391,8 +382,6 @@ export function computeStatistics(months, options = {}) {
     worstStreak,
     distribution,
     entityEvolution,
-    subEntityEvolution,
-    allSubEntities,
     cashVsInvested,
     allEntities: allEntitiesLiquid,
     heatmap,

@@ -76,7 +76,6 @@ export const ca = {
   travelFundLabel: 'Fons de viatges',
   toggleHousing: 'Habitatge',
   toggleTravel: 'Viatges',
-  investmentEvolutionTitle: 'Evolució inversions',
   addMonth: 'Afegir mes',
   addMonthTitle: 'Afegir mes',
   addMonthSave: 'Desar',
