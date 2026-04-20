@@ -3,23 +3,30 @@ import { startRegistration, startAuthentication, browserSupportsWebAuthn } from 
 import { API_URL } from '../config.js';
 import { getAppJwt } from './useBackendProfile.js';
 
-const PASSKEY_REGISTERED_KEY = 'mt_passkey_registered';
-
 export function usePasskey({ onLoginSuccess }) {
   const [registering, setRegistering] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
   const [error, setError] = useState(null);
 
   const supported = Boolean(API_URL) && browserSupportsWebAuthn();
-  const [hasRegistered, setHasRegistered] = useState(() => {
-    try { return localStorage.getItem(PASSKEY_REGISTERED_KEY) === '1'; } catch { return false; }
-  });
+  const [hasRegistered, setHasRegistered] = useState(false);
+  const [checkingCredentials, setCheckingCredentials] = useState(supported);
 
   useEffect(() => {
-    try {
-      if (hasRegistered) localStorage.setItem(PASSKEY_REGISTERED_KEY, '1');
-    } catch {}
-  }, [hasRegistered]);
+    if (!supported) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/webauthn/has-credentials`);
+        if (res.ok) {
+          const { hasCredentials } = await res.json();
+          if (!cancelled) setHasRegistered(hasCredentials);
+        }
+      } catch {}
+      if (!cancelled) setCheckingCredentials(false);
+    })();
+    return () => { cancelled = true; };
+  }, [supported]);
 
   const register = useCallback(async () => {
     if (!supported) return;
@@ -106,6 +113,7 @@ export function usePasskey({ onLoginSuccess }) {
   return {
     supported,
     hasRegistered,
+    checkingCredentials,
     register,
     authenticate,
     registering,

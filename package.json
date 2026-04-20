@@ -8,6 +8,7 @@
     "dev": "npm run dev -w money-tracker-web",
     "dev:web": "npm run dev -w money-tracker-web",
     "dev:api": "npm run dev -w money-tracker-api",
+    "start:api": "node apps/api/src/server.js",
     "build": "npm run build -w money-tracker-web",
     "test": "npm run test -w money-tracker-web && npm run test -w money-tracker-api",
     "test:watch": "npm run test:watch -w money-tracker-web",

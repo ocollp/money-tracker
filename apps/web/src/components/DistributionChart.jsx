@@ -74,8 +74,8 @@ function ToggleButton({ active, onClick, children, label }) {
       onClick={onClick}
       className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 ${
         active
-          ? 'bg-white/[0.08] border-white/[0.12] text-text-primary'
-          : 'bg-white/[0.02] border-white/[0.05] text-text-secondary/30'
+          ? 'bg-white/[0.14] border-white/[0.2] text-white'
+          : 'bg-white/[0.03] border-white/[0.06] text-text-secondary/30'
       }`}
       aria-label={label}
       title={label}

@@ -78,6 +78,7 @@ export default function LoginScreen({
     if (autoTriggered.current) return;
     if (checkingSession) return;
     if (!passkey?.supported || !passkey.hasRegistered) return;
+    if (passkey.checkingCredentials) return;
     if (passkey.authenticating) return;
     autoTriggered.current = true;
     const timer = setTimeout(() => passkey.authenticate(), 800);

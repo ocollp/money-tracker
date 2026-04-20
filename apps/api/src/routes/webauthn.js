@@ -130,6 +130,19 @@ export async function webauthnRoutes(fastify) {
     },
   );
 
+  // ─── Check if any passkeys exist (public, no auth needed) ───────────────
+
+  fastify.get('/has-credentials', async (_request, reply) => {
+    const db = getDb();
+    if (!db) return reply.code(503).send({ error: 'database_not_configured' });
+
+    const userWithPasskeys = await db.collection('users').findOne(
+      { 'passkeys.0': { $exists: true } },
+      { projection: { _id: 1 } },
+    );
+    return { hasCredentials: !!userWithPasskeys };
+  });
+
   // ─── Authentication (no JWT needed — this IS the login) ─────────────────
 
   fastify.post('/login-options', async (request, reply) => {
