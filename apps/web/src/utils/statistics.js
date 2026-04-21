@@ -5,11 +5,13 @@ import {
   OWNERSHIP_SHARE,
   ASSUMED_UNEMPLOYMENT,
   TRAVEL_MONTHLY_SAVING,
+  TRAVEL_PATRIMONY_SHARE,
 } from '../config.js';
 
 function totalWealth(m) {
   return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0) + (m.travelFund || 0);
 }
+
 
 function fillMissingMonths(months) {
   if (months.length <= 1) {
@@ -178,6 +180,15 @@ export function computeStatistics(months, options = {}) {
     return point;
   });
 
+  /** Per-fila sèries per sparklines al repartiment (noms que no coincideixen amb claus de byEntityLiquid). */
+  const distributionSparklineExtras = {
+    'Hipoteca BBVA': months.map(m => {
+      const h = m.byEntityHousing?.BBVA;
+      return h ? (h.value || 0) + (h.debt || 0) : 0;
+    }),
+    'Fons de viatges': months.map(m => (m.travelFund || 0) * TRAVEL_PATRIMONY_SHARE),
+  };
+
   const cashVsInvested = months.map(m => ({
     date: m.shortLabel,
     key: m.key,
@@ -218,7 +229,12 @@ export function computeStatistics(months, options = {}) {
   }));
   const latestTravelFund = latestMonth.travelFund || 0;
   if (latestTravelFund !== 0) {
-    distribution.push({ name: 'Fons de viatges', value: latestTravelFund, isTravel: true, pct: 0 });
+    distribution.push({
+      name: 'Fons de viatges',
+      value: latestTravelFund * TRAVEL_PATRIMONY_SHARE,
+      isTravel: true,
+      pct: 0,
+    });
   }
   const totalWithTravel = distribution.reduce((s, d) => s + d.value, 0);
   for (const d of distribution) {
@@ -382,6 +398,7 @@ export function computeStatistics(months, options = {}) {
     worstStreak,
     distribution,
     entityEvolution,
+    distributionSparklineExtras,
     cashVsInvested,
     allEntities: allEntitiesLiquid,
     heatmap,

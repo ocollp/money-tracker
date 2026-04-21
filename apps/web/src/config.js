@@ -43,3 +43,6 @@ export const MORTGAGE_MONTHLY_PAYMENT = n(import.meta.env.VITE_MORTGAGE_MONTHLY_
 export const OWNERSHIP_SHARE = n(import.meta.env.VITE_OWNERSHIP_SHARE);
 export const ASSUMED_UNEMPLOYMENT = n(import.meta.env.VITE_ASSUMED_UNEMPLOYMENT) ?? 1000;
 export const TRAVEL_MONTHLY_SAVING = n(import.meta.env.VITE_TRAVEL_MONTHLY_SAVING) ?? 600;
+
+/** Fraction of the shared travel pot that counts toward individual total wealth / repartiment (rest is “partner’s share”). */
+export const TRAVEL_PATRIMONY_SHARE = 0.5;

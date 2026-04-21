@@ -16,6 +16,7 @@ import {
   PROFILE_SECONDARY_ID,
   SPREADSHEET_ID_2,
   API_URL,
+  TRAVEL_PATRIMONY_SHARE,
 } from './config';
 import LoginScreen from './components/LoginScreen';
 import NoSheetAccessScreen from './components/NoSheetAccessScreen';
@@ -428,7 +429,9 @@ export default function App() {
               title={t.kpiTotalWealth}
               value={formatMoney(
                 stats.currentTotalWealth -
-                  (stats.hasTravel && stats.travel ? (stats.travel.current ?? 0) / 2 : 0),
+                  (stats.hasTravel && stats.travel
+                    ? (stats.travel.current ?? 0) * (1 - TRAVEL_PATRIMONY_SHARE)
+                    : 0),
               )}
               subtitle={null}
               trend={0}
@@ -444,6 +447,7 @@ export default function App() {
             selectedEntity={selectedEntity}
             onSelectEntity={setSelectedEntity}
             entityEvolution={stats.entityEvolution}
+            distributionSparklineExtras={stats.distributionSparklineExtras}
             hasHousing={stats.hasHousing}
             hasTravel={stats.hasTravel}
           />

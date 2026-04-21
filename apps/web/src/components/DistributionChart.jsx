@@ -22,6 +22,13 @@ const ENTITY_COLORS = {
   'Fons de viatges': '#a78bfa',
 };
 
+/** Shorter labels in the Repartiment list/pie (internal `name` keys unchanged for data/sparklines). */
+const REPARTIMENT_DISPLAY_LABELS = {
+  'Hipoteca BBVA': 'Hipoteca',
+  'Compte corrent BBVA': 'BBVA',
+  CaixaBank: 'La Caixa',
+};
+
 function getColor(name, index) {
   return ENTITY_COLORS[name] ?? DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
 }
@@ -54,7 +61,12 @@ function MiniSparkline({ data, color, width = 48, height = 18 }) {
   }).join(' ');
 
   return (
-    <svg width={width} height={height} className="shrink-0 opacity-60 hidden sm:block">
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      className="shrink-0 opacity-60 block h-3 w-9 min-[380px]:w-10 sm:h-[18px] sm:w-12"
+      aria-hidden
+    >
       <polyline
         points={points}
         fill="none"
@@ -85,12 +97,22 @@ function ToggleButton({ active, onClick, children, label }) {
   );
 }
 
-export default function DistributionChart({ distribution, title, selectedEntity, onSelectEntity, entityEvolution, hasHousing, hasTravel }) {
+export default function DistributionChart({
+  distribution,
+  title,
+  selectedEntity,
+  onSelectEntity,
+  entityEvolution,
+  distributionSparklineExtras,
+  hasHousing,
+  hasTravel,
+}) {
   const { t } = useI18n();
   const [showHousing, setShowHousing] = useState(true);
   const [showTravel, setShowTravel] = useState(true);
 
   const displayName = (name) => {
+    if (name in REPARTIMENT_DISPLAY_LABELS) return REPARTIMENT_DISPLAY_LABELS[name];
     if (name === 'Efectivo') return t.entityEffective;
     if (name === 'Fons de viatges') return t.travelFundLabel ?? 'Fons de viatges';
     return name;
@@ -107,8 +129,18 @@ export default function DistributionChart({ distribution, title, selectedEntity,
       if (key === 'date' || key === 'key') continue;
       result[key] = last6.map(e => e[key] || 0);
     }
+    if (result.BBVA) {
+      result['Compte corrent BBVA'] = result.BBVA;
+    }
+    if (distributionSparklineExtras && typeof distributionSparklineExtras === 'object') {
+      for (const [k, series] of Object.entries(distributionSparklineExtras)) {
+        if (Array.isArray(series) && series.length >= 2) {
+          result[k] = series.slice(-6);
+        }
+      }
+    }
     return result;
-  }, [entityEvolution]);
+  }, [entityEvolution, distributionSparklineExtras]);
 
   if (!distribution?.length) return null;
 
