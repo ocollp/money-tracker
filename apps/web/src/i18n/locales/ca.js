@@ -21,6 +21,8 @@ export const ca = {
   checkingSession: 'Comprovant sessió...',
   reload: 'Recarregar la pàgina',
   loginButton: 'Entrar amb Google',
+  authErrorDatabaseNotConfigured:
+    'El servidor no té MongoDB configurat. A Render → Environment afegeix MONGODB_URI (cadena d’Atlas), JWT_SECRET i desa; després redeploy.',
   loginFaceId: 'Entrar amb Face ID',
   registerFaceId: 'Activar Face ID',
   loading: 'Carregant...',

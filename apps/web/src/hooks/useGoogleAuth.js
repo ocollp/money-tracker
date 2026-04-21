@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GOOGLE_CLIENT_ID, SCOPES, API_URL } from '../config';
+import { useI18n } from '../i18n/I18nContext.jsx';
+
+function mapAuthApiError(body, t) {
+  if (body?.error === 'database_not_configured') {
+    return t.authErrorDatabaseNotConfigured ?? 'database_not_configured';
+  }
+  return body?.error || null;
+}
 
 const STORAGE_KEY = 'mt_auth';
 const JWT_KEY = 'mt_app_jwt';
@@ -64,6 +72,7 @@ async function fetchUserInfo(token) {
 // ─── hook ─────────────────────────────────────────────────────────────────
 
 export default function useGoogleAuth() {
+  const { t } = useI18n();
   const implicitSaved = !USE_BACKEND ? loadImplicitSession() : null;
   const implicitHasValidToken = Boolean(
     implicitSaved?.expiresAt && Date.now() < implicitSaved.expiresAt
@@ -145,7 +154,7 @@ export default function useGoogleAuth() {
                 });
                 if (!res.ok) {
                   const body = await res.json().catch(() => ({}));
-                  throw new Error(body?.error || `Error ${res.status}`);
+                  throw new Error(mapAuthApiError(body, t) || `Error ${res.status}`);
                 }
                 const data = await res.json();
                 saveBackendSession(data.user, data.token);
@@ -243,7 +252,7 @@ export default function useGoogleAuth() {
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
       if (silentCheckTimer.current) clearTimeout(silentCheckTimer.current);
     };
-  }, []);
+  }, [t]);
 
   const login = useCallback((loginHint) => {
     if (USE_BACKEND) {

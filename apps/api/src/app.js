@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { getDb } from './db.js';
+import { isMongoUriConfigured, resolveMongoUri } from './lib/mongoEnv.js';
 import { registerAuth } from './plugins/auth.js';
 import { authRoutes } from './routes/auth.js';
 import { meRoutes } from './routes/me.js';
@@ -25,11 +26,16 @@ export async function buildApp(opts = {}) {
   await fastify.register(sheetsRoutes, { prefix: '/sheets' });
   await fastify.register(webauthnRoutes, { prefix: '/auth/webauthn' });
 
-  fastify.get('/health', async () => ({
-    ok: true,
-    service: 'money-tracker-api',
-    db: Boolean(getDb()),
-  }));
+  fastify.get('/health', async () => {
+    const { envKey } = resolveMongoUri();
+    return {
+      ok: true,
+      service: 'money-tracker-api',
+      mongoUriEnvSet: isMongoUriConfigured(),
+      mongoUriEnvKey: envKey,
+      db: Boolean(getDb()),
+    };
+  });
 
   fastify.get('/', async () => ({
     message: 'Money Tracker API',

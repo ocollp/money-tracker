@@ -23,6 +23,8 @@ export const en = {
   checkingSession: 'Checking session...',
   reload: 'Reload page',
   loginButton: 'Sign in with Google',
+  authErrorDatabaseNotConfigured:
+    'The API has no MongoDB. In Render → Environment set MONGODB_URI (Atlas connection string) and JWT_SECRET, save, then redeploy.',
   loginFaceId: 'Sign in with Face ID',
   registerFaceId: 'Enable Face ID',
   loading: 'Loading...',

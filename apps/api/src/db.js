@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb';
+import { resolveMongoUri } from './lib/mongoEnv.js';
 
 let client;
 let db;
@@ -17,10 +18,10 @@ const CONNECT_RETRIES = 4;
 const CONNECT_BASE_DELAY_MS = 1500;
 
 export async function connectDb() {
-  const uri = typeof process.env.MONGODB_URI === 'string' ? process.env.MONGODB_URI.trim() : '';
+  const { uri } = resolveMongoUri();
   if (!uri) {
     console.warn(
-      '[api] MONGODB_URI is missing — set it in Render → Environment (same name, no typos). Auth will not work until then.',
+      '[api] No MongoDB URI — set MONGODB_URI (or MONGODB_URL / DATABASE_URL) in Render → Environment.',
     );
     return null;
   }
