@@ -411,10 +411,10 @@ export default function App() {
             <KpiCard
               className={stats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
               title={t.travelTitle}
-              value={formatMoney((stats.travel.current ?? 0) * 2)}
+              value={formatMoney(stats.travel.current ?? 0)}
               subtitle={
                 (stats.travel.spentLastMonth ?? 0) > 0
-                  ? `${t.travelSpentLastMonth}: ${formatMoney((stats.travel.spentLastMonth ?? 0) * 2)}`
+                  ? `${t.travelSpentLastMonth}: ${formatMoney(stats.travel.spentLastMonth ?? 0)}`
                   : null
               }
               trend={0}
@@ -426,7 +426,10 @@ export default function App() {
             <KpiCard
               className={kpiCount === 3 ? 'col-span-2 lg:col-span-1' : ''}
               title={t.kpiTotalWealth}
-              value={formatMoney(stats.currentTotalWealth)}
+              value={formatMoney(
+                stats.currentTotalWealth -
+                  (stats.hasTravel && stats.travel ? (stats.travel.current ?? 0) / 2 : 0),
+              )}
               subtitle={null}
               trend={0}
               icon="💸"
