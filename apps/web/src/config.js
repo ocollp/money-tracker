@@ -1,5 +1,12 @@
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-export const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '').trim();
+/** En desenvolupament, si no hi ha VITE_API_URL, Vite fa proxy cap a l'API (mateix origen, sense CORS). */
+const useDevProxy = import.meta.env.DEV && !rawApiUrl;
+/** Prefix per fetch: URL completa, o "" per rutes relatives (proxy dev). */
+export const API_URL = useDevProxy ? '' : rawApiUrl;
+/** Si l'app ha de parlar amb l'API Node (URL directa o proxy local). */
+export const HAS_BACKEND = Boolean(rawApiUrl) || useDevProxy;
 export const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 export const SPREADSHEET_ID_2 = import.meta.env.VITE_SPREADSHEET_ID_2 || '';
 export const SHEET_RANGE = 'A:I';

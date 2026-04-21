@@ -8,7 +8,7 @@ import {
   checkSheetAccessViaBackend,
 } from '../services/sheetsApi';
 import { getTestStats } from '../data/testData';
-import { PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID, API_URL } from '../config';
+import { PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID, API_URL, HAS_BACKEND } from '../config';
 import { financeConfigToStatsOptions } from '../lib/mergeFinanceConfig.js';
 
 const POLL_INTERVAL_MS = 45 * 1000;
@@ -25,7 +25,7 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
 
   // ── Single source of truth: do we have a valid auth credential? ──
   // Every effect below gates on `authReady` — nothing runs without it.
-  const useBackend = Boolean(API_URL && appJwt);
+  const useBackend = Boolean(HAS_BACKEND && appJwt);
   const authReady = isTestData || (useBackend ? Boolean(appJwt) : Boolean(accessToken));
 
   const checkAccess = useMemo(() => {

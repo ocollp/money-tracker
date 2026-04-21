@@ -1,5 +1,6 @@
 import { getDb } from '../db.js';
 import { fetchGoogleUserInfo } from '../lib/googleUser.js';
+import { isAllowedGoogleRedirectUri } from '../lib/googleOAuthRedirect.js';
 import { exchangeCodeForTokens } from '../lib/googleTokens.js';
 import { signAppJwt } from '../lib/jwt.js';
 import { defaultSettings } from '../lib/userModel.js';
@@ -14,13 +15,18 @@ export async function authRoutes(fastify) {
       return reply.code(503).send({ error: 'database_not_configured' });
     }
 
-    const { code, accessToken: bodyAccessToken } = request.body || {};
+    const { code, accessToken: bodyAccessToken, redirect_uri: redirectUriBody } = request.body || {};
     let googleAccessToken;
     let tokenFields = {};
 
     if (code && typeof code === 'string') {
+      const redirectUri =
+        typeof redirectUriBody === 'string' ? redirectUriBody.trim() : '';
+      if (!redirectUri || !isAllowedGoogleRedirectUri(redirectUri)) {
+        return reply.code(400).send({ error: 'redirect_uri_invalid' });
+      }
       try {
-        const tokens = await exchangeCodeForTokens(code);
+        const tokens = await exchangeCodeForTokens(code, redirectUri);
         googleAccessToken = tokens.accessToken;
         tokenFields = {
           googleAccessToken: tokens.accessToken,

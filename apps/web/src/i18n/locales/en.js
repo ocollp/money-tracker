@@ -25,6 +25,8 @@ export const en = {
   loginButton: 'Sign in with Google',
   authErrorDatabaseNotConfigured:
     'The API has no MongoDB. In Render → Environment set MONGODB_URI (Atlas connection string) and JWT_SECRET, save, then redeploy.',
+  authErrorRedirectUri:
+    'This browser origin is not allowed for the API. In Google Cloud → OAuth client add it under Authorized JavaScript origins and Authorized redirect URIs; on the API, CORS_ORIGIN must match (e.g. http://localhost:5174).',
   loginFaceId: 'Sign in with Face ID',
   registerFaceId: 'Enable Face ID',
   loading: 'Loading...',

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { API_URL } from '../config.js';
+import { API_URL, HAS_BACKEND } from '../config.js';
 
 const JWT_KEY = 'mt_app_jwt';
 
@@ -29,7 +29,7 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
   const [backendReady, setBackendReady] = useState(false);
 
   useEffect(() => {
-    if (!API_URL) {
+    if (!HAS_BACKEND) {
       setBackendReady(true);
       return;
     }
@@ -129,7 +129,7 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
   }, [accessToken, appJwt]);
 
   const refreshProfile = useCallback(async () => {
-    if (!API_URL) return;
+    if (!HAS_BACKEND) return;
     const jwt = getAppJwt();
     if (!jwt) return;
     const res = await fetch(`${API_URL}/me`, {
@@ -147,7 +147,7 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
   }, [onJwtExpired]);
 
   const patchSettings = useCallback(async (partial) => {
-    if (!API_URL) throw new Error('API not configured');
+    if (!HAS_BACKEND) throw new Error('API not configured');
     const jwt = getAppJwt();
     if (!jwt) throw new Error('Not authenticated with API');
     const res = await fetch(`${API_URL}/me`, {
@@ -173,7 +173,7 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
     loading,
     error,
     backendReady,
-    hasApi: Boolean(API_URL),
+    hasApi: HAS_BACKEND,
     refreshProfile,
     patchSettings,
   };

@@ -18,7 +18,16 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     base: process.env.VITE_BASE_PATH || '/',
-    server: { port: 5174 },
+    server: {
+      port: 5174,
+      // Mateix origen que el navegador: evita CORS en local quan no hi ha VITE_API_URL (veure config.js).
+      proxy: {
+        '/auth': { target: 'http://127.0.0.1:3001', changeOrigin: true },
+        '/me': { target: 'http://127.0.0.1:3001', changeOrigin: true },
+        '/sheets': { target: 'http://127.0.0.1:3001', changeOrigin: true },
+        '/health': { target: 'http://127.0.0.1:3001', changeOrigin: true },
+      },
+    },
     test: {
       globals: true,
       environment: 'jsdom',

@@ -27,7 +27,7 @@ Vitest + `fastify.inject()`, in-memory DB stub, mocked `fetch` for Google userin
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `POST` | `/auth/google` | — | Body `{ "accessToken": "<Google OAuth token>" }` → `{ token, user, settings }` |
+| `POST` | `/auth/google` | — | Body `{ "code", "redirect_uri" }` (GIS popup: `redirect_uri` = page origin, e.g. `http://localhost:5174`) or `{ "accessToken" }` (implicit) → `{ token, user, settings }` |
 | `GET` | `/me` | Bearer app JWT | Current user + settings |
 | `PATCH` | `/me` | Bearer app JWT | Partial settings merge (allowed keys in `userModel`) |
 
@@ -41,8 +41,8 @@ Vitest + `fastify.inject()`, in-memory DB stub, mocked `fetch` for Google userin
 | `MONGODB_DB_NAME` | `money_tracker` | Database name |
 | `JWT_SECRET` | — | **Required** when `MONGODB_URI` is set |
 | `JWT_EXPIRES_IN` | `7d` | App JWT expiry (jsonwebtoken string) |
-| `CORS_ORIGIN` | `*` | Comma-separated allowed origins for the web app |
+| `CORS_ORIGIN` | `*` | Comma-separated allowed origins for the web app. Must include each dev origin (e.g. `http://localhost:5174`) and your production site origin — the same values must appear in **Google Cloud Console → OAuth 2.0 Client → Authorized JavaScript origins** and **Authorized redirect URIs** (GIS code flow uses the page origin as `redirect_uri` when exchanging the code, not `postmessage`). |
 
 ## Web app
 
-Set `VITE_API_URL` (no trailing slash) in `apps/web/.env` to the API base URL. The Google OAuth client must include scopes `openid email profile` (plus Sheets) so the same token works with userinfo.
+Set `VITE_API_URL` (no trailing slash) in `apps/web/.env` to the API base URL, or omit it in dev to use the Vite proxy. The Google OAuth client must include scopes `openid email profile` (plus Sheets) so the same token works with userinfo.

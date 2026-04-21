@@ -23,6 +23,8 @@ export const es = {
   checkingSession: 'Comprobando sesión...',
   reload: 'Recargar la página',
   loginButton: 'Entrar con Google',
+  authErrorRedirectUri:
+    'El origen del navegador no está permitido para la API. En Google Cloud → cliente OAuth añade ese origen en «Authorized JavaScript origins» y «Authorized redirect URIs»; en la API, CORS_ORIGIN debe coincidir (p. ej. http://localhost:5174).',
   authErrorDatabaseNotConfigured:
     'El servidor no tiene MongoDB configurado. En Render → Environment añade MONGODB_URI (cadena de Atlas), JWT_SECRET y guarda; luego redeploy.',
   loginFaceId: 'Entrar con Face ID',

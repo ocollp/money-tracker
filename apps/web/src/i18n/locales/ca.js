@@ -23,6 +23,8 @@ export const ca = {
   loginButton: 'Entrar amb Google',
   authErrorDatabaseNotConfigured:
     'El servidor no té MongoDB configurat. A Render → Environment afegeix MONGODB_URI (cadena d’Atlas), JWT_SECRET i desa; després redeploy.',
+  authErrorRedirectUri:
+    "L'origen del navegador no està permès per l'API. A Google Cloud → OAuth client afegeix aquest origen a «Authorized JavaScript origins» i «Authorized redirect URIs»; a l'API, CORS_ORIGIN ha de coincidir (p. ex. http://localhost:5174).",
   loginFaceId: 'Entrar amb Face ID',
   registerFaceId: 'Activar Face ID',
   loading: 'Carregant...',

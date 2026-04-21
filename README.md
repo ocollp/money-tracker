@@ -39,9 +39,12 @@ Personal finance dashboard: net worth over time, monthly changes, burn rate, run
 4. Run locally:
 
    ```bash
-   npm run dev          # Vite dev server (apps/web)
-   npm run dev:api      # API on http://localhost:3001 (needs .env if using MongoDB)
+   npm run dev       # web (Vite) + API (port 3001) together — recommended
+   npm run dev:web   # only Vite
+   npm run dev:api   # only API
    ```
+
+   If MongoDB is not running locally, the API still listens (dev only); login needs a working DB. See `apps/api/README.md`.
 
 ## Tests
 

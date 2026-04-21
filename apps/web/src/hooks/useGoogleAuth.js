@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GOOGLE_CLIENT_ID, SCOPES, API_URL } from '../config';
+import { GOOGLE_CLIENT_ID, SCOPES, API_URL, HAS_BACKEND } from '../config';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 function mapAuthApiError(body, t) {
   if (body?.error === 'database_not_configured') {
     return t.authErrorDatabaseNotConfigured ?? 'database_not_configured';
+  }
+  if (body?.error === 'redirect_uri_invalid') {
+    return (
+      t.authErrorRedirectUri ??
+      "L'origen del navegador no coincideix amb CORS_ORIGIN de l'API (inclou http://localhost:5174 i el teu domini de producció)."
+    );
   }
   return body?.error || null;
 }
@@ -17,7 +23,7 @@ const SILENT_CHECK_MS = 3000;
 const GIS_LOAD_TIMEOUT_MS = 15000;
 
 // True when the app is backed by an API that can proxy Sheets + store refresh tokens
-const USE_BACKEND = Boolean(API_URL);
+const USE_BACKEND = HAS_BACKEND;
 
 // ─── storage helpers ───────────────────────────────────────────────────────
 
@@ -150,7 +156,10 @@ export default function useGoogleAuth() {
                 const res = await fetch(`${API_URL}/auth/google`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ code: response.code }),
+                  body: JSON.stringify({
+                    code: response.code,
+                    redirect_uri: window.location.origin,
+                  }),
                 });
                 if (!res.ok) {
                   const body = await res.json().catch(() => ({}));
@@ -162,7 +171,13 @@ export default function useGoogleAuth() {
                 setAppJwt(data.token);
                 setAuthError(null);
               } catch (e) {
-                setAuthError(e.message || 'Error autenticant amb el servidor');
+                const net =
+                  e instanceof TypeError || /failed to fetch/i.test(String(e?.message || ''));
+                setAuthError(
+                  net
+                    ? "No s'ha pogut connectar amb l'API (port 3001). Des de l'arrel del repo executa: npm run dev (engega web + API). Si només l'API: npm run dev:api. Amb VITE_API_URL comentada al .env s'usa el proxy de Vite i no cal CORS."
+                    : e.message || 'Error autenticant amb el servidor',
+                );
               }
             },
           });

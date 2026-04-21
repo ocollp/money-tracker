@@ -8,12 +8,33 @@ import { meRoutes } from './routes/me.js';
 import { sheetsRoutes } from './routes/sheets.js';
 import { webauthnRoutes } from './routes/webauthn.js';
 
+/** localhost and 127.0.0.1 are different Origins; mirror both so dev works either way. */
+function parseCorsOrigins() {
+  const raw = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+  if (raw.length === 0) return true;
+  const allowed = new Set(raw);
+  for (const o of raw) {
+    try {
+      const u = new URL(o);
+      if (u.hostname === 'localhost') {
+        allowed.add(`${u.protocol}//127.0.0.1${u.port ? `:${u.port}` : ''}`);
+      }
+      if (u.hostname === '127.0.0.1') {
+        allowed.add(`${u.protocol}//localhost${u.port ? `:${u.port}` : ''}`);
+      }
+    } catch {
+      /* ignore invalid */
+    }
+  }
+  return [...allowed];
+}
+
 export async function buildApp(opts = {}) {
   const fastify = Fastify({ logger: opts.logger ?? true });
 
-  const corsOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean)
-    : true;
+  const corsOrigins = process.env.CORS_ORIGIN ? parseCorsOrigins() : true;
 
   await fastify.register(cors, {
     origin: corsOrigins,

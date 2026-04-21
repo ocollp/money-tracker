@@ -46,7 +46,7 @@ describe('app', () => {
         const res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { code: 'any' },
+          payload: { code: 'any', redirect_uri: 'http://localhost:5174' },
         });
         expect(res.statusCode).toBe(503);
         expect(JSON.parse(res.body).error).toBe('database_not_configured');
@@ -69,6 +69,26 @@ describe('app', () => {
         });
         expect(res.statusCode).toBe(400);
         expect(JSON.parse(res.body).error).toBe('code_or_accessToken_required');
+      });
+
+      it('returns 400 redirect_uri_invalid when code is sent without allowed redirect_uri', async () => {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/auth/google',
+          payload: { code: 'x', redirect_uri: 'https://evil.example' },
+        });
+        expect(res.statusCode).toBe(400);
+        expect(JSON.parse(res.body).error).toBe('redirect_uri_invalid');
+      });
+
+      it('returns 400 redirect_uri_invalid when redirect_uri is missing', async () => {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/auth/google',
+          payload: { code: 'x' },
+        });
+        expect(res.statusCode).toBe(400);
+        expect(JSON.parse(res.body).error).toBe('redirect_uri_invalid');
       });
 
       it('accepts accessToken (implicit flow) and returns JWT + user', async () => {
@@ -110,7 +130,7 @@ describe('app', () => {
         const res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { code: 'bad' },
+          payload: { code: 'bad', redirect_uri: 'http://localhost:5174' },
         });
         expect(res.statusCode).toBe(401);
         expect(JSON.parse(res.body).error).toBe('invalid_google_token');
@@ -133,7 +153,7 @@ describe('app', () => {
         const res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { code: 'good-code' },
+          payload: { code: 'good-code', redirect_uri: 'http://localhost:5174' },
         });
         expect(res.statusCode).toBe(200);
         const body = JSON.parse(res.body);
@@ -160,7 +180,7 @@ describe('app', () => {
         let res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { code: 'c1' },
+          payload: { code: 'c1', redirect_uri: 'http://localhost:5174' },
         });
         expect(res.statusCode).toBe(200);
 
@@ -177,7 +197,7 @@ describe('app', () => {
         res = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { code: 'c2' },
+          payload: { code: 'c2', redirect_uri: 'http://localhost:5174' },
         });
         expect(res.statusCode).toBe(200);
         const body = JSON.parse(res.body);
@@ -218,7 +238,7 @@ describe('app', () => {
         const authRes = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { code: 'tok' },
+          payload: { code: 'tok', redirect_uri: 'http://localhost:5174' },
         });
         const { token } = JSON.parse(authRes.body);
 
@@ -252,7 +272,7 @@ describe('app', () => {
         const authRes = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { code: 'tok' },
+          payload: { code: 'tok', redirect_uri: 'http://localhost:5174' },
         });
         const { token } = JSON.parse(authRes.body);
 
@@ -282,7 +302,7 @@ describe('app', () => {
         const authRes = await app.inject({
           method: 'POST',
           url: '/auth/google',
-          payload: { code: 'tok' },
+          payload: { code: 'tok', redirect_uri: 'http://localhost:5174' },
         });
         const { token } = JSON.parse(authRes.body);
 

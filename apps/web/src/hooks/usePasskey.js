@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
-import { API_URL } from '../config.js';
+import { API_URL, HAS_BACKEND } from '../config.js';
 import { getAppJwt } from './useBackendProfile.js';
 
 export function usePasskey({ onLoginSuccess }) {
@@ -8,7 +8,7 @@ export function usePasskey({ onLoginSuccess }) {
   const [authenticating, setAuthenticating] = useState(false);
   const [error, setError] = useState(null);
 
-  const supported = Boolean(API_URL) && browserSupportsWebAuthn();
+  const supported = HAS_BACKEND && browserSupportsWebAuthn();
   const [hasRegistered, setHasRegistered] = useState(false);
   const [checkingCredentials, setCheckingCredentials] = useState(supported);
 

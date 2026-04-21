@@ -2,18 +2,33 @@ import { OAuth2Client } from 'google-auth-library';
 
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
 
-function getOAuth2Client() {
+function getCredentials() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required');
   }
-  return new OAuth2Client(clientId, clientSecret, 'postmessage');
+  return { clientId, clientSecret };
 }
 
-export async function exchangeCodeForTokens(code) {
-  const client = getOAuth2Client();
-  const { tokens } = await client.getToken(code);
+function getOAuth2ClientForCodeExchange(redirectUri) {
+  const { clientId, clientSecret } = getCredentials();
+  return new OAuth2Client({ clientId, clientSecret, redirectUri });
+}
+
+function getOAuth2ClientForRefresh() {
+  const { clientId, clientSecret } = getCredentials();
+  return new OAuth2Client({ clientId, clientSecret });
+}
+
+/** @param {string} code - Authorization code from GIS */
+/** @param {string} redirectUri - Must be window.location.origin (popup flow), not "postmessage" */
+export async function exchangeCodeForTokens(code, redirectUri) {
+  const client = getOAuth2ClientForCodeExchange(redirectUri);
+  const { tokens } = await client.getToken({
+    code,
+    redirect_uri: redirectUri,
+  });
   return {
     accessToken: tokens.access_token,
     refreshToken: tokens.refresh_token || null,
@@ -22,7 +37,7 @@ export async function exchangeCodeForTokens(code) {
 }
 
 export async function refreshAccessToken(refreshToken) {
-  const client = getOAuth2Client();
+  const client = getOAuth2ClientForRefresh();
   client.setCredentials({ refresh_token: refreshToken });
   const { credentials } = await client.refreshAccessToken();
   return {
