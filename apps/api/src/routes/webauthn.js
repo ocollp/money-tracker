@@ -132,15 +132,18 @@ export async function webauthnRoutes(fastify) {
 
   // ─── Check if any passkeys exist (public, no auth needed) ───────────────
 
+  // When DB is unavailable, respond 200 so the login UI can still load; Face ID probe just sees no passkeys.
   fastify.get('/has-credentials', async (_request, reply) => {
     const db = getDb();
-    if (!db) return reply.code(503).send({ error: 'database_not_configured' });
+    if (!db) {
+      return reply.send({ hasCredentials: false, databaseAvailable: false });
+    }
 
     const userWithPasskeys = await db.collection('users').findOne(
       { 'passkeys.0': { $exists: true } },
       { projection: { _id: 1 } },
     );
-    return { hasCredentials: !!userWithPasskeys };
+    return { hasCredentials: !!userWithPasskeys, databaseAvailable: true };
   });
 
   // ─── Authentication (no JWT needed — this IS the login) ─────────────────
