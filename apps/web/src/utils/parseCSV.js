@@ -1,10 +1,6 @@
 const VIVIENDA_PERSONAL = 'Vivienda personal';
 const INVERTIDO = 'Invertido';
 
-/**
- * Si `amount` es un número distinto de 0, quita del CSV las filas «Vivienda personal» de esa entidad
- * y añade una fila sintética por cada mes que siga teniendo datos (mismo importe en todos).
- */
 export function mergeFixedHousingSheetRows(rows, opts) {
   const amount = opts?.amount;
   const entityRaw = opts?.entity ?? 'BBVA';

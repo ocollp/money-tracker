@@ -53,10 +53,6 @@ const travelPatRaw = n(import.meta.env.VITE_TRAVEL_PATRIMONY_SHARE);
 export const TRAVEL_PATRIMONY_SHARE =
   travelPatRaw != null && travelPatRaw >= 0 && travelPatRaw <= 1 ? travelPatRaw : 1;
 
-/**
- * Valor fijo de la fila «Invertido / Vivienda personal» (tu parte en el CSV). Si está definido, no hace falta repetir esa fila cada mes en la hoja.
- * Opcional: `VITE_HOUSING_EQUITY_ENTITY` (por defecto BBVA) para coincidir con la entidad de la fila que dejarías de copiar.
- */
 export const HOUSING_SHEET_FIXED_VALUE = n(import.meta.env.VITE_HOUSING_EQUITY);
 export const HOUSING_SHEET_FIXED_ENTITY =
   (import.meta.env.VITE_HOUSING_EQUITY_ENTITY || 'BBVA').trim() || 'BBVA';

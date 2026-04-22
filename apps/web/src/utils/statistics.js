@@ -8,15 +8,38 @@ import {
   TRAVEL_PATRIMONY_SHARE,
 } from '../config.js';
 
-function totalWealth(m) {
-  return (m.liquidTotal || 0) + (m.housingValue || 0) + (m.mortgageDebt || 0) + (m.travelFund || 0);
+export function buildEffectiveMortgageSeries(months) {
+  const n = months.length;
+  const raw = months.map((m) => m.mortgageDebt || 0);
+  const out = new Array(n).fill(0);
+  const firstNZ = raw.findIndex((d) => d !== 0);
+  if (firstNZ === -1) return out;
+  const anchor = raw[firstNZ];
+  for (let i = 0; i < firstNZ; i++) out[i] = anchor;
+  let last = anchor;
+  for (let i = firstNZ; i < n; i++) {
+    if (raw[i] !== 0) last = raw[i];
+    out[i] = last;
+  }
+  return out;
 }
 
-
-function fillMissingMonths(months) {
+function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0), mortgageByKey) {
+  const mdFor = (m) =>
+    mortgageByKey && mortgageByKey.has(m.key)
+      ? mortgageByKey.get(m.key)
+      : (m.mortgageDebt || 0);
+  const totalWealthM = (m) =>
+    (m.liquidTotal || 0) +
+    housingValueOf(m) +
+    mdFor(m) +
+    (m.travelFund || 0);
   if (months.length <= 1) {
-    const tw = months.length ? totalWealth(months[0]) : 0;
-    return { filledMonths: months, filledLiquidTotals: months.map(m => m.liquidTotal), filledTotalWealth: months.map(m => totalWealth(m)) };
+    return {
+      filledMonths: months,
+      filledLiquidTotals: months.map((m) => m.liquidTotal),
+      filledTotalWealth: months.map((m) => totalWealthM(m)),
+    };
   }
   const first = months[0].date;
   const last = months[months.length - 1].date;
@@ -26,20 +49,30 @@ function fillMissingMonths(months) {
   const filledTotalWealth = [];
   const monthNamesShort = ['', 'Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
   let lastLiquid = months[0].liquidTotal;
-  let lastTW = totalWealth(months[0]);
+  let lastMortgageEff = mdFor(months[0]);
+  let lastTW = totalWealthM(months[0]);
   for (let d = new Date(first.getFullYear(), first.getMonth(), 1); d <= last; d.setMonth(d.getMonth() + 1)) {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const existing = byKey.get(key);
     if (existing) {
       filledMonths.push(existing);
       lastLiquid = existing.liquidTotal;
-      lastTW = totalWealth(existing);
+      lastMortgageEff = mdFor(existing);
+      lastTW = totalWealthM(existing);
       filledLiquidTotals.push(existing.liquidTotal);
       filledTotalWealth.push(lastTW);
     } else {
       const shortLabel = `${monthNamesShort[d.getMonth() + 1]} ${String(d.getFullYear()).slice(2)}`;
-      filledMonths.push({ key, date: new Date(d), shortLabel, label: `${monthNamesShort[d.getMonth() + 1]} ${d.getFullYear()}`, liquidTotal: lastLiquid });
+      const syn = {
+        key,
+        date: new Date(d),
+        shortLabel,
+        label: `${monthNamesShort[d.getMonth() + 1]} ${d.getFullYear()}`,
+        liquidTotal: lastLiquid,
+      };
+      filledMonths.push(syn);
       filledLiquidTotals.push(lastLiquid);
+      lastTW = lastLiquid + housingValueOf(syn) + lastMortgageEff + (syn.travelFund || 0);
       filledTotalWealth.push(lastTW);
     }
   }
@@ -49,11 +82,43 @@ function fillMissingMonths(months) {
 export function computeStatistics(months, options = {}) {
   if (!months.length) return null;
 
-  const { filledMonths, filledLiquidTotals, filledTotalWealth } = fillMissingMonths(months);
+  const fixedHousingVal =
+    options.fixedHousingSheetValue != null &&
+    Number.isFinite(options.fixedHousingSheetValue) &&
+    options.fixedHousingSheetValue !== 0
+      ? options.fixedHousingSheetValue
+      : null;
+  const fixedHousingEntityNorm = String(options.fixedHousingSheetEntity || 'BBVA')
+    .trim()
+    .toLowerCase();
+
+  const housingValueAsUsed = (m) => {
+    if (fixedHousingVal != null && Object.prototype.hasOwnProperty.call(m, 'housingValue')) {
+      return fixedHousingVal;
+    }
+    return m.housingValue || 0;
+  };
+
+  const mortgageEffective = buildEffectiveMortgageSeries(months);
+  const mortgageByKey = new Map(months.map((m, i) => [m.key, mortgageEffective[i]]));
+
+  const { filledMonths, filledLiquidTotals, filledTotalWealth } = fillMissingMonths(
+    months,
+    housingValueAsUsed,
+    mortgageByKey,
+  );
+
+  const lastIdx = months.length - 1;
 
   const totals = months.map(m => m.total);
   const liquidTotals = months.map(m => m.liquidTotal);
-  const totalWealthByMonth = months.map(m => totalWealth(m));
+  const totalWealthByMonth = months.map(
+    (m, i) =>
+      (m.liquidTotal || 0) +
+      housingValueAsUsed(m) +
+      (mortgageEffective[i] || 0) +
+      (m.travelFund || 0),
+  );
 
   const current = liquidTotals[liquidTotals.length - 1];
   const currentTotal = totals[totals.length - 1];
@@ -155,14 +220,20 @@ export function computeStatistics(months, options = {}) {
     ...Object.keys(latestMonth.byEntityLiquid),
     ...Object.keys(byEntityHousing),
   ])];
-  const totalForDistribution = current + (latestMonth.housingValue || 0) + (latestMonth.mortgageDebt || 0);
+  const totalForDistribution =
+    current + housingValueAsUsed(latestMonth) + (mortgageEffective[lastIdx] || 0);
   const distributionRaw = [];
   for (const name of allEntityNames) {
     const liquid = latestMonth.byEntityLiquid[name] ?? 0;
     const housing = byEntityHousing[name];
-    const equity = housing ? (housing.value || 0) + (housing.debt || 0) : 0;
+    const entityNorm = String(name).trim().toLowerCase();
+    const housingValuePart =
+      fixedHousingVal != null && entityNorm === fixedHousingEntityNorm
+        ? fixedHousingVal
+        : (housing?.value || 0);
+    const equity = housing ? housingValuePart + (housing.debt || 0) : 0;
     const value = liquid + equity;
-    if (name === 'BBVA' && liquid > 0 && equity !== 0) {
+    if (name === 'BBVA' && equity !== 0 && (liquid > 0 || fixedHousingVal != null)) {
       distributionRaw.push({ name: 'Compte corrent BBVA', value: liquid });
       distributionRaw.push({ name: 'Hipoteca BBVA', value: equity, isHousing: true });
     } else {
@@ -180,11 +251,14 @@ export function computeStatistics(months, options = {}) {
     return point;
   });
 
-  /** Per-fila sèries per sparklines al repartiment (noms que no coincideixen amb claus de byEntityLiquid). */
   const distributionSparklineExtras = {
-    'Hipoteca BBVA': months.map(m => {
+    'Hipoteca BBVA': months.map((m, i) => {
       const h = m.byEntityHousing?.BBVA;
-      return h ? (h.value || 0) + (h.debt || 0) : 0;
+      const v =
+        fixedHousingVal != null && fixedHousingEntityNorm === 'bbva'
+          ? fixedHousingVal
+          : h?.value || 0;
+      return v + (mortgageEffective[i] || 0);
     }),
     'Fons de viatges': months.map(m => (m.travelFund || 0) * TRAVEL_PATRIMONY_SHARE),
   };
@@ -199,8 +273,10 @@ export function computeStatistics(months, options = {}) {
   const changesTotal = [];
   for (let i = 1; i < months.length; i++) {
     const liquidChange = liquidTotals[i] - liquidTotals[i - 1];
-    const housingEquityPrev = (months[i - 1].housingValue || 0) + (months[i - 1].mortgageDebt || 0);
-    const housingEquityCurr = (months[i].housingValue || 0) + (months[i].mortgageDebt || 0);
+    const housingEquityPrev =
+      housingValueAsUsed(months[i - 1]) + (mortgageEffective[i - 1] || 0);
+    const housingEquityCurr =
+      housingValueAsUsed(months[i]) + (mortgageEffective[i] || 0);
     const totalChange = liquidChange + (housingEquityCurr - housingEquityPrev);
     const prevTotal = liquidTotals[i - 1] + housingEquityPrev;
     const pct = prevTotal ? (totalChange / prevTotal) * 100 : 0;
@@ -252,24 +328,27 @@ export function computeStatistics(months, options = {}) {
     else if (travelSpentLastMonth > myHalfSaving * 1.5) travelPace = 'watch';
   }
 
-  const hasHousing = months.some(m => m.housingValue > 0);
-  const latestHousingValue = latestMonth.housingValue;
+  const hasHousing =
+    months.some((m) => m.housingValue > 0) || fixedHousingVal != null;
+  const latestHousingValue = housingValueAsUsed(latestMonth);
   const latestMortgageDebt = latestMonth.mortgageDebt;
   const housingEquity = latestHousingValue + latestMortgageDebt;
 
-  const mortgageMonths = months.filter(m => m.mortgageDebt < 0);
-  const firstMortgage = mortgageMonths.length ? mortgageMonths[0] : null;
-  const initialDebt = firstMortgage ? Math.abs(firstMortgage.mortgageDebt) : 0;
-  const currentDebt = Math.abs(latestMortgageDebt);
+  const firstMortIdx = mortgageEffective.findIndex((d) => d < 0);
+  const initialDebt = firstMortIdx >= 0 ? Math.abs(mortgageEffective[firstMortIdx]) : 0;
+  const currentDebt = Math.abs(mortgageEffective[lastIdx] || 0);
   const totalPaid = initialDebt - currentDebt;
 
-  const mortgageEvolution = mortgageMonths.map(m => ({
-    date: m.shortLabel,
-    key: m.key,
-    debt: Math.abs(m.mortgageDebt),
-    equity: m.housingValue + m.mortgageDebt,
-    paid: initialDebt - Math.abs(m.mortgageDebt),
-  }));
+  const mortgageEvolution = months
+    .map((m, i) => ({ m, i }))
+    .filter(({ i }) => mortgageEffective[i] < 0)
+    .map(({ m, i }) => ({
+      date: m.shortLabel,
+      key: m.key,
+      debt: Math.abs(mortgageEffective[i]),
+      equity: housingValueAsUsed(m) + mortgageEffective[i],
+      paid: initialDebt - Math.abs(mortgageEffective[i]),
+    }));
 
   const mortgageEndYear = options.mortgageEndYear ?? MORTGAGE_END_YEAR;
   const mortgageEndMonth = options.mortgageEndMonth ?? MORTGAGE_END_MONTH;
@@ -301,17 +380,21 @@ export function computeStatistics(months, options = {}) {
 
   const calendarYear = new Date().getFullYear();
   let mortgagePrincipalPaidYtd = null;
-  if (hasHousing && currentDebt > 0 && mortgageMonths.length) {
+  if (hasHousing && currentDebt > 0 && firstMortIdx >= 0) {
     let debtAtYearStart = null;
-    for (const m of months) {
-      if (m.date.getFullYear() === calendarYear) {
-        debtAtYearStart = Math.abs(m.mortgageDebt);
+    for (let mi = 0; mi < months.length; mi++) {
+      if (months[mi].date.getFullYear() === calendarYear) {
+        debtAtYearStart = Math.abs(mortgageEffective[mi]);
         break;
       }
     }
     if (debtAtYearStart == null) {
-      const prevYear = months.filter(m => m.date.getFullYear() === calendarYear - 1);
-      if (prevYear.length) debtAtYearStart = Math.abs(prevYear[prevYear.length - 1].mortgageDebt);
+      for (let mi = months.length - 1; mi >= 0; mi--) {
+        if (months[mi].date.getFullYear() === calendarYear - 1) {
+          debtAtYearStart = Math.abs(mortgageEffective[mi]);
+          break;
+        }
+      }
     }
     if (debtAtYearStart != null) {
       mortgagePrincipalPaidYtd = Math.max(0, debtAtYearStart - currentDebt);

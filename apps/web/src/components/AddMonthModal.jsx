@@ -97,7 +97,6 @@ export default function AddMonthModal({
     }));
 
     const housingEntry = lastMonth?.entries?.find(e => e.category === 'Vivienda personal');
-    // Con VITE_HOUSING_EQUITY la fila no va a la hoja: los totales salen del .env al cargar.
     if (!fixedHousing && housingEntry) {
       payload.push({
         date, month: target.month, year: target.year,

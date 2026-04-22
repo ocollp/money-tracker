@@ -86,6 +86,8 @@ export function financeConfigToStatsOptions(finance) {
     mortgageEndMonth: finance.mortgageEndMonth,
     mortgageMonthlyPayment: finance.mortgageMonthlyPayment,
     assumedUnemployment: finance.assumedUnemployment,
+    fixedHousingSheetValue: finance.fixedHousingSheetValue,
+    fixedHousingSheetEntity: finance.fixedHousingSheetEntity,
   };
 }
 
