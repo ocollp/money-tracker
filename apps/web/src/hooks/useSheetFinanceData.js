@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { parseCSV, groupByMonth } from '../utils/parseCSV';
+import { parseCSV, groupByMonth, mergeFixedHousingSheetRows } from '../utils/parseCSV';
 import { computeStatistics } from '../utils/statistics';
 import {
   fetchSheetData,
@@ -22,6 +22,8 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     () => financeConfigToStatsOptions(financeConfig),
     [financeConfig]
   );
+
+  const { fixedHousingSheetValue, fixedHousingSheetEntity } = financeConfig;
 
   // ── Single source of truth: do we have a valid auth credential? ──
   // Every effect below gates on `authReady` — nothing runs without it.
@@ -125,7 +127,10 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
 
     fetchData(currentSheetId)
       .then((csvText) => {
-        const rows = parseCSV(csvText);
+        const rows = mergeFixedHousingSheetRows(parseCSV(csvText), {
+          amount: fixedHousingSheetValue,
+          entity: fixedHousingSheetEntity,
+        });
         const months = groupByMonth(rows);
         const s = computeStatistics(months, { ...statsOpts, profileId: effectiveProfile });
         setStats(s);
@@ -133,7 +138,7 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [fetchData, sheetAccess, currentSheetId, fetchKey, effectiveProfile, isTestData, statsOpts]);
+  }, [fetchData, sheetAccess, currentSheetId, fetchKey, effectiveProfile, isTestData, statsOpts, fixedHousingSheetValue, fixedHousingSheetEntity]);
 
   useEffect(() => {
     if (isTestData || !fetchData) return;
@@ -142,7 +147,10 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     const intervalId = setInterval(() => {
       fetchData(currentSheetId)
         .then((csvText) => {
-          const rows = parseCSV(csvText);
+          const rows = mergeFixedHousingSheetRows(parseCSV(csvText), {
+            amount: fixedHousingSheetValue,
+            entity: fixedHousingSheetEntity,
+          });
           const months = groupByMonth(rows);
           const s = computeStatistics(months, { ...statsOpts, profileId: effectiveProfile });
           setStats(s);
@@ -152,7 +160,7 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [fetchData, currentSheetId, effectiveProfile, stats, isTestData, statsOpts]);
+  }, [fetchData, currentSheetId, effectiveProfile, stats, isTestData, statsOpts, fixedHousingSheetValue, fixedHousingSheetEntity]);
 
   const refresh = useCallback(() => { setFetchKey((k) => k + 1); }, []);
 

@@ -10,6 +10,8 @@ import {
   MORTGAGE_MONTHLY_PAYMENT,
   OWNERSHIP_SHARE,
   ASSUMED_UNEMPLOYMENT,
+  HOUSING_SHEET_FIXED_VALUE,
+  HOUSING_SHEET_FIXED_ENTITY,
 } from '../config.js';
 
 export function buildFinanceConfig(apiSettings) {
@@ -53,6 +55,8 @@ export function buildFinanceConfig(apiSettings) {
       s.assumedUnemployment != null && !Number.isNaN(Number(s.assumedUnemployment))
         ? Number(s.assumedUnemployment)
         : ASSUMED_UNEMPLOYMENT,
+    fixedHousingSheetValue: HOUSING_SHEET_FIXED_VALUE,
+    fixedHousingSheetEntity: HOUSING_SHEET_FIXED_ENTITY,
   };
 }
 

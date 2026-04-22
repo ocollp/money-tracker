@@ -1,3 +1,55 @@
+const VIVIENDA_PERSONAL = 'Vivienda personal';
+const INVERTIDO = 'Invertido';
+
+/**
+ * Si `amount` es un número distinto de 0, quita del CSV las filas «Vivienda personal» de esa entidad
+ * y añade una fila sintética por cada mes que siga teniendo datos (mismo importe en todos).
+ */
+export function mergeFixedHousingSheetRows(rows, opts) {
+  const amount = opts?.amount;
+  const entityRaw = opts?.entity ?? 'BBVA';
+  if (amount == null || !Number.isFinite(amount) || amount === 0) return rows;
+  const entity = String(entityRaw).trim() || 'BBVA';
+  const entityNorm = entity.toLowerCase();
+
+  const filtered = rows.filter(
+    (r) =>
+      !(
+        r.category === VIVIENDA_PERSONAL &&
+        String(r.entity).trim().toLowerCase() === entityNorm
+      ),
+  );
+  if (filtered.length === 0) return rows;
+
+  const monthKeys = new Set();
+  const dateByKey = new Map();
+  for (const r of filtered) {
+    const key = `${r.year}-${r.month}`;
+    monthKeys.add(key);
+    if (!dateByKey.has(key)) dateByKey.set(key, r.date);
+  }
+
+  const extra = [];
+  for (const key of monthKeys) {
+    const [yStr, mStr] = key.split('-');
+    const y = Number(yStr);
+    const mo = Number(mStr);
+    const date = dateByKey.get(key) || `1/${String(mo).padStart(2, '0')}/${y}`;
+    extra.push({
+      date,
+      month: mo,
+      year: y,
+      type: INVERTIDO,
+      category: VIVIENDA_PERSONAL,
+      entity,
+      amount,
+      isHousing: true,
+      isTravel: false,
+    });
+  }
+  return [...filtered, ...extra];
+}
+
 export function parseCSV(text) {
   const lines = text.trim().split('\n');
   const rows = [];
@@ -18,7 +70,7 @@ export function parseCSV(text) {
 
     if (amount === null || isNaN(amount)) continue;
 
-    const isHousing = category === 'Vivienda personal' || category === 'Hipoteca';
+    const isHousing = category === VIVIENDA_PERSONAL || category === 'Hipoteca';
     const isTravel = category === 'Cuenta compartida flexible';
 
     rows.push({ date, month, year, type, category, entity, amount, isHousing, isTravel });
@@ -59,10 +111,10 @@ export function groupByMonth(rows) {
     m.total += row.amount;
 
     if (row.isHousing) {
-      if (row.category === 'Vivienda personal') m.housingValue = row.amount;
+      if (row.category === VIVIENDA_PERSONAL) m.housingValue = row.amount;
       if (row.category === 'Hipoteca') m.mortgageDebt = row.amount;
       if (!m.byEntityHousing[row.entity]) m.byEntityHousing[row.entity] = { value: 0, debt: 0 };
-      if (row.category === 'Vivienda personal') m.byEntityHousing[row.entity].value = row.amount;
+      if (row.category === VIVIENDA_PERSONAL) m.byEntityHousing[row.entity].value = row.amount;
       if (row.category === 'Hipoteca') m.byEntityHousing[row.entity].debt = row.amount;
     } else if (row.isTravel) {
       m.travelFund = row.amount;

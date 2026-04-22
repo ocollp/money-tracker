@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseCSV, groupByMonth } from './parseCSV.js';
+import { parseCSV, groupByMonth, mergeFixedHousingSheetRows } from './parseCSV.js';
 
 const HEADER = 'date,month,year,type,category,entity,amount\n';
 
@@ -56,6 +56,31 @@ describe('parseCSV', () => {
     const rows = parseCSV(csv);
     expect(rows).toHaveLength(1);
     expect(rows[0].amount).toBe(100);
+  });
+});
+
+describe('mergeFixedHousingSheetRows', () => {
+  it('injects a constant Vivienda personal row per month and strips CSV duplicates for that entity', () => {
+    const csv =
+      HEADER +
+      '01/01/2024,1,2024,Invertido,Vivienda personal,BBVA,999\n' +
+      '01/01/2024,1,2024,Invertido,Fondo,Indexa,500\n' +
+      '01/02/2024,2,2024,Cash,Efectivo,Bank,100';
+    const rows = parseCSV(csv);
+    const merged = mergeFixedHousingSheetRows(rows, { amount: 150000, entity: 'BBVA' });
+    const months = groupByMonth(merged);
+    expect(months).toHaveLength(2);
+    expect(months[0].housingValue).toBe(150000);
+    expect(months[1].housingValue).toBe(150000);
+    const jan = months[0].entries.filter((e) => e.category === 'Vivienda personal');
+    expect(jan).toHaveLength(1);
+    expect(jan[0].amount).toBe(150000);
+  });
+
+  it('returns rows unchanged when amount is unset', () => {
+    const csv = HEADER + '01/01/2024,1,2024,Invertido,Vivienda personal,BBVA,150000';
+    const rows = parseCSV(csv);
+    expect(mergeFixedHousingSheetRows(rows, { amount: null, entity: 'BBVA' })).toBe(rows);
   });
 });
 

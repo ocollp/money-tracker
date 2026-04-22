@@ -29,16 +29,37 @@ function formatDate(month, year, format) {
   return `1/${String(month).padStart(2, '0')}/${year}`;
 }
 
-export default function AddMonthModal({ months, spreadsheetId, appJwt, apiUrl, onClose, onSaved }) {
+export default function AddMonthModal({
+  months,
+  spreadsheetId,
+  appJwt,
+  apiUrl,
+  onClose,
+  onSaved,
+  fixedHousingSheetValue,
+  fixedHousingSheetEntity,
+}) {
   const { t } = useI18n();
   const lastMonth = months?.[months.length - 1];
   const target = nextMonth(lastMonth);
   const dateFormat = detectDateFormat(lastMonth);
 
+  const fixedHousing = useMemo(() => {
+    const a = fixedHousingSheetValue;
+    if (a == null || !Number.isFinite(a) || a === 0) return null;
+    const entityTrim = (fixedHousingSheetEntity || 'BBVA').trim() || 'BBVA';
+    return { amount: a, entity: entityTrim };
+  }, [fixedHousingSheetValue, fixedHousingSheetEntity]);
+
   const initialRows = useMemo(() => {
     if (!lastMonth?.entries?.length) return [];
+    const entNorm = fixedHousing?.entity.toLowerCase();
     return lastMonth.entries
-      .filter(e => e.category !== 'Vivienda personal')
+      .filter((e) => {
+        if (e.category !== 'Vivienda personal') return true;
+        if (!fixedHousing) return false;
+        return String(e.entity).trim().toLowerCase() !== entNorm;
+      })
       .map(e => ({
         type: e.type,
         category: e.category,
@@ -46,7 +67,7 @@ export default function AddMonthModal({ months, spreadsheetId, appJwt, apiUrl, o
         prevAmount: e.amount,
         amount: '',
       }));
-  }, [lastMonth]);
+  }, [lastMonth, fixedHousing]);
 
   const [rows, setRows] = useState(initialRows);
   const [saving, setSaving] = useState(false);
@@ -76,7 +97,8 @@ export default function AddMonthModal({ months, spreadsheetId, appJwt, apiUrl, o
     }));
 
     const housingEntry = lastMonth?.entries?.find(e => e.category === 'Vivienda personal');
-    if (housingEntry) {
+    // Con VITE_HOUSING_EQUITY la fila no va a la hoja: los totales salen del .env al cargar.
+    if (!fixedHousing && housingEntry) {
       payload.push({
         date, month: target.month, year: target.year,
         type: housingEntry.type, category: housingEntry.category,

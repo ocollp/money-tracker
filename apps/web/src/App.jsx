@@ -509,6 +509,8 @@ export default function App() {
           spreadsheetId={effectiveProfile === PROFILE_SECONDARY_ID ? financeConfig.spreadsheetId2 : financeConfig.spreadsheetId}
           appJwt={appJwt}
           apiUrl={API_URL}
+          fixedHousingSheetValue={financeConfig.fixedHousingSheetValue}
+          fixedHousingSheetEntity={financeConfig.fixedHousingSheetEntity}
           onClose={() => setAddMonthOpen(false)}
           onSaved={refresh}
         />
