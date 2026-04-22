@@ -152,9 +152,31 @@ export async function webauthnRoutes(fastify) {
     const db = getDb();
     if (!db) return reply.code(503).send({ error: 'database_not_configured' });
 
+    const users = await db
+      .collection('users')
+      .find({ 'passkeys.0': { $exists: true } }, { projection: { passkeys: 1 } })
+      .toArray();
+
+    const seen = new Set();
+    const allowCredentials = [];
+    for (const u of users) {
+      for (const pk of u.passkeys || []) {
+        const id = pk.credentialId;
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        const desc = { id, type: 'public-key' };
+        if (Array.isArray(pk.transports) && pk.transports.length > 0) {
+          desc.transports = pk.transports;
+        }
+        allowCredentials.push(desc);
+      }
+    }
+
     const options = await generateAuthenticationOptions({
       rpID: rpId(),
-      userVerification: 'preferred',
+      ...(allowCredentials.length > 0 ? { allowCredentials } : {}),
+      /** Prefer Face ID / Touch ID over a generic passkey picker when credentials are explicit. */
+      userVerification: 'required',
     });
 
     setChallenge(`auth:${options.challenge}`, options.challenge);

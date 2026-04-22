@@ -44,5 +44,11 @@ export const OWNERSHIP_SHARE = n(import.meta.env.VITE_OWNERSHIP_SHARE);
 export const ASSUMED_UNEMPLOYMENT = n(import.meta.env.VITE_ASSUMED_UNEMPLOYMENT) ?? 1000;
 export const TRAVEL_MONTHLY_SAVING = n(import.meta.env.VITE_TRAVEL_MONTHLY_SAVING) ?? 600;
 
-/** Fraction of the shared travel pot that counts toward individual total wealth / repartiment (rest is “partner’s share”). */
-export const TRAVEL_PATRIMONY_SHARE = 0.5;
+/**
+ * Fraction of `travelFund` (full sheet balance) that counts toward patrimony KPI + distribution slice.
+ * Default 1 = use the CSV figure as-is. Set `VITE_TRAVEL_PATRIMONY_SHARE=0.5` only if that balance is the
+ * joint pot and you want “my half” in totals (KPI then subtracts `(1 - share) × travel` from raw wealth).
+ */
+const travelPatRaw = n(import.meta.env.VITE_TRAVEL_PATRIMONY_SHARE);
+export const TRAVEL_PATRIMONY_SHARE =
+  travelPatRaw != null && travelPatRaw >= 0 && travelPatRaw <= 1 ? travelPatRaw : 1;
