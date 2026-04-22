@@ -115,6 +115,7 @@ export const en = {
 
   testMode: 'Sample mode (local data)',
   dataUpdatedAt: 'Data updated at',
+  refreshingData: 'Refreshing data…',
   pullDownHint: 'Pull down from the top to refresh',
 
   settingsTitle: 'Settings',

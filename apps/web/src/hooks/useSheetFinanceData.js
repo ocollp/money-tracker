@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { parseCSV, groupByMonth } from '../utils/parseCSV';
 import { computeStatistics } from '../utils/statistics';
 import {
@@ -68,6 +68,8 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   const [error, setError] = useState(null);
   const [fetchKey, setFetchKey] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+  /** Only clear stats when sheet or profile context changes — keeps UI during pull-refresh / /me race. */
+  const statsCacheKeyRef = useRef(null);
 
   const effectiveProfiles = !sheetAccess
     ? []
@@ -112,9 +114,14 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     if (!sheetAccess || !currentSheetId) return;
     if (!sheetAccess.id1 && !sheetAccess.id2) return;
 
+    const statsKey = `${currentSheetId}\0${effectiveProfile}`;
+    if (statsCacheKeyRef.current !== statsKey) {
+      statsCacheKeyRef.current = statsKey;
+      setStats(null);
+    }
+
     setLoading(true);
     setError(null);
-    setStats(null);
 
     fetchData(currentSheetId)
       .then((csvText) => {

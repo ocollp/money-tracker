@@ -293,7 +293,7 @@ export default function App() {
     );
   }
 
-  if ((loading && !isTestData) || (isTestData && !stats)) {
+  if ((loading && !isTestData && !stats) || (isTestData && !stats)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -478,6 +478,12 @@ export default function App() {
           <p>{t.testMode}</p>
         ) : (
           <>
+            {loading && stats ? (
+              <p className="text-text-secondary/90 flex items-center justify-center gap-2">
+                <span className="inline-block w-3.5 h-3.5 border-2 border-brand/30 border-t-brand rounded-full animate-spin shrink-0" aria-hidden />
+                <span>{t.refreshingData}</span>
+              </p>
+            ) : null}
             {updatedLabel ? (
               <p className="text-text-secondary">
                 {t.dataUpdatedAt}{' '}

@@ -26,7 +26,8 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
   const [apiUser, setApiUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [backendReady, setBackendReady] = useState(false);
+  /** With a stored app JWT, don’t block first paint on /me (cold Render is slow). */
+  const [backendReady, setBackendReady] = useState(() => !HAS_BACKEND || Boolean(getAppJwt()));
 
   useEffect(() => {
     if (!HAS_BACKEND) {
@@ -39,7 +40,8 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
       let cancelled = false;
       setLoading(true);
       setError(null);
-      setBackendReady(false);
+      /** Don’t block the whole app on /me: sheet + local finance config can load in parallel. */
+      setBackendReady(true);
 
       (async () => {
         try {
@@ -52,11 +54,9 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
             onJwtExpired?.();
             setSettings(null);
             setApiUser(null);
-            setBackendReady(true);
             return;
           }
           if (res.status === 503) {
-            setBackendReady(true);
             return;
           }
           if (!res.ok) {
@@ -65,11 +65,9 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
           const data = await res.json();
           setApiUser(data.user);
           setSettings(data.settings);
-          setBackendReady(true);
         } catch (e) {
           if (!cancelled) {
             setError(e.message || 'API error');
-            setBackendReady(true);
           }
         } finally {
           if (!cancelled) setLoading(false);

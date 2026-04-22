@@ -115,6 +115,7 @@ export const es = {
 
   testMode: 'Modo ejemplo (datos locales)',
   dataUpdatedAt: 'Datos actualizados a las',
+  refreshingData: 'Actualizando datos…',
   pullDownHint: 'Desliza hacia abajo para actualizar',
 
   settingsTitle: 'Configuración',

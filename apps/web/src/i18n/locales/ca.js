@@ -105,6 +105,7 @@ export const ca = {
   monthsShort: ['Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'],
   testMode: 'Mode prova (dades locals)',
   dataUpdatedAt: 'Dades actualitzades a les',
+  refreshingData: 'Actualitzant dades…',
   pullDownHint: 'Arrossega avall des de dalt per actualitzar',
   settingsTitle: 'Configuració',
   settingsClose: 'Tancar',
