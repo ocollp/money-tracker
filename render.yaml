@@ -1,0 +1,10 @@
+# Render Blueprint — API (Fastify) from monorepo root.
+# If you already created the service manually: Settings → Root Directory = (empty),
+# Build Command = npm ci, Start Command = npm run start:api
+# https://render.com/docs/monorepo-support
+services:
+  - type: web
+    name: money-tracker-api
+    runtime: node
+    buildCommand: npm ci
+    startCommand: npm run start:api

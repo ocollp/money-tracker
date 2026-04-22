@@ -1,6 +1,9 @@
 {
   "name": "money-tracker",
   "private": true,
+  "engines": {
+    "node": ">=20 <23"
+  },
   "workspaces": [
     "apps/*"
   ],
