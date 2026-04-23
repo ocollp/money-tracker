@@ -74,7 +74,7 @@ export const es = {
 
   travelTitle: 'Fondo de viajes',
   travelCurrentFund: 'Saldo actual',
-  travelSpentLastMonth: 'Gastado últimos 30 días',
+  travelSpentLastMonth: (amount) => `${amount} gastado en los últimos 30 días`,
   sectionExpand: 'Mostrar',
   sectionCollapse: 'Ocultar',
   netWorthRange3: '3 m',

@@ -66,7 +66,7 @@ export const ca = {
   patternsPositiveMonths: (n, total) => `${n} de ${total} mesos positius`,
   travelTitle: 'Fons de viatges',
   travelCurrentFund: 'Saldo actual',
-  travelSpentLastMonth: "Gastat últims 30 dies",
+  travelSpentLastMonth: (amount) => `${amount} gastat els últims 30 dies`,
   sectionExpand: 'Mostra',
   sectionCollapse: 'Amaga',
   netWorthRange3: '3 m',

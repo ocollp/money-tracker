@@ -415,7 +415,9 @@ export default function App() {
               value={formatMoney(stats.travel.current ?? 0)}
               subtitle={
                 (stats.travel.spentLastMonth ?? 0) > 0
-                  ? `${t.travelSpentLastMonth}: ${formatMoney(stats.travel.spentLastMonth ?? 0)}`
+                  ? typeof t.travelSpentLastMonth === 'function'
+                    ? t.travelSpentLastMonth(formatMoney(stats.travel.spentLastMonth ?? 0))
+                    : `${t.travelSpentLastMonth}: ${formatMoney(stats.travel.spentLastMonth ?? 0)}`
                   : null
               }
               trend={0}

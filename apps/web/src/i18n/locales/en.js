@@ -74,7 +74,7 @@ export const en = {
 
   travelTitle: 'Travel fund',
   travelCurrentFund: 'Current balance',
-  travelSpentLastMonth: 'Spent last 30 days',
+  travelSpentLastMonth: (amount) => `${amount} spent in the last 30 days`,
   sectionExpand: 'Show',
   sectionCollapse: 'Hide',
   netWorthRange3: '3 mo',
