@@ -8,30 +8,38 @@ import {
   TRAVEL_PATRIMONY_SHARE,
 } from '../config.js';
 
-export function buildEffectiveMortgageSeries(months) {
-  const n = months.length;
-  const raw = months.map((m) => m.mortgageDebt || 0);
+export function buildCarriedForwardSeries(values) {
+  const n = values.length;
+  const scalars = values.map((v) => (typeof v === 'number' && !Number.isNaN(v) ? v : 0));
   const out = new Array(n).fill(0);
-  const firstNZ = raw.findIndex((d) => d !== 0);
+  const firstNZ = scalars.findIndex((d) => d !== 0);
   if (firstNZ === -1) return out;
-  const anchor = raw[firstNZ];
+  const anchor = scalars[firstNZ];
   for (let i = 0; i < firstNZ; i++) out[i] = anchor;
   let last = anchor;
   for (let i = firstNZ; i < n; i++) {
-    if (raw[i] !== 0) last = raw[i];
+    if (scalars[i] !== 0) last = scalars[i];
     out[i] = last;
   }
   return out;
 }
 
-function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0), mortgageByKey) {
+export function buildEffectiveMortgageSeries(months) {
+  return buildCarriedForwardSeries(months.map((m) => m.mortgageDebt || 0));
+}
+
+function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0), mortgageByKey, housingByKey) {
   const mdFor = (m) =>
     mortgageByKey && mortgageByKey.has(m.key)
       ? mortgageByKey.get(m.key)
       : (m.mortgageDebt || 0);
+  const hfFor = (m) =>
+    housingByKey && housingByKey.has(m.key)
+      ? housingByKey.get(m.key)
+      : housingValueOf(m);
   const totalWealthM = (m) =>
     (m.liquidTotal || 0) +
-    housingValueOf(m) +
+    hfFor(m) +
     mdFor(m) +
     (m.travelFund || 0);
   if (months.length <= 1) {
@@ -49,6 +57,7 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
   const filledTotalWealth = [];
   const monthNamesShort = ['', 'Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
   let lastLiquid = months[0].liquidTotal;
+  let lastHousingEff = hfFor(months[0]);
   let lastMortgageEff = mdFor(months[0]);
   let lastTW = totalWealthM(months[0]);
   for (let d = new Date(first.getFullYear(), first.getMonth(), 1); d <= last; d.setMonth(d.getMonth() + 1)) {
@@ -57,6 +66,7 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
     if (existing) {
       filledMonths.push(existing);
       lastLiquid = existing.liquidTotal;
+      lastHousingEff = hfFor(existing);
       lastMortgageEff = mdFor(existing);
       lastTW = totalWealthM(existing);
       filledLiquidTotals.push(existing.liquidTotal);
@@ -72,7 +82,7 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
       };
       filledMonths.push(syn);
       filledLiquidTotals.push(lastLiquid);
-      lastTW = lastLiquid + housingValueOf(syn) + lastMortgageEff + (syn.travelFund || 0);
+      lastTW = lastLiquid + lastHousingEff + lastMortgageEff + (syn.travelFund || 0);
       filledTotalWealth.push(lastTW);
     }
   }
@@ -99,6 +109,10 @@ export function computeStatistics(months, options = {}) {
     return m.housingValue || 0;
   };
 
+  const housingValueBaseSeries = months.map((m) => housingValueAsUsed(m));
+  const housingEffective = buildCarriedForwardSeries(housingValueBaseSeries);
+  const housingByKey = new Map(months.map((m, i) => [m.key, housingEffective[i]]));
+
   const mortgageEffective = buildEffectiveMortgageSeries(months);
   const mortgageByKey = new Map(months.map((m, i) => [m.key, mortgageEffective[i]]));
 
@@ -106,6 +120,7 @@ export function computeStatistics(months, options = {}) {
     months,
     housingValueAsUsed,
     mortgageByKey,
+    housingByKey,
   );
 
   const lastIdx = months.length - 1;
@@ -115,7 +130,7 @@ export function computeStatistics(months, options = {}) {
   const totalWealthByMonth = months.map(
     (m, i) =>
       (m.liquidTotal || 0) +
-      housingValueAsUsed(m) +
+      (housingEffective[i] || 0) +
       (mortgageEffective[i] || 0) +
       (m.travelFund || 0),
   );
@@ -221,7 +236,7 @@ export function computeStatistics(months, options = {}) {
     ...Object.keys(byEntityHousing),
   ])];
   const totalForDistribution =
-    current + housingValueAsUsed(latestMonth) + (mortgageEffective[lastIdx] || 0);
+    current + (housingEffective[lastIdx] || 0) + (mortgageEffective[lastIdx] || 0);
   const distributionRaw = [];
   for (const name of allEntityNames) {
     const liquid = latestMonth.byEntityLiquid[name] ?? 0;
@@ -254,10 +269,13 @@ export function computeStatistics(months, options = {}) {
   const distributionSparklineExtras = {
     'Hipoteca BBVA': months.map((m, i) => {
       const h = m.byEntityHousing?.BBVA;
+      const hasBbvaHousing = h && Object.prototype.hasOwnProperty.call(m, 'housingValue');
       const v =
         fixedHousingVal != null && fixedHousingEntityNorm === 'bbva'
           ? fixedHousingVal
-          : h?.value || 0;
+          : hasBbvaHousing
+            ? (housingEffective[i] ?? 0)
+            : h?.value || 0;
       return v + (mortgageEffective[i] || 0);
     }),
     'Fons de viatges': months.map(m => (m.travelFund || 0) * TRAVEL_PATRIMONY_SHARE),
@@ -274,9 +292,9 @@ export function computeStatistics(months, options = {}) {
   for (let i = 1; i < months.length; i++) {
     const liquidChange = liquidTotals[i] - liquidTotals[i - 1];
     const housingEquityPrev =
-      housingValueAsUsed(months[i - 1]) + (mortgageEffective[i - 1] || 0);
+      (housingEffective[i - 1] || 0) + (mortgageEffective[i - 1] || 0);
     const housingEquityCurr =
-      housingValueAsUsed(months[i]) + (mortgageEffective[i] || 0);
+      (housingEffective[i] || 0) + (mortgageEffective[i] || 0);
     const totalChange = liquidChange + (housingEquityCurr - housingEquityPrev);
     const prevTotal = liquidTotals[i - 1] + housingEquityPrev;
     const pct = prevTotal ? (totalChange / prevTotal) * 100 : 0;
@@ -330,9 +348,9 @@ export function computeStatistics(months, options = {}) {
 
   const hasHousing =
     months.some((m) => m.housingValue > 0) || fixedHousingVal != null;
-  const latestHousingValue = housingValueAsUsed(latestMonth);
-  const latestMortgageDebt = latestMonth.mortgageDebt;
-  const housingEquity = latestHousingValue + latestMortgageDebt;
+  const latestHousingValue = housingEffective[lastIdx] || 0;
+  const latestMortgageDebtSigned = mortgageEffective[lastIdx] || 0;
+  const housingEquity = latestHousingValue + latestMortgageDebtSigned;
 
   const firstMortIdx = mortgageEffective.findIndex((d) => d < 0);
   const initialDebt = firstMortIdx >= 0 ? Math.abs(mortgageEffective[firstMortIdx]) : 0;
@@ -346,7 +364,7 @@ export function computeStatistics(months, options = {}) {
       date: m.shortLabel,
       key: m.key,
       debt: Math.abs(mortgageEffective[i]),
-      equity: housingValueAsUsed(m) + mortgageEffective[i],
+      equity: (housingEffective[i] || 0) + mortgageEffective[i],
       paid: initialDebt - Math.abs(mortgageEffective[i]),
     }));
 

@@ -68,7 +68,7 @@ describe('computeStatistics', () => {
     };
     const without = computeStatistics([jul, ago]);
     const agostoSin = without.heatmap.find((h) => h.key === '2025-08');
-    expect(agostoSin.value).toBeGreaterThan(100_000);
+    expect(agostoSin.value).toBe(1000);
 
     const withFixed = computeStatistics([jul, ago], {
       fixedHousingSheetValue: 150_000,
@@ -76,6 +76,41 @@ describe('computeStatistics', () => {
     });
     const agostoCon = withFixed.heatmap.find((h) => h.key === '2025-08');
     expect(agostoCon.value).toBe(1000);
+  });
+
+  it('heatmap uses carried housing value so first Vivienda row does not fake +150k total change', () => {
+    const base = {
+      shortLabel: 'x',
+      label: 'x',
+      byEntity: {},
+      byEntityLiquid: {},
+      byEntityHousing: {},
+      cash: 0,
+      cashLiquid: 0,
+      invested: 0,
+      investedLiquid: 0,
+      travelFund: 0,
+      total: 0,
+    };
+    const jul = {
+      ...base,
+      key: '2025-07',
+      date: new Date(2025, 6, 1),
+      liquidTotal: 500_000,
+      housingValue: 0,
+      mortgageDebt: -148_000,
+    };
+    const ago = {
+      ...base,
+      key: '2025-08',
+      date: new Date(2025, 7, 1),
+      liquidTotal: 465_000,
+      housingValue: 150_000,
+      mortgageDebt: -148_000,
+    };
+    const stats = computeStatistics([jul, ago]);
+    const agosto = stats.heatmap.find((h) => h.key === '2025-08');
+    expect(agosto.value).toBe(-35_000);
   });
 
   it('backfills mortgage debt before the first Hipoteca row in the sheet', () => {

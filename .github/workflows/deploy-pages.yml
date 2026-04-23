@@ -40,6 +40,11 @@ jobs:
           VITE_MORTGAGE_MONTHLY_PAYMENT: ${{ secrets.VITE_MORTGAGE_MONTHLY_PAYMENT }}
           VITE_OWNERSHIP_SHARE: ${{ secrets.VITE_OWNERSHIP_SHARE }}
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_HOUSING_EQUITY: ${{ secrets.VITE_HOUSING_EQUITY }}
+          VITE_HOUSING_EQUITY_ENTITY: ${{ secrets.VITE_HOUSING_EQUITY_ENTITY }}
+          VITE_TRAVEL_PATRIMONY_SHARE: ${{ secrets.VITE_TRAVEL_PATRIMONY_SHARE }}
+          VITE_TRAVEL_MONTHLY_SAVING: ${{ secrets.VITE_TRAVEL_MONTHLY_SAVING }}
+          VITE_ASSUMED_UNEMPLOYMENT: ${{ secrets.VITE_ASSUMED_UNEMPLOYMENT }}
 
       - name: Fix SPA routing for GitHub Pages
         run: cp apps/web/dist/index.html apps/web/dist/404.html
