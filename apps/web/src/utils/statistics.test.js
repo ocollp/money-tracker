@@ -78,6 +78,43 @@ describe('computeStatistics', () => {
     expect(agostoCon.value).toBe(1000);
   });
 
+  it('KPI total month change excludes travel fund delta (matches heatmap)', () => {
+    const base = {
+      shortLabel: 'x',
+      label: 'x',
+      byEntity: {},
+      byEntityLiquid: {},
+      byEntityHousing: {},
+      cash: 0,
+      cashLiquid: 0,
+      invested: 0,
+      investedLiquid: 0,
+      total: 0,
+    };
+    const jul = {
+      ...base,
+      key: '2025-07',
+      date: new Date(2025, 6, 1),
+      liquidTotal: 500_000,
+      travelFund: 30_000,
+      housingValue: 150_000,
+      mortgageDebt: -100_000,
+    };
+    const ago = {
+      ...base,
+      key: '2025-08',
+      date: new Date(2025, 7, 1),
+      liquidTotal: 483_000,
+      travelFund: 15_000,
+      housingValue: 150_000,
+      mortgageDebt: -100_000,
+    };
+    const stats = computeStatistics([jul, ago]);
+    expect(stats.changeVsPrevTotal).toBe(-17_000);
+    const agosto = stats.heatmap.find((h) => h.key === '2025-08');
+    expect(agosto.value).toBe(-17_000);
+  });
+
   it('heatmap uses carried housing value so first Vivienda row does not fake +150k total change', () => {
     const base = {
       shortLabel: 'x',

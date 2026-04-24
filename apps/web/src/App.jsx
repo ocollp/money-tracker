@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { formatMoney, formatChange, formatPct, formatUpdatedClock } from './utils/formatters';
+import { formatMoney, formatChange, formatUpdatedClock } from './utils/formatters';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { useBackendProfile, clearAppJwt } from './hooks/useBackendProfile';
@@ -395,17 +395,11 @@ export default function App() {
           <KpiCard
             title={t.kpiCurrentMonth}
             value={formatChange(entityChange ? entityChange.change : (stats.changeVsPrevTotal ?? stats.changeVsPrev))}
-            subtitle={entityChange
-              ? (entityChange.pct != null ? t.kpiVsPrevMonth(formatPct(entityChange.pct)) : null)
-              : ((stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct) != null ? t.kpiVsPrevMonth(formatPct(stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct)) : null)}
-            trend={entityChange ? entityChange.change : (stats.changeVsPrevTotal ?? stats.changeVsPrev ?? 0)}
             icon="🗓️"
           />
           <KpiCard
             title={t.kpiMoneyAndInvestments}
             value={formatMoney(entityChange ? entityChange.current : stats.current)}
-            subtitle={(stats.changeVsYearPctTotal ?? stats.changeVsYearPct) != null && !entityChange ? t.kpiVsPrevYear(formatPct(stats.changeVsYearPctTotal ?? stats.changeVsYearPct)) : null}
-            trend={entityChange ? entityChange.change : (stats.changeVsYearTotal ?? stats.changeVsYear ?? 0)}
             icon="💰"
           />
           {stats.hasTravel && stats.travel && (

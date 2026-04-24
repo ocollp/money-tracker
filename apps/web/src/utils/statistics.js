@@ -135,11 +135,20 @@ export function computeStatistics(months, options = {}) {
       (m.travelFund || 0),
   );
 
+  const totalWealthOperationalByMonth = months.map(
+    (m, i) =>
+      (m.liquidTotal || 0) +
+      (housingEffective[i] || 0) +
+      (mortgageEffective[i] || 0),
+  );
+
   const current = liquidTotals[liquidTotals.length - 1];
   const currentTotal = totals[totals.length - 1];
   const currentTotalWealth = totalWealthByMonth[totalWealthByMonth.length - 1];
+  const currentOperationalWealth = totalWealthOperationalByMonth[lastIdx];
   const previous = liquidTotals.length > 1 ? liquidTotals[liquidTotals.length - 2] : null;
-  const previousTotalWealth = totalWealthByMonth.length > 1 ? totalWealthByMonth[totalWealthByMonth.length - 2] : null;
+  const previousOperationalWealth =
+    lastIdx >= 1 ? totalWealthOperationalByMonth[lastIdx - 1] : null;
   const yearAgoIdx = liquidTotals.length > 12 ? liquidTotals.length - 13 : null;
 
   const changeVsPrev = previous !== null ? current - previous : null;
@@ -148,11 +157,23 @@ export function computeStatistics(months, options = {}) {
   const changeVsYearPct = yearAgoIdx !== null && liquidTotals[yearAgoIdx]
     ? ((current - liquidTotals[yearAgoIdx]) / liquidTotals[yearAgoIdx]) * 100 : null;
 
-  const changeVsPrevTotal = previousTotalWealth != null ? currentTotalWealth - previousTotalWealth : null;
-  const changeVsPrevPctTotal = previousTotalWealth ? ((currentTotalWealth - previousTotalWealth) / previousTotalWealth) * 100 : null;
-  const changeVsYearTotal = yearAgoIdx != null ? currentTotalWealth - totalWealthByMonth[yearAgoIdx] : null;
-  const changeVsYearPctTotal = yearAgoIdx != null && totalWealthByMonth[yearAgoIdx]
-    ? ((currentTotalWealth - totalWealthByMonth[yearAgoIdx]) / totalWealthByMonth[yearAgoIdx]) * 100 : null;
+  const changeVsPrevTotal =
+    previousOperationalWealth != null
+      ? currentOperationalWealth - previousOperationalWealth
+      : null;
+  const changeVsPrevPctTotal = previousOperationalWealth
+    ? ((currentOperationalWealth - previousOperationalWealth) / previousOperationalWealth) * 100
+    : null;
+  const changeVsYearTotal =
+    yearAgoIdx != null
+      ? currentOperationalWealth - totalWealthOperationalByMonth[yearAgoIdx]
+      : null;
+  const changeVsYearPctTotal =
+    yearAgoIdx != null && totalWealthOperationalByMonth[yearAgoIdx]
+      ? ((currentOperationalWealth - totalWealthOperationalByMonth[yearAgoIdx]) /
+          totalWealthOperationalByMonth[yearAgoIdx]) *
+        100
+      : null;
 
   const maxTotal = Math.max(...liquidTotals);
   const minTotal = Math.min(...liquidTotals);

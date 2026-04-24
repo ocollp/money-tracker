@@ -52,8 +52,6 @@ export const es = {
   kpiCurrentMonth: 'Mes actual',
   kpiMoneyAndInvestments: 'Dinero e inversiones',
   kpiTotalWealth: 'Patrimonio total',
-  kpiVsPrevMonth: (pct) => `${pct} respecto al mes anterior`,
-  kpiVsPrevYear: (pct) => `${pct} respecto al año pasado`,
   streakPositive: (n) => `${n} ${n === 1 ? 'mes' : 'meses'} positivos seguidos`,
   streakNegative: (n) => `${n} ${n === 1 ? 'mes' : 'meses'} a la baja`,
   projection1yLabel: (change) => `En 12 meses: ~${change}`,
