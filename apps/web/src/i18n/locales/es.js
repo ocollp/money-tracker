@@ -66,7 +66,6 @@ export const es = {
   cashLabel: 'Efectivo',
   heatmapTitle: 'Rendimiento mensual',
   patternsTitle: 'Evolución por años',
-  patternsYearNote2025: 'Año en que compré el piso',
   patternsCurrentYear: 'en curso',
   patternsMonths: 'meses',
   patternsPerMonth: 'mes',

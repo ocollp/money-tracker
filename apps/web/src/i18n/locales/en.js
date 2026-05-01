@@ -66,7 +66,6 @@ export const en = {
   cashLabel: 'Cash',
   heatmapTitle: 'Monthly performance',
   patternsTitle: 'Yearly evolution',
-  patternsYearNote2025: 'Year I bought the flat',
   patternsCurrentYear: 'in progress',
   patternsMonths: 'months',
   patternsPerMonth: 'mo',

@@ -59,8 +59,6 @@ export const ca = {
   cashLabel: 'Cash',
   heatmapTitle: 'Rendiment mensual',
   patternsTitle: 'Evolució per anys',
-  /** Context sota la fila de l’any (només 2025): compra de l’habitatge. */
-  patternsYearNote2025: 'Any en què vaig comprar el pis',
   patternsCurrentYear: 'en curs',
   patternsMonths: 'mesos',
   patternsPerMonth: 'mes',

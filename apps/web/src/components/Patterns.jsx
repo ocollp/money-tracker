@@ -1,8 +1,6 @@
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
-const currentYear = new Date().getFullYear();
-
 export default function Patterns({ yearComparison }) {
   const { t } = useI18n();
   const sortedYears = [...(yearComparison || [])].sort((a, b) => b.year - a.year);
@@ -20,7 +18,6 @@ export default function Patterns({ yearComparison }) {
             const barWidth = best > 0 ? (Math.abs(y.total) / best) * 100 : 0;
             const isPositive = y.total >= 0;
             const avgPerMonth = y.months > 0 ? y.total / y.months : 0;
-            const isCurrent = y.year === currentYear;
 
             return (
               <div
@@ -37,11 +34,6 @@ export default function Patterns({ yearComparison }) {
                 <div className="relative flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <span className="text-sm font-bold">{y.year}</span>
-                    {y.year === 2025 && t.patternsYearNote2025 ? (
-                      <p className="text-[11px] text-text-secondary/95 leading-snug mt-0.5 max-w-[min(100%,14rem)]">
-                        {t.patternsYearNote2025}
-                      </p>
-                    ) : null}
                     <div className="flex items-center gap-1.5 mt-1">
                       <span className={`text-[11px] font-medium ${isPositive ? 'text-positive/80' : 'text-negative/80'}`}>
                         ~{isPositive ? '+' : ''}{formatMoney(avgPerMonth)}/{t.patternsPerMonth}

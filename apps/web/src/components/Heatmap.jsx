@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n/I18nContext.jsx';
+import { formatChange } from '../utils/formatters';
 
 export default function Heatmap({ data }) {
   const { t } = useI18n();
@@ -44,13 +45,13 @@ export default function Heatmap({ data }) {
         </div>
       </div>
 
-      <div className="px-2 sm:px-5 pb-2 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile -mx-1 sm:mx-0 max-w-full">
-        <table className="w-full min-w-0 sm:min-w-0 border-separate max-w-full" style={{ borderSpacing: '3px 4px' }}>
+      <div className="px-2 sm:px-5 pb-2 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile -mx-1 sm:mx-0 max-w-full touch-pan-x">
+        <table className="w-max min-w-full border-separate max-w-none" style={{ borderSpacing: '3px 4px' }}>
           <thead>
             <tr>
               <th className="text-left text-text-secondary text-[10px] sm:text-[11px] font-semibold p-0 w-7 sm:w-10"></th>
               {monthNames.map(m => (
-                <th key={m} className="text-center text-text-secondary/70 text-[9px] sm:text-[11px] font-semibold pb-1 px-0 min-w-[1.85rem] sm:min-w-0">{m}</th>
+                <th key={m} className="text-center text-text-secondary/70 text-[9px] sm:text-[11px] font-semibold pb-1 px-0 min-w-[3.5rem] sm:min-w-0">{m}</th>
               ))}
             </tr>
           </thead>
@@ -63,15 +64,15 @@ export default function Heatmap({ data }) {
                   return (
                     <td key={i} className="p-0 sm:p-0 align-middle">
                       <div
-                        className="rounded-md sm:rounded-lg w-[1.85rem] h-[1.85rem] sm:w-full sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-95 mx-auto sm:mx-0"
+                        className="rounded-md sm:rounded-lg w-[3.5rem] min-h-[2.5rem] py-0.5 sm:w-full sm:min-h-14 sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-95 mx-auto sm:mx-0 px-0.5"
                         style={getCellStyle(cell?.value)}
                       >
                         {cell && (
                           <>
-                            <span className="text-[9px] sm:text-[13px] font-bold leading-none drop-shadow-sm tabular-nums">
-                              {(Math.abs(cell.value) / 1000).toFixed(1)}k
+                            <span className="text-[9px] sm:text-[12px] font-bold leading-snug text-center drop-shadow-sm tabular-nums hyphens-none">
+                              {formatChange(cell.value)}
                             </span>
-                            <span className="text-[9px] sm:text-[10px] text-text-primary/70 leading-none mt-0.5 font-medium hidden sm:inline tabular-nums">
+                            <span className="mt-0.5 text-[7px] sm:text-[10px] text-text-primary/70 leading-none font-medium tabular-nums hidden sm:block text-center w-full">
                               {Math.abs(cell.pct).toFixed(1)}%
                             </span>
                           </>
