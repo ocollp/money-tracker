@@ -25,23 +25,21 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
 
   const { fixedHousingSheetValue, fixedHousingSheetEntity } = financeConfig;
 
-  // ── Single source of truth: do we have a valid auth credential? ──
-  // Every effect below gates on `authReady` — nothing runs without it.
   const useBackend = Boolean(HAS_BACKEND && appJwt);
   const authReady = isTestData || (useBackend ? Boolean(appJwt) : Boolean(accessToken));
 
   const checkAccess = useMemo(() => {
     if (!authReady || isTestData) return null;
     return useBackend
-      ? (sid) => checkSheetAccessViaBackend(appJwt, sid, API_URL)
-      : (sid) => checkSheetAccess(accessToken, sid);
+      ? (s) => checkSheetAccessViaBackend(appJwt, s, API_URL)
+      : (s) => checkSheetAccess(accessToken, s);
   }, [authReady, useBackend, appJwt, accessToken, isTestData]);
 
   const fetchData = useMemo(() => {
     if (!authReady || isTestData) return null;
     return useBackend
-      ? (sid) => fetchSheetDataViaBackend(appJwt, sid, API_URL)
-      : (sid) => fetchSheetData(accessToken, sid);
+      ? (s) => fetchSheetDataViaBackend(appJwt, s, API_URL)
+      : (s) => fetchSheetData(accessToken, s);
   }, [authReady, useBackend, appJwt, accessToken, isTestData]);
 
   const PROFILE_PRIMARY = useMemo(
@@ -70,8 +68,11 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   const [error, setError] = useState(null);
   const [fetchKey, setFetchKey] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
-  /** Only clear stats when sheet or profile context changes — keeps UI during pull-refresh / /me race. */
   const statsCacheKeyRef = useRef(null);
+  /** Result of secondary sheet HEAD-style check when it finishes before primary CSV load. */
+  const pendingSecondaryAccessRef = useRef(undefined);
+  const sheetAccessRef = useRef(sheetAccess);
+  sheetAccessRef.current = sheetAccess;
 
   const effectiveProfiles = !sheetAccess
     ? []
@@ -97,24 +98,28 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     setLastUpdatedAt(new Date());
   }, [isTestData]);
 
+  /** Secondary sheet access probe — parallel with primary fetch; does not block first paint. */
   useEffect(() => {
-    if (isTestData) return;
-    if (!checkAccess) { setSheetAccess(null); return; }
-
+    if (isTestData || !checkAccess || !sid2) return;
     let cancelled = false;
-    Promise.all([
-      checkAccess(sid1),
-      sid2 ? checkAccess(sid2) : Promise.resolve(false),
-    ]).then(([id1, id2]) => {
-      if (!cancelled) setSheetAccess({ id1: !!id1, id2: !!id2 });
+    checkAccess(sid2).then((ok) => {
+      if (cancelled) return;
+      pendingSecondaryAccessRef.current = !!ok;
+      setSheetAccess((prev) => {
+        if (!prev) return null;
+        return { ...prev, id2: !!ok };
+      });
     });
-    return () => { cancelled = true; };
-  }, [checkAccess, isTestData, sid1, sid2]);
+    return () => {
+      cancelled = true;
+    };
+  }, [checkAccess, sid2, isTestData]);
 
   useEffect(() => {
     if (isTestData || !fetchData) return;
-    if (!sheetAccess || !currentSheetId) return;
-    if (!sheetAccess.id1 && !sheetAccess.id2) return;
+    if (!currentSheetId) return;
+    const access = sheetAccessRef.current;
+    if (access !== null && !access.id1 && !access.id2) return;
 
     const statsKey = `${currentSheetId}\0${effectiveProfile}`;
     if (statsCacheKeyRef.current !== statsKey) {
@@ -135,10 +140,28 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
         const s = computeStatistics(months, { ...statsOpts, profileId: effectiveProfile });
         setStats(s);
         setLastUpdatedAt(new Date());
+
+        setSheetAccess((prev) => {
+          const nextId1 = currentSheetId === sid1 ? true : (prev?.id1 ?? false);
+          const nextId2 =
+            currentSheetId === sid2
+              ? true
+              : pendingSecondaryAccessRef.current !== undefined
+                ? pendingSecondaryAccessRef.current
+                : (prev?.id2 ?? false);
+          return { id1: nextId1, id2: nextId2 };
+        });
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        setError(err.message);
+        setSheetAccess((prev) => {
+          if (currentSheetId === sid1) return { id1: false, id2: false };
+          if (currentSheetId === sid2 && prev) return { ...prev, id2: false };
+          return prev ?? { id1: false, id2: false };
+        });
+      })
       .finally(() => setLoading(false));
-  }, [fetchData, sheetAccess, currentSheetId, fetchKey, effectiveProfile, isTestData, statsOpts, fixedHousingSheetValue, fixedHousingSheetEntity]);
+  }, [fetchData, currentSheetId, fetchKey, effectiveProfile, isTestData, statsOpts, fixedHousingSheetValue, fixedHousingSheetEntity, sid1, sid2]);
 
   useEffect(() => {
     if (isTestData || !fetchData) return;

@@ -282,23 +282,23 @@ export default function App() {
     );
   }
 
-  if (!isTestData && user && sheetAccess === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">{t.checkingAccess}</span>
-        </div>
-      </div>
-    );
-  }
-
   if ((loading && !isTestData && !stats) || (isTestData && !stats)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
           <span className="text-text-secondary">{isTestData ? t.loadingTestData : t.loadingData}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isTestData && user && sheetAccess === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+          <span className="text-text-secondary">{t.checkingAccess}</span>
         </div>
       </div>
     );
