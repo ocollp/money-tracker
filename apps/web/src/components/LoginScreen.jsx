@@ -1,58 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
-const LANG_LABELS = { CAT: 'Català', ES: 'Español', EN: 'English' };
-
-function LangDropdown({ lang, setLang, langs }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handle = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handle);
-    return () => document.removeEventListener('mousedown', handle);
-  }, [open]);
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-text-secondary/60 hover:text-text-primary hover:bg-white/[0.08] transition-all duration-200"
-        aria-label="Language"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z" />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute top-full right-0 mt-2 z-20 bg-surface-alt border border-white/[0.08] rounded-xl shadow-xl overflow-hidden min-w-[140px] animate-[fadeSlideIn_0.15s_ease-out]">
-          {langs.map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => { setLang(l); setOpen(false); }}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm transition-colors duration-150 ${
-                l === lang
-                  ? 'text-brand bg-brand/10 font-medium'
-                  : 'text-text-secondary hover:bg-white/[0.04] hover:text-text-primary'
-              }`}
-            >
-              <span>{LANG_LABELS[l]}</span>
-              {l === lang && (
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 function GoogleIcon() {
   return (
     <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -71,7 +19,7 @@ export default function LoginScreen({
   authError = null,
   passkey,
 }) {
-  const { lang, setLang, t, LANGS } = useI18n();
+  const { t } = useI18n();
 
   const autoTriggered = useRef(false);
   useEffect(() => {
@@ -87,10 +35,6 @@ export default function LoginScreen({
 
   return (
     <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex flex-col items-center justify-center px-6 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
-      <div className="absolute top-5 right-5">
-        <LangDropdown lang={lang} setLang={setLang} langs={LANGS} />
-      </div>
-
       <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden flex items-center justify-center bg-white/[0.04] mb-5">
         <img
           src={`${import.meta.env.BASE_URL}piggy.gif`}

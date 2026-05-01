@@ -1,7 +1,7 @@
 export function formatMoney(value) {
   const num = Number(value);
   if (value == null || isNaN(num)) return '—';
-  const formatted = new Intl.NumberFormat('es-ES', {
+  const formatted = new Intl.NumberFormat('ca-ES', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
     useGrouping: true,

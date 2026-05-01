@@ -1,4 +1,5 @@
-export const ca = {
+/** Textos de la interfície (només català). */
+export const t = {
   appTitle: 'Finances personals',
   appSubtitle: 'El teu resum financer personal',
   onboarding: [
@@ -118,7 +119,6 @@ export const ca = {
   sectionProfiles: 'Perfils',
   sectionSheets: 'Google Sheets',
   sectionMortgage: 'Hipoteca',
-  sectionLanguage: 'Idioma',
   sectionOther: 'Altres',
   profilePrimary: 'Principal',
   profileSecondary: 'Secundari',
