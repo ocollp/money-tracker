@@ -357,6 +357,24 @@ export function computeStatistics(months, options = {}) {
   }
   distribution.sort((a, b) => b.value - a.value);
   const prevTravelFund = months.length > 1 ? (months[months.length - 2].travelFund || 0) : 0;
+
+  /** Same adjustment as App KPI «Patrimoni total»: raw wealth minus non-patrimony share of travel fund. */
+  const travelAdjPatrimonyKpi = (fund) =>
+    hasTravel && fund ? fund * (1 - TRAVEL_PATRIMONY_SHARE) : 0;
+  const patrimonyKpiCurrent =
+    totalWealthByMonth[lastIdx] - travelAdjPatrimonyKpi(latestTravelFund);
+  const patrimonyKpiPrevious =
+    lastIdx >= 1
+      ? totalWealthByMonth[lastIdx - 1] -
+        travelAdjPatrimonyKpi(months[lastIdx - 1].travelFund || 0)
+      : null;
+  const patrimonyKpiChangeVsPrev =
+    patrimonyKpiPrevious != null ? patrimonyKpiCurrent - patrimonyKpiPrevious : null;
+  const patrimonyKpiChangeVsPrevPct =
+    patrimonyKpiPrevious
+      ? ((patrimonyKpiCurrent - patrimonyKpiPrevious) / patrimonyKpiPrevious) * 100
+      : null;
+
   const travelMonthlySaving = options.travelMonthlySaving ?? TRAVEL_MONTHLY_SAVING ?? 0;
   const myHalfSaving = travelMonthlySaving / 2;
   const travelSpentLastMonth = Math.max(0, (prevTravelFund + myHalfSaving) - latestTravelFund);
@@ -486,6 +504,8 @@ export function computeStatistics(months, options = {}) {
     current,
     currentTotal,
     currentTotalWealth,
+    patrimonyKpiChangeVsPrev,
+    patrimonyKpiChangeVsPrevPct,
     changeVsPrev,
     changeVsPrevPct,
     changeVsPrevTotal,

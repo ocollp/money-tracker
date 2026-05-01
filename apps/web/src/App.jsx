@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { formatMoney, formatChange, formatUpdatedClock } from './utils/formatters';
+import { formatMoney, formatChange, formatPct, formatUpdatedClock } from './utils/formatters';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { useBackendProfile, clearAppJwt } from './hooks/useBackendProfile';
@@ -330,6 +330,16 @@ export default function App() {
   const kpiLgCols =
     kpiCount >= 4 ? 'lg:grid-cols-4' : kpiCount === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2';
 
+  const monthDelta = entityChange
+    ? entityChange.change
+    : (stats.changeVsPrevTotal ?? stats.changeVsPrev);
+  const monthDeltaPct = entityChange
+    ? entityChange.pct
+    : (stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct);
+
+  const liquidDelta = entityChange ? entityChange.change : stats.changeVsPrev;
+  const liquidPct = entityChange ? entityChange.pct : stats.changeVsPrevPct;
+
   return (
     <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
       <div
@@ -394,12 +404,24 @@ export default function App() {
         <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${kpiLgCols}`}>
           <KpiCard
             title={t.kpiCurrentMonth}
-            value={formatChange(entityChange ? entityChange.change : (stats.changeVsPrevTotal ?? stats.changeVsPrev))}
+            value={formatChange(monthDelta)}
+            subtitle={
+              monthDeltaPct != null && !Number.isNaN(monthDeltaPct)
+                ? t.kpiVsPrevMonth(formatPct(monthDeltaPct))
+                : null
+            }
+            trend={monthDelta != null ? monthDelta : 0}
             icon="🗓️"
           />
           <KpiCard
             title={t.kpiMoneyAndInvestments}
             value={formatMoney(entityChange ? entityChange.current : stats.current)}
+            subtitle={
+              liquidPct != null && !Number.isNaN(liquidPct)
+                ? t.kpiVsPrevMonth(formatPct(liquidPct))
+                : null
+            }
+            trend={liquidDelta != null ? liquidDelta : 0}
             icon="💰"
           />
           {stats.hasTravel && stats.travel && (
@@ -429,8 +451,15 @@ export default function App() {
                     ? (stats.travel.current ?? 0) * (1 - TRAVEL_PATRIMONY_SHARE)
                     : 0),
               )}
-              subtitle={null}
-              trend={0}
+              subtitle={
+                stats.patrimonyKpiChangeVsPrevPct != null &&
+                !Number.isNaN(stats.patrimonyKpiChangeVsPrevPct)
+                  ? t.kpiVsPrevMonth(formatPct(stats.patrimonyKpiChangeVsPrevPct))
+                  : null
+              }
+              trend={
+                stats.patrimonyKpiChangeVsPrev != null ? stats.patrimonyKpiChangeVsPrev : 0
+              }
               icon="💸"
             />
           )}
