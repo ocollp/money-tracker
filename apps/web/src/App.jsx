@@ -437,7 +437,7 @@ export default function App() {
                   : null
               }
               trend={0}
-              subtitleColor={(stats.travel.spentLastMonth ?? 0) > 0 ? 'text-negative' : undefined}
+              subtitleColor={(stats.travel.spentLastMonth ?? 0) > 0 ? 'text-text-secondary' : undefined}
               icon="✈️"
             />
           )}
