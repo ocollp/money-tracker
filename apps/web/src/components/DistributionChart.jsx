@@ -117,11 +117,11 @@ function ToggleButton({ active, onClick, children, label }) {
   );
 }
 
-/** % of radius so the pie stays inside the box (avoids SVG clipping with overflow-x-hidden on the card). */
+/** % of maxRadius (half of min chart w/h). High values fill the square; keep <100% to avoid SVG edge clipping. */
 const PIE_LAYOUT = {
   donut: {
-    innerRadius: '38%',
-    outerRadius: '58%',
+    innerRadius: '39%',
+    outerRadius: '84%',
     paddingAngle: 0,
     cornerRadius: 0,
     stroke: 'transparent',
@@ -129,7 +129,7 @@ const PIE_LAYOUT = {
   },
   trivial: {
     innerRadius: 0,
-    outerRadius: '58%',
+    outerRadius: '84%',
     paddingAngle: 0,
     cornerRadius: 0,
     stroke: 'transparent',
@@ -212,14 +212,14 @@ export default function DistributionChart({
 
   return (
     <div
-      className="flex min-h-0 flex-col glass-card max-w-full overflow-x-hidden px-3 pt-1.5 pb-1.5 sm:px-6 sm:pb-6 sm:pt-5"
+      className="flex min-h-0 flex-col gap-0 glass-card max-w-full overflow-x-hidden px-3 pb-1 pt-1 sm:gap-0 sm:px-5 sm:py-4"
       onDoubleClick={hasSelection ? clearFilter : undefined}
     >
-      <div className="mb-1 flex min-w-0 shrink-0 flex-col gap-1 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <h3 className="text-lg font-semibold truncate min-w-0 sm:flex-1 sm:min-w-0 sm:pr-2">
+      <div className="flex min-w-0 shrink-0 flex-row flex-wrap items-center justify-between gap-x-1.5 gap-y-0.5 pb-0 sm:mb-2 sm:gap-x-4 sm:gap-y-1 sm:pb-0">
+        <h3 className="min-w-0 flex-1 truncate text-lg font-semibold leading-tight sm:min-w-0 sm:pr-2">
           {title}
         </h3>
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0 min-w-0">
+        <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-1">
           {hasSelection && onSelectEntity && (
             <button
               type="button"
@@ -261,11 +261,11 @@ export default function DistributionChart({
         </div>
       </div>
       {hasSelection && (
-        <p className="mb-0.5 text-[11px] text-text-secondary sm:mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
+        <p className="mb-0.5 text-[11px] leading-snug text-text-secondary sm:mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
       )}
-      <div className="flex min-h-0 w-full flex-col items-stretch justify-start gap-1 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
+      <div className="flex min-h-0 w-full flex-col items-stretch gap-0 sm:flex-row sm:items-center sm:gap-4 lg:gap-5">
         <div
-          className="relative mx-auto aspect-square w-full max-w-[min(100%,22.5rem)] shrink-0 sm:mx-0 sm:h-72 sm:w-72 sm:max-w-none lg:h-80 lg:w-80"
+          className="relative -mt-px mx-auto aspect-square w-full max-w-[min(100%,17rem)] shrink-0 leading-none sm:mx-0 sm:mt-0 sm:h-64 sm:w-64 sm:max-w-none lg:h-72 lg:w-72"
           onDoubleClick={hasSelection ? clearFilter : undefined}
         >
           <ResponsiveContainer width="100%" height="100%">
@@ -311,7 +311,7 @@ export default function DistributionChart({
               />
             </PieChart>
           </ResponsiveContainer>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-2 text-center">
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-2 text-center sm:px-2">
             {hasDonutHole ? (
               <div className="flex flex-col gap-0.5">
                 {hideMoney ? (
@@ -357,13 +357,13 @@ export default function DistributionChart({
             )}
           </div>
         </div>
-        <div className="flex w-full min-w-0 flex-col gap-1 sm:flex-1 sm:justify-center sm:gap-1.5 sm:pt-1">
+        <div className="-mt-1 flex w-full min-w-0 flex-col gap-1 sm:mt-0 sm:flex-1 sm:gap-1.5">
           {visibleList.map((d, index) => {
             const c = getColor(d.name, index);
             return (
               <div
                 key={d.name}
-                className={`space-y-0.5 rounded-xl px-2 sm:px-2.5 py-1.5 -mx-1 transition-all duration-200 ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
+                className={`space-y-0.5 rounded-xl px-2 py-1.5 transition-all duration-200 sm:px-2.5 ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
                 style={{ opacity: selectionAppliesToPie && !isSliceSelected(d.name) ? 0.3 : 1 }}
                 onClick={() => onSelectEntity?.(d.name)}
                 onDoubleClick={clearFilter}

@@ -27,7 +27,6 @@ import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
 import DistributionChart from './components/DistributionChart';
 import Heatmap from './components/Heatmap';
-import PeriodComparison from './components/PeriodComparison';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
@@ -520,10 +519,6 @@ export default function App() {
 
         {stats.hasHousing && (
           <MortgageCard housing={stats.housing} />
-        )}
-
-        {stats.periodComparison && (
-          <PeriodComparison data={stats.periodComparison} />
         )}
 
         <Patterns yearComparison={stats.yearComparison} />

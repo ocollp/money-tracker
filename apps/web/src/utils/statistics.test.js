@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseCSV, groupByMonth } from './parseCSV.js';
-import { computeStatistics, buildEffectiveMortgageSeries, buildPeriodComparison } from './statistics.js';
+import { computeStatistics, buildEffectiveMortgageSeries } from './statistics.js';
 
 const HEADER = 'date,month,year,type,category,entity,amount\n';
 
@@ -223,48 +223,5 @@ describe('computeStatistics', () => {
     const hip = stats.distribution.find((d) => d.name === 'Hipoteca BBVA');
     expect(compte.value).toBe(200_000);
     expect(hip.value).toBe(50_000);
-  });
-});
-
-describe('buildPeriodComparison', () => {
-  const ch = (year, month1to12, v) => ({
-    month: { date: new Date(year, month1to12 - 1, 1), label: `${year}-${month1to12}` },
-    value: v,
-  });
-
-  it('returns null for empty changes', () => {
-    expect(buildPeriodComparison([])).toBeNull();
-  });
-
-  it('sums last 6 vs prior 6 without overlap', () => {
-    const rows = [];
-    for (let i = 0; i < 12; i++) rows.push(ch(2024, 1 + i, 100));
-    const pc = buildPeriodComparison(rows);
-    expect(pc.rolling.recentSum).toBe(600);
-    expect(pc.rolling.priorSum).toBe(600);
-    expect(pc.rolling.recentMonths).toBe(6);
-    expect(pc.rolling.priorMonths).toBe(6);
-    expect(pc.rolling.delta).toBe(0);
-  });
-
-  it('has no prior window when there are at most 6 changes', () => {
-    const rows = Array.from({ length: 6 }, (_, i) => ch(2024, i + 1, 50));
-    const pc = buildPeriodComparison(rows);
-    expect(pc.rolling.priorMonths).toBe(0);
-    expect(pc.rolling.priorSum).toBe(0);
-  });
-
-  it('matches YoY on same calendar month as latest month', () => {
-    const rows = [
-      ch(2025, 4, 100),
-      ch(2025, 5, 300),
-      ch(2026, 4, 50),
-      ch(2026, 5, 500),
-    ];
-    const pc = buildPeriodComparison(rows);
-    expect(pc.yoyMonth.available).toBe(true);
-    expect(pc.yoyMonth.priorChange).toBe(300);
-    expect(pc.yoyMonth.currentChange).toBe(500);
-    expect(pc.yoyMonth.delta).toBe(200);
   });
 });

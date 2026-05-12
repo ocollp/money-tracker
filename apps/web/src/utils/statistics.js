@@ -90,57 +90,6 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
   return { filledMonths, filledLiquidTotals, filledTotalWealth };
 }
 
-export function buildPeriodComparison(changesTotal) {
-  const nCh = changesTotal.length;
-  if (nCh === 0) return null;
-
-  const recentLen = Math.min(6, nCh);
-  const recent = changesTotal.slice(-recentLen);
-  const recentSum = recent.reduce((s, c) => s + c.value, 0);
-
-  const priorLen = Math.min(6, Math.max(0, nCh - recentLen));
-  const prior = priorLen > 0 ? changesTotal.slice(-(recentLen + priorLen), -recentLen) : [];
-  const priorSum = prior.reduce((s, c) => s + c.value, 0);
-
-  const rollingDelta = recentSum - priorSum;
-  const rollingPctVsPrior =
-    priorLen > 0 && priorSum !== 0 ? (rollingDelta / Math.abs(priorSum)) * 100 : null;
-
-  const lastChange = changesTotal[nCh - 1];
-  const ly = lastChange.month.date.getFullYear() - 1;
-  const lm = lastChange.month.date.getMonth();
-  const yoyPrior = changesTotal.find(
-    (c) => c.month.date.getFullYear() === ly && c.month.date.getMonth() === lm,
-  );
-
-  const yoyDelta =
-    yoyPrior != null ? lastChange.value - yoyPrior.value : null;
-  const yoyPctVsPrior =
-    yoyPrior != null && yoyPrior.value !== 0
-      ? ((lastChange.value - yoyPrior.value) / Math.abs(yoyPrior.value)) * 100
-      : null;
-
-  return {
-    rolling: {
-      recentSum,
-      recentMonths: recentLen,
-      priorSum,
-      priorMonths: priorLen,
-      delta: rollingDelta,
-      pctVsPrior: rollingPctVsPrior,
-    },
-    yoyMonth: {
-      currentChange: lastChange.value,
-      currentMonthLabel: lastChange.month.label,
-      priorChange: yoyPrior ? yoyPrior.value : null,
-      priorMonthLabel: yoyPrior ? yoyPrior.month.label : null,
-      delta: yoyDelta,
-      pctVsPrior: yoyPctVsPrior,
-      available: yoyPrior != null,
-    },
-  };
-}
-
 export function computeStatistics(months, options = {}) {
   if (!months.length) return null;
 
@@ -388,8 +337,6 @@ export function computeStatistics(months, options = {}) {
     monthIdx: c.month.date.getMonth(),
   }));
 
-  const periodComparison = buildPeriodComparison(changesTotal);
-
   const hasTravel = months.some(m => m.travelFund !== 0);
   const travelEvolution = months.map(m => ({
     date: m.shortLabel,
@@ -608,7 +555,6 @@ export function computeStatistics(months, options = {}) {
     cashVsInvested,
     allEntities: allEntitiesLiquid,
     heatmap,
-    periodComparison,
     patterns,
     savingsRate,
     yearComparison,
