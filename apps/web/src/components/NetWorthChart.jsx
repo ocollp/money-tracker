@@ -43,6 +43,19 @@ function CustomCursor({ points, height }) {
   );
 }
 
+function formatNetWorthAxisTick(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return '';
+  const sign = n < 0 ? '-' : '';
+  const a = Math.abs(n);
+  if (a < 1000) return `${sign}${Math.round(a)}`;
+  if (a < 10_000) {
+    const k = (a / 1000).toFixed(1).replace(/\.0$/, '');
+    return `${sign}${k}k`;
+  }
+  return `${sign}${(a / 1000).toFixed(0)}k`;
+}
+
 const RANGE_KEYS = ['3', '6', '12', 'all'];
 
 export default function NetWorthChart({ months, totals, title = 'Patrimoni', subtitle = 'Diners i inversions', tooltipLabel = 'Patrimoni', selectedEntity, onClearEntity }) {
@@ -103,7 +116,9 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
       const pad = Math.max(Math.abs(lo) * 0.05, 500);
       return [lo - pad, hi + pad];
     }
-    return undefined;
+    const span = hi - lo;
+    const pad = Math.max(span * 0.06, Math.abs(hi) * 0.02, 200);
+    return [lo - pad, hi + pad];
   }, [data]);
 
   const xTicks = getXAxisTicks(data, narrow);
@@ -207,11 +222,11 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
               domain={yDomain}
               axisLine={false}
               tickLine={false}
-              tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
-              width={narrow ? 34 : 40}
+              tickFormatter={formatNetWorthAxisTick}
+              width={narrow ? 40 : 44}
               tick={(props) => {
                 const { y, payload } = props;
-                const text = `${(payload.value / 1000).toFixed(0)}k`;
+                const text = formatNetWorthAxisTick(payload.value);
                 return (
                   <text x={0} y={y} dy={4} textAnchor="start" fill="#f1f5f9" fontSize={12}>
                     {text}

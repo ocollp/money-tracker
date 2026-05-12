@@ -46,6 +46,14 @@ function getColor(name, index) {
   return ENTITY_COLORS[name] ?? DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
 }
 
+const TOGGLE_BTN_BASE =
+  'w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200';
+const TOGGLE_INACTIVE =
+  'bg-white/[0.03] border-white/[0.06] text-text-secondary/30 hover:bg-white/[0.08] hover:text-text-secondary/55 hover:border-white/[0.1]';
+const TOGGLE_ACTIVE_NEUTRAL = 'bg-white/[0.14] border-white/[0.2] text-white';
+const TOGGLE_ACTIVE_BRAND =
+  'bg-brand/25 text-text-primary border-brand/45 shadow-sm shadow-brand/10';
+
 const CustomTooltip = ({ active, payload, formatDisplayName, total, t, hideMoney }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0];
@@ -101,11 +109,7 @@ function ToggleButton({ active, onClick, children, label }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 ${
-        active
-          ? 'bg-white/[0.14] border-white/[0.2] text-white'
-          : 'bg-white/[0.03] border-white/[0.06] text-text-secondary/30'
-      }`}
+      className={`${TOGGLE_BTN_BASE} text-sm leading-none ${active ? TOGGLE_ACTIVE_NEUTRAL : TOGGLE_INACTIVE}`}
       aria-label={label}
     >
       {children}
@@ -133,6 +137,7 @@ export default function DistributionChart({
   entityEvolution,
   distributionSparklineExtras,
   hasHousing,
+  onShowHousingChange,
   pieVariant = 'donut',
   privacyToggle = false,
 }) {
@@ -186,7 +191,8 @@ export default function DistributionChart({
     .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
 
   const pieData = recalculated.filter(d => !d.hidden);
-  const listItems = recalculated.map((d, i) => ({ item: d, index: i }));
+  const visibleList = recalculated.filter((d) => !d.hidden);
+  const selectionAppliesToPie = selectedEntities.some((n) => pieData.some((p) => p.name === n));
 
   const clearFilter = () => onSelectEntity?.(null);
 
@@ -217,7 +223,13 @@ export default function DistributionChart({
           {hasHousing && (
             <ToggleButton
               active={showHousing}
-              onClick={() => setShowHousing(v => !v)}
+              onClick={() => {
+                setShowHousing((v) => {
+                  const next = !v;
+                  onShowHousingChange?.(next);
+                  return next;
+                });
+              }}
               label={t.toggleHousing ?? 'Habitatge'}
             >
               <span className="text-sm leading-none">🏠</span>
@@ -229,10 +241,8 @@ export default function DistributionChart({
               onClick={() => setPrivacyMode((v) => !v)}
               aria-pressed={privacyMode}
               aria-label={privacyMode ? (t.distributionPrivacyHideMoney ?? '') : (t.distributionPrivacyShowMoney ?? '')}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center border text-sm leading-none transition-all duration-200 ${
-                privacyMode
-                  ? 'bg-brand/25 text-text-primary border-brand/45 shadow-sm shadow-brand/10'
-                  : 'bg-white/[0.03] border-white/[0.06] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary hover:border-white/[0.1]'
+              className={`${TOGGLE_BTN_BASE} text-sm leading-none ${
+                privacyMode ? TOGGLE_ACTIVE_BRAND : TOGGLE_INACTIVE
               }`}
             >
               👀
@@ -272,7 +282,7 @@ export default function DistributionChart({
                   <Cell
                     key={i}
                     fill={getColor(d.name, i)}
-                    opacity={hasSelection && !isSliceSelected(d.name) ? 0.25 : 1}
+                    opacity={selectionAppliesToPie && !isSliceSelected(d.name) ? 0.25 : 1}
                     style={{ transition: 'opacity 0.3s ease' }}
                   />
                 ))}
@@ -322,13 +332,13 @@ export default function DistributionChart({
           </div>
         </div>
         <div className="flex flex-col gap-1 w-full">
-          {listItems.map(({ item: d, index }) => {
+          {visibleList.map((d, index) => {
             const c = getColor(d.name, index);
             return (
               <div
                 key={d.name}
                 className={`space-y-0.5 rounded-xl px-2 sm:px-2.5 py-1.5 -mx-1 transition-all duration-200 ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
-                style={{ opacity: d.hidden ? 0.2 : (hasSelection && !isSliceSelected(d.name) ? 0.3 : 1) }}
+                style={{ opacity: selectionAppliesToPie && !isSliceSelected(d.name) ? 0.3 : 1 }}
                 onClick={() => onSelectEntity?.(d.name)}
                 onDoubleClick={clearFilter}
               >

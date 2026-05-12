@@ -33,6 +33,7 @@ import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { generateInsight } from './utils/insights.js';
+import { ASSET_CLASS_LABELS } from './utils/assetClassBuckets.js';
 
 const PROFILE_KEY = 'mt_profile';
 
@@ -492,6 +493,11 @@ export default function App() {
               entityEvolution={stats.assetClassEvolution}
               distributionSparklineExtras={{}}
               hasHousing={stats.hasHousing}
+              onShowHousingChange={(show) => {
+                if (!show) {
+                  setSelectedAssetClasses((p) => p.filter((n) => n !== ASSET_CLASS_LABELS.immo));
+                }
+              }}
             />
           </div>
         )}
@@ -501,8 +507,8 @@ export default function App() {
             months={assetClassNetWorth?.months ?? stats.netWorthMonths}
             totals={
               assetClassNetWorth?.totals
-              ?? stats.netWorthTotalWealth
               ?? stats.netWorthTotals
+              ?? stats.netWorthTotalWealth
             }
             title={t.netWorthTitle}
             subtitle={null}
