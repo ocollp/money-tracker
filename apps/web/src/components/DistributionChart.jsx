@@ -212,10 +212,10 @@ export default function DistributionChart({
 
   return (
     <div
-      className="flex min-h-0 flex-col glass-card max-w-full overflow-x-hidden px-3 pt-2 pb-2 sm:px-6 sm:pb-6 sm:pt-5"
+      className="flex min-h-0 flex-col glass-card max-w-full overflow-x-hidden px-3 pt-1.5 pb-1.5 sm:px-6 sm:pb-6 sm:pt-5"
       onDoubleClick={hasSelection ? clearFilter : undefined}
     >
-      <div className="mb-2 flex min-w-0 shrink-0 flex-col gap-1.5 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div className="mb-1 flex min-w-0 shrink-0 flex-col gap-1 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <h3 className="text-lg font-semibold truncate min-w-0 sm:flex-1 sm:min-w-0 sm:pr-2">
           {title}
         </h3>
@@ -261,9 +261,9 @@ export default function DistributionChart({
         </div>
       </div>
       {hasSelection && (
-        <p className="mb-1 text-[11px] text-text-secondary sm:mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
+        <p className="mb-0.5 text-[11px] text-text-secondary sm:mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
       )}
-      <div className="flex min-h-0 w-full flex-col items-stretch justify-start gap-2 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
+      <div className="flex min-h-0 w-full flex-col items-stretch justify-start gap-1 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
         <div
           className="relative mx-auto aspect-square w-full max-w-[min(100%,22.5rem)] shrink-0 sm:mx-0 sm:h-72 sm:w-72 sm:max-w-none lg:h-80 lg:w-80"
           onDoubleClick={hasSelection ? clearFilter : undefined}
