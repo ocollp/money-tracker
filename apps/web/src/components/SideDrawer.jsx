@@ -98,17 +98,17 @@ export default function SideDrawer({
     return (
       <div className={`border-b border-white/[0.06] ${extraClass}`}>
         <div className={`relative overflow-hidden ${isCollapsed ? 'px-2 py-4' : 'px-4 py-5'}`}>
-          <div className="absolute inset-0 bg-gradient-to-br from-brand/[0.08] to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-sky-500/[0.06] via-transparent to-indigo-500/[0.04] pointer-events-none" />
           <div className={`relative flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
             {user.picture ? (
               <img
                 src={user.picture}
                 alt=""
-                className={`rounded-full ring-2 ring-brand/20 shrink-0 shadow-sm ${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'}`}
+                className={`rounded-full ring-2 ring-sky-500/25 shrink-0 shadow-sm ${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'}`}
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className={`rounded-full bg-gradient-to-br from-brand/30 to-brand/10 flex items-center justify-center text-brand font-bold text-sm shrink-0 ${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'}`}>
+              <div className={`rounded-full bg-gradient-to-br from-sky-500/25 to-sky-600/10 flex items-center justify-center text-sky-200 font-bold text-sm shrink-0 ${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'}`}>
                 {user.name?.[0]?.toUpperCase() ?? '?'}
               </div>
             )}
@@ -160,7 +160,7 @@ export default function SideDrawer({
 
   const desktopSidebar = (
     <aside
-      className="hidden sm:flex fixed top-0 left-0 bottom-0 z-30 bg-surface-alt border-r border-white/[0.06] flex-col transition-all duration-300 ease-in-out"
+      className="hidden sm:flex fixed top-0 left-0 bottom-0 z-30 glass-sidebar flex-col transition-all duration-300 ease-in-out"
       style={{ width: collapsed ? COLLAPSED_W : EXPANDED_W }}
     >
       {userSection(collapsed)}
@@ -208,7 +208,7 @@ export default function SideDrawer({
       <button
         type="button"
         onClick={onToggleCollapse}
-        className="absolute top-1/2 -translate-y-1/2 -right-3.5 z-40 w-7 h-7 rounded-full bg-surface-alt border border-white/[0.08] shadow-lg flex items-center justify-center text-text-secondary/50 hover:text-text-primary hover:border-brand/30 hover:shadow-brand/10 transition-all duration-200"
+        className="absolute top-1/2 -translate-y-1/2 -right-3.5 z-40 w-7 h-7 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.12] shadow-lg flex items-center justify-center text-text-secondary/50 hover:text-text-primary hover:border-brand/35 hover:shadow-brand/10 transition-all duration-200"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +226,7 @@ export default function SideDrawer({
         aria-hidden
       />
       <nav
-        className={`fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[80vw] bg-surface-alt border-r border-white/[0.06] shadow-2xl flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[80vw] glass-sidebar shadow-2xl flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top, 0px))' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}

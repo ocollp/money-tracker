@@ -4,25 +4,38 @@ import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 const DISTRIBUTION_COLORS = [
-  '#3b82f6', '#10b981', '#a78bfa', '#f59e0b', '#ec4899',
-  '#06b6d4', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316',
+  '#2563eb',
+  '#ca8a04',
+  '#0891b2',
+  '#ea580c',
+  '#22c55e',
+  '#a855f7',
+  '#ec4899',
+  '#0ea5e9',
 ];
 
 const ENTITY_COLORS = {
   BBVA: '#2563eb',
   'Compte corrent BBVA': '#3b82f6',
-  'Hipoteca BBVA': '#1d4ed8',
-  Revolut: '#eab308',
-  'Trade Republic': '#8b5cf6',
-  Urbanitae: '#10b981',
-  Efectivo: '#ec4899',
-  Indexa: '#22c55e',
-  'Indexa Capital': '#06b6d4',
-  Fundeen: '#f97316',
-  'Fons de viatges': '#a78bfa',
+  'Hipoteca BBVA': '#1e40af',
+  Revolut: '#b45309',
+  'Trade Republic': '#0e7490',
+  Urbanitae: '#ea580c',
+  Efectivo: '#22c55e',
+  Indexa: '#7c3aed',
+  'Indexa Capital': '#8b5cf6',
+  Fundeen: '#ea580c',
+  'Fons de viatges': '#9333ea',
+  Habitatge: '#0891b2',
+  Crowdfunding: '#f97316',
+  'Fons indexat': '#a855f7',
+  'Pla de pensions': '#1d4ed8',
+  Accions: '#22c55e',
+  Cripto: '#ec4899',
+  'Compte remunerat': '#ca8a04',
+  "Fons d'emergència": '#ef4444',
 };
 
-/** Shorter labels in the Repartiment list/pie (internal `name` keys unchanged for data/sparklines). */
 const REPARTIMENT_DISPLAY_LABELS = {
   'Hipoteca BBVA': 'Hipoteca',
   'Compte corrent BBVA': 'BBVA',
@@ -33,16 +46,20 @@ function getColor(name, index) {
   return ENTITY_COLORS[name] ?? DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
 }
 
-const CustomTooltip = ({ active, payload, formatDisplayName, total, t }) => {
+const CustomTooltip = ({ active, payload, formatDisplayName, total, t, hideMoney }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0];
   const pct = total > 0 ? (d.value / total) * 100 : 0;
   return (
-    <div className="bg-surface border border-border rounded-xl px-3 py-2 shadow-xl">
+    <div className="rounded-xl px-3 py-2 shadow-xl border border-white/[0.12] bg-slate-900/75 backdrop-blur-xl">
       <p className="text-xs text-text-secondary">{formatDisplayName(d.name)}</p>
-      <p className="text-sm font-bold text-text-primary">{formatMoney(d.value)}</p>
+      {!hideMoney ? (
+        <p className="text-sm font-bold text-text-primary">{formatMoney(d.value)}</p>
+      ) : null}
       {typeof t.distributionTooltipPct === 'function' && (
-        <p className="text-[11px] text-text-secondary/90 mt-0.5">{t.distributionTooltipPct(pct.toFixed(1))}</p>
+        <p className={`text-[11px] text-text-secondary/90 ${hideMoney ? 'mt-0 font-semibold text-text-primary' : 'mt-0.5'}`}>
+          {t.distributionTooltipPct(pct.toFixed(1))}
+        </p>
       )}
     </div>
   );
@@ -90,26 +107,41 @@ function ToggleButton({ active, onClick, children, label }) {
           : 'bg-white/[0.03] border-white/[0.06] text-text-secondary/30'
       }`}
       aria-label={label}
-      title={label}
     >
       {children}
     </button>
   );
 }
 
+const PIE_LAYOUT = {
+  donut: { innerRadius: 52, outerRadius: 80, paddingAngle: 0, cornerRadius: 0, stroke: 'transparent', strokeWidth: 0 },
+  trivial: {
+    innerRadius: 0,
+    outerRadius: 88,
+    paddingAngle: 0,
+    cornerRadius: 0,
+    stroke: 'transparent',
+    strokeWidth: 0,
+  },
+};
+
 export default function DistributionChart({
   distribution,
   title,
-  selectedEntity,
+  selectedEntities = [],
   onSelectEntity,
   entityEvolution,
   distributionSparklineExtras,
   hasHousing,
-  hasTravel,
+  pieVariant = 'donut',
+  privacyToggle = false,
 }) {
   const { t } = useI18n();
   const [showHousing, setShowHousing] = useState(true);
-  const [showTravel, setShowTravel] = useState(true);
+  const [privacyMode, setPrivacyMode] = useState(true);
+
+  const hasSelection = selectedEntities.length > 0;
+  const isSliceSelected = (name) => selectedEntities.includes(name);
 
   const displayName = (name) => {
     if (name in REPARTIMENT_DISPLAY_LABELS) return REPARTIMENT_DISPLAY_LABELS[name];
@@ -118,8 +150,7 @@ export default function DistributionChart({
     return name;
   };
 
-  const isHidden = (d) =>
-    (!showHousing && d.isHousing) || (!showTravel && d.isTravel);
+  const isHidden = (d) => !showHousing && d.isHousing;
 
   const sparklines = useMemo(() => {
     if (!entityEvolution?.length) return {};
@@ -159,15 +190,21 @@ export default function DistributionChart({
 
   const clearFilter = () => onSelectEntity?.(null);
 
+  const hideMoney = privacyToggle && !privacyMode;
+  const pieShape = PIE_LAYOUT[pieVariant] ?? PIE_LAYOUT.donut;
+  const hasDonutHole = pieShape.innerRadius > 0;
+
   return (
     <div
-      className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-3 sm:px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 max-w-full overflow-x-hidden"
-      onDoubleClick={selectedEntity ? clearFilter : undefined}
+      className="h-full min-h-0 flex flex-col glass-card px-3 sm:px-5 pt-5 pb-3 max-w-full overflow-x-hidden"
+      onDoubleClick={hasSelection ? clearFilter : undefined}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3 shrink-0">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <div className="flex items-center gap-1.5">
-          {selectedEntity && onSelectEntity && (
+      <div className="flex flex-col gap-2 mb-3 shrink-0 min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <h3 className="text-lg font-semibold truncate min-w-0 sm:flex-1 sm:min-w-0 sm:pr-2">
+          {title}
+        </h3>
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0 min-w-0">
+          {hasSelection && onSelectEntity && (
             <button
               type="button"
               onClick={clearFilter}
@@ -186,36 +223,46 @@ export default function DistributionChart({
               <span className="text-sm leading-none">🏠</span>
             </ToggleButton>
           )}
-          {hasTravel && (
-            <ToggleButton
-              active={showTravel}
-              onClick={() => setShowTravel(v => !v)}
-              label={t.toggleTravel ?? 'Viatges'}
+          {privacyToggle && (
+            <button
+              type="button"
+              onClick={() => setPrivacyMode((v) => !v)}
+              aria-pressed={privacyMode}
+              aria-label={privacyMode ? (t.distributionPrivacyHideMoney ?? '') : (t.distributionPrivacyShowMoney ?? '')}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center border text-sm leading-none transition-all duration-200 ${
+                privacyMode
+                  ? 'bg-brand/25 text-text-primary border-brand/45 shadow-sm shadow-brand/10'
+                  : 'bg-white/[0.03] border-white/[0.06] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary hover:border-white/[0.1]'
+              }`}
             >
-              <span className="text-sm leading-none">✈️</span>
-            </ToggleButton>
+              👀
+            </button>
           )}
         </div>
       </div>
-      {selectedEntity && (
+      {hasSelection && (
         <p className="text-[11px] text-text-secondary mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
       )}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 flex-1 min-h-0">
         <div
           className="relative h-40 w-40 sm:h-48 sm:w-48 shrink-0"
-          onDoubleClick={selectedEntity ? clearFilter : undefined}
+          onDoubleClick={hasSelection ? clearFilter : undefined}
         >
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData} dataKey="value" nameKey="name"
-                cx="50%" cy="50%" innerRadius={52} outerRadius={80}
-                strokeWidth={0}
-                paddingAngle={0}
-                style={{ cursor: 'pointer' }}
+                cx="50%" cy="50%"
+                innerRadius={pieShape.innerRadius}
+                outerRadius={pieShape.outerRadius}
+                paddingAngle={pieShape.paddingAngle}
+                cornerRadius={pieShape.cornerRadius}
+                stroke={pieShape.stroke}
+                strokeWidth={pieShape.strokeWidth ?? 0}
+                style={{ cursor: onSelectEntity ? 'pointer' : 'default' }}
                 onClick={(_, i) => {
                   const name = pieData[i]?.name;
-                  if (name && onSelectEntity) onSelectEntity(selectedEntity === name ? null : name);
+                  if (name && onSelectEntity) onSelectEntity(name);
                 }}
                 isAnimationActive={true}
                 animationDuration={600}
@@ -225,22 +272,53 @@ export default function DistributionChart({
                   <Cell
                     key={i}
                     fill={getColor(d.name, i)}
-                    opacity={selectedEntity && selectedEntity !== d.name ? 0.25 : 1}
+                    opacity={hasSelection && !isSliceSelected(d.name) ? 0.25 : 1}
                     style={{ transition: 'opacity 0.3s ease' }}
                   />
                 ))}
               </Pie>
               <Tooltip
                 content={(props) => (
-                  <CustomTooltip {...props} formatDisplayName={displayName} total={visibleTotal} t={t} />
+                  <CustomTooltip
+                    {...props}
+                    formatDisplayName={displayName}
+                    total={visibleTotal}
+                    t={t}
+                    hideMoney={hideMoney}
+                  />
                 )}
                 wrapperStyle={{ zIndex: 50 }}
               />
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-[10px] text-text-secondary">{t.distributionTotal}</span>
-            <span className="text-sm font-bold text-text-primary">{formatMoney(visibleTotal)}</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-1">
+            {hasDonutHole ? (
+              hideMoney ? (
+                <>
+                  <span className="text-[10px] text-text-secondary leading-tight">{t.distributionPctOnlyLabel ?? '%'}</span>
+                  <span className="text-lg font-bold text-text-primary tabular-nums tracking-tight">100%</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-[10px] text-text-secondary">{t.distributionTotal}</span>
+                  <span className="text-sm font-bold text-text-primary">{formatMoney(visibleTotal)}</span>
+                </>
+              )
+            ) : (
+              <div className="rounded-full bg-black/45 backdrop-blur-md px-3 py-2 border border-white/[0.12] shadow-lg max-w-[78%]">
+                {hideMoney ? (
+                  <>
+                    <span className="text-[10px] text-text-secondary leading-tight block">{t.distributionPctOnlyLabel ?? '%'}</span>
+                    <span className="text-xl font-bold text-text-primary tabular-nums tracking-tight">100%</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[10px] text-text-secondary block">{t.distributionTotal}</span>
+                    <span className="text-sm font-bold text-text-primary">{formatMoney(visibleTotal)}</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col gap-1 w-full">
@@ -249,9 +327,9 @@ export default function DistributionChart({
             return (
               <div
                 key={d.name}
-                className="space-y-0.5 cursor-pointer rounded-xl px-2 sm:px-2.5 py-1.5 -mx-1 transition-all duration-200 hover:bg-white/[0.04] active:bg-white/[0.06]"
-                style={{ opacity: d.hidden ? 0.2 : (selectedEntity && selectedEntity !== d.name ? 0.3 : 1) }}
-                onClick={() => onSelectEntity?.(selectedEntity === d.name ? null : d.name)}
+                className={`space-y-0.5 rounded-xl px-2 sm:px-2.5 py-1.5 -mx-1 transition-all duration-200 ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
+                style={{ opacity: d.hidden ? 0.2 : (hasSelection && !isSliceSelected(d.name) ? 0.3 : 1) }}
+                onClick={() => onSelectEntity?.(d.name)}
                 onDoubleClick={clearFilter}
               >
                 <div className="flex items-center justify-between gap-1.5 sm:gap-2">
@@ -260,9 +338,17 @@ export default function DistributionChart({
                     <span className="text-text-secondary text-xs sm:text-sm truncate">{displayName(d.name)}</span>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <MiniSparkline data={sparklines[d.name]} color={c} />
-                    <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(d.value)}</span>
-                    <span className="text-[10px] sm:text-xs text-text-secondary w-7 sm:w-9 text-right tabular-nums">{d.pct.toFixed(0)}%</span>
+                    {!hideMoney ? <MiniSparkline data={sparklines[d.name]} color={c} /> : null}
+                    {!hideMoney ? (
+                      <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(d.value)}</span>
+                    ) : null}
+                    <span
+                      className={`tabular-nums text-right font-semibold text-text-primary ${
+                        hideMoney ? 'text-sm sm:text-base min-w-[3.25rem]' : 'text-[10px] sm:text-xs text-text-secondary w-7 sm:w-9'
+                      }`}
+                    >
+                      {hideMoney ? `${d.pct.toFixed(1)}%` : `${d.pct.toFixed(0)}%`}
+                    </span>
                   </div>
                 </div>
                 <div className="w-full bg-surface rounded-full h-1.5 overflow-hidden">

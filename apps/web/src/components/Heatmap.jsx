@@ -30,7 +30,7 @@ export default function Heatmap({ data }) {
   const negativeMonths = rows.filter(d => d.value < 0).length;
 
   return (
-    <div className="bg-surface-alt/80 rounded-2xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
+    <div className="glass-card overflow-hidden">
       <div className="px-5 pt-5 pb-3 flex items-center justify-between gap-2">
         <h3 className="text-lg font-semibold">{t.heatmapTitle}</h3>
         <div className="flex items-center gap-3 text-xs shrink-0">

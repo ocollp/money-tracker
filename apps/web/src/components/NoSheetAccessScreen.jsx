@@ -112,7 +112,7 @@ export default function NoSheetAccessScreen({
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10">
-      <div className="bg-surface-alt/90 rounded-2xl p-8 border border-white/[0.06] shadow-xl text-left max-w-lg w-full space-y-5">
+      <div className="glass-card p-8 text-left max-w-lg w-full space-y-5">
         <div className="text-center space-y-2">
           <p className="text-negative text-lg font-medium">{t.noSheetError}</p>
           <p className="text-text-secondary text-sm">
@@ -120,7 +120,7 @@ export default function NoSheetAccessScreen({
           </p>
         </div>
 
-        <div className="text-text-secondary text-sm space-y-3 border border-white/[0.06] rounded-xl p-4 bg-black/20">
+        <div className="text-text-secondary text-sm space-y-3 border border-white/[0.1] rounded-xl p-4 bg-white/[0.04] backdrop-blur-sm">
           {hasPrimarySheetId ? (
             <>
               <p className="font-medium text-text-primary">{t.noSheetHasId}</p>

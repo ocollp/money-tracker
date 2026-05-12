@@ -3,7 +3,7 @@ import { formatMoney, getEntityColor } from '../utils/formatters';
 
 export default function EntityEvolutionChart({ data, entities }) {
   return (
-    <div className="bg-surface-alt/80 rounded-2xl p-5 border border-white/[0.06] shadow-lg shadow-black/10">
+    <div className="glass-card p-5">
       <h3 className="text-lg font-semibold mb-4">Evolució per entitat</h3>
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">

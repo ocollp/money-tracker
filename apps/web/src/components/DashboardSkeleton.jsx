@@ -1,6 +1,6 @@
 export default function DashboardSkeleton() {
   const bar = 'h-4 rounded-lg bg-white/[0.06] animate-pulse';
-  const card = 'bg-surface-alt/60 rounded-2xl border border-white/[0.06] overflow-hidden';
+  const card = 'glass-card overflow-hidden';
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-pulse" aria-busy="true" aria-label="Loading">

@@ -22,7 +22,7 @@ export default function GoalTracker({ current, velocity }) {
   };
 
   return (
-    <div className="bg-surface-alt/80 rounded-2xl p-5 border border-white/[0.06] shadow-lg shadow-black/10">
+    <div className="glass-card p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Objetivo financiero</h3>
         <button

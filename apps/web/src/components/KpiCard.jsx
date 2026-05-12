@@ -6,7 +6,7 @@ export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, 
   const arrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '';
 
   return (
-    <div className={`bg-surface-alt/80 rounded-2xl p-3 sm:p-5 border border-white/[0.06] shadow-lg shadow-black/10 relative ${highlight ? 'ring-1 ring-brand/30' : ''} ${className}`.trim()}>
+    <div className={`glass-card p-3 sm:p-5 relative ${highlight ? 'ring-1 ring-brand/35' : ''} ${className}`.trim()}>
       <div className="flex items-center justify-between mb-1.5 sm:mb-3">
         <div className="flex items-center gap-1.5">
           <span className="text-text-secondary text-xs sm:text-sm font-medium">{title}</span>
@@ -32,7 +32,7 @@ export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, 
         </div>
       )}
       {tooltip && showTip && (
-        <div className="absolute z-20 left-3 right-3 top-full mt-1 bg-surface-alt border border-white/[0.08] rounded-xl p-3 text-xs text-text-secondary leading-relaxed shadow-xl backdrop-blur-sm">
+        <div className="absolute z-20 left-3 right-3 top-full mt-1 glass-card p-3 text-xs text-text-secondary leading-relaxed shadow-xl">
           {tooltip}
         </div>
       )}

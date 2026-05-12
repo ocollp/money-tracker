@@ -34,8 +34,8 @@ export default function LoginScreen({
   }, [checkingSession, passkey]);
 
   return (
-    <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex flex-col items-center justify-center px-6 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-gradient-to-br from-surface via-surface to-[#0a0d14] overflow-hidden overscroll-none">
-      <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden flex items-center justify-center bg-white/[0.04] mb-5">
+    <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex flex-col items-center justify-center px-6 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-[#06080d] overflow-hidden overscroll-none">
+      <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden flex items-center justify-center bg-white/[0.08] backdrop-blur-xl border border-white/[0.1] mb-5">
         <img
           src={`${import.meta.env.BASE_URL}piggy.gif`}
           alt=""

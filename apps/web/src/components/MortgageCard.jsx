@@ -14,7 +14,7 @@ export default function MortgageCard({ housing }) {
     && Math.round(housing.fullDebt) !== Math.round(housing.debt);
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-5 pt-5 pb-5 border border-white/[0.06] shadow-lg shadow-black/10 gap-4">
+    <div className="h-full min-h-0 flex flex-col glass-card px-5 pt-5 pb-5 gap-4">
       <h3 className="text-lg font-semibold">{t.housingTitle}</h3>
 
       <div className="grid grid-cols-2 gap-3 flex-1">

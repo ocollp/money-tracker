@@ -7,7 +7,7 @@ export default function Patterns({ yearComparison }) {
   const best = Math.max(...sortedYears.map(y => Math.abs(y.total)), 1);
 
   return (
-    <div className="bg-surface-alt/80 rounded-2xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
+    <div className="glass-card overflow-hidden">
       <div className="px-5 pt-5 pb-4">
         <h3 className="text-lg font-semibold">{t.patternsTitle}</h3>
       </div>
@@ -22,7 +22,7 @@ export default function Patterns({ yearComparison }) {
             return (
               <div
                 key={y.year}
-                className="relative rounded-xl px-4 py-3 border bg-white/[0.02] border-white/[0.04] hover:bg-white/[0.04] transition-all duration-300 overflow-hidden"
+                className="relative rounded-xl px-4 py-3 border bg-white/[0.05] border-white/[0.08] hover:bg-white/[0.08] transition-all duration-300 overflow-hidden"
               >
                 <div
                   className={`absolute inset-y-0 left-0 transition-all duration-700 ease-out ${

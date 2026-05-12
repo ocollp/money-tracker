@@ -290,7 +290,7 @@ export default function ProfileSettings({
       aria-modal="true"
       aria-labelledby="settings-title"
     >
-      <div className="bg-surface-alt border border-white/[0.08] rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="glass-card shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 sm:p-6 border-b border-white/[0.06] flex justify-between items-center gap-2">
           <h2 id="settings-title" className="text-lg font-semibold text-text-primary flex items-center gap-2">
             <SettingsIcon className="w-5 h-5 shrink-0 text-text-secondary" />

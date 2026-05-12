@@ -38,7 +38,7 @@ function CustomCursor({ points, height }) {
   return (
     <line
       x1={x} y1={0} x2={x} y2={height}
-      stroke="#ec489960" strokeWidth={1} strokeDasharray="4 3"
+      stroke="#38bdf860" strokeWidth={1} strokeDasharray="4 3"
     />
   );
 }
@@ -67,21 +67,44 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
   }, [title]);
 
   const { sliceMonths, sliceTotals } = useMemo(() => {
-    if (!months?.length || range === 'all') return { sliceMonths: months, sliceTotals: totals };
+    const m = months ?? [];
+    const rawT = totals ?? [];
+    const len = m.length;
+    if (!len) return { sliceMonths: [], sliceTotals: [] };
+    const t =
+      rawT.length === len
+        ? rawT
+        : rawT.length > len
+          ? rawT.slice(0, len)
+          : m.map((_, i) => (i < rawT.length ? rawT[i] : rawT[rawT.length - 1] ?? 0));
+    if (range === 'all') return { sliceMonths: m, sliceTotals: t };
     const n = range === '3' ? 3 : range === '6' ? 6 : 12;
-    const start = Math.max(0, months.length - n);
+    const start = Math.max(0, len - n);
     return {
-      sliceMonths: months.slice(start),
-      sliceTotals: totals.slice(start),
+      sliceMonths: m.slice(start),
+      sliceTotals: t.slice(start),
     };
   }, [months, totals, range]);
 
   const data = sliceMonths.map((m, i) => ({
     date: m.shortLabel,
-    total: sliceTotals[i],
+    total: typeof sliceTotals[i] === 'number' && !Number.isNaN(sliceTotals[i]) ? sliceTotals[i] : 0,
   }));
 
   const lastPoint = data.length > 0 ? data[data.length - 1] : null;
+
+  const yDomain = useMemo(() => {
+    if (data.length < 1) return undefined;
+    const values = data.map((d) => d.total);
+    const lo = Math.min(...values);
+    const hi = Math.max(...values);
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return undefined;
+    if (lo === hi) {
+      const pad = Math.max(Math.abs(lo) * 0.05, 500);
+      return [lo - pad, hi + pad];
+    }
+    return undefined;
+  }, [data]);
 
   const xTicks = getXAxisTicks(data, narrow);
   const chartMargin = {
@@ -101,7 +124,7 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
     return (
       <div
         className="rounded-xl px-3.5 py-2.5 shadow-xl backdrop-blur-sm"
-        style={{ background: 'rgba(15, 23, 42, 0.92)', border: '1px solid rgba(236, 72, 153, 0.25)' }}
+        style={{ background: 'rgba(15, 23, 42, 0.88)', border: '1px solid rgba(56, 189, 248, 0.22)' }}
       >
         <div className="text-[11px] font-medium mb-1" style={{ color: '#94a3b8' }}>{label}</div>
         <div className="text-sm font-bold" style={{ color: '#f1f5f9' }}>{formatMoney(val)}</div>
@@ -122,23 +145,26 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-surface-alt/80 rounded-2xl px-3 sm:px-5 pt-5 pb-3 border border-white/[0.06] shadow-lg shadow-black/10 max-w-full overflow-x-hidden">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 mb-3 shrink-0">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold transition-all duration-300">{title}</h3>
+    <div className="h-full min-h-0 flex flex-col glass-card px-3 sm:px-5 pt-5 pb-3 max-w-full overflow-x-hidden">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 mb-3 shrink-0 min-w-0">
+        <div className="flex min-w-0 w-full flex-col gap-1.5 sm:flex-1 sm:min-w-0">
+          <h3 className="text-lg font-semibold text-text-primary transition-all duration-300 truncate">
+            {title}
+          </h3>
           {selectedEntity && onClearEntity && (
             <button
               type="button"
               onClick={onClearEntity}
-              className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary transition-all duration-150 flex items-center gap-1.5"
+              title={selectedEntity}
+              className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary transition-all duration-150 inline-flex items-center gap-1.5 max-w-full min-w-0 self-start"
             >
-              {selectedEntity}
+              <span className="min-w-0 truncate text-left">{selectedEntity}</span>
               <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           )}
         </div>
         <div
-          className="flex flex-wrap gap-1 p-0.5 rounded-xl bg-surface/80 border border-white/[0.06] self-start"
+          className="flex flex-wrap gap-1 p-0.5 rounded-xl bg-white/[0.06] backdrop-blur-md border border-white/[0.1] self-start shrink-0"
           role="group"
           aria-label={t.netWorthRangeAria ?? 'Period'}
         >
@@ -159,14 +185,14 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
         </div>
       </div>
       {subtitle && <p className="text-xs text-text-secondary mb-4 shrink-0">{subtitle}</p>}
-      <div className="min-h-[280px] flex-1 min-h-0 touch-none" style={{ touchAction: 'none' }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full touch-none shrink-0" style={{ touchAction: 'none', height: 280 }}>
+        <ResponsiveContainer width="100%" height={280}>
           <AreaChart key={animKey} data={data} margin={chartMargin}>
             <defs>
               <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ec4899" stopOpacity={0.35} />
-                <stop offset="40%" stopColor="#ec4899" stopOpacity={0.1} />
-                <stop offset="100%" stopColor="#ec4899" stopOpacity={0} />
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.32} />
+                <stop offset="40%" stopColor="#38bdf8" stopOpacity={0.08} />
+                <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
@@ -178,6 +204,7 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
               tick={(props) => renderXAxisTick(props, data[0]?.date, data[data.length - 1]?.date, tickFontSize)}
             />
             <YAxis
+              domain={yDomain}
               axisLine={false}
               tickLine={false}
               tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
@@ -194,9 +221,9 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
             />
             <Tooltip content={renderTooltip} cursor={<CustomCursor />} />
             <Area
-              type="monotone" dataKey="total" stroke="#ec4899" strokeWidth={2.5}
+              type="monotone" dataKey="total" stroke="#38bdf8" strokeWidth={2.5}
               fill="url(#netWorthGrad)" dot={false}
-              activeDot={{ r: 5, fill: '#ec4899', stroke: '#ec489940', strokeWidth: 6 }}
+              activeDot={{ r: 5, fill: '#38bdf8', stroke: '#38bdf840', strokeWidth: 6 }}
               isAnimationActive={true}
               animationDuration={800}
               animationEasing="ease-out"
@@ -204,7 +231,7 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
             {lastPoint && (
               <ReferenceDot
                 x={lastPoint.date} y={lastPoint.total}
-                r={4} fill="#ec4899" stroke="#0f172a" strokeWidth={2}
+                r={4} fill="#38bdf8" stroke="#0f172a" strokeWidth={2}
                 isFront
               />
             )}

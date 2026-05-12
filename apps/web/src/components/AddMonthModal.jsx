@@ -127,7 +127,7 @@ export default function AddMonthModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-surface-alt w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl border border-white/[0.06] shadow-2xl max-h-[90svh] flex flex-col"
+        className="glass-card w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90svh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-white/[0.06]">

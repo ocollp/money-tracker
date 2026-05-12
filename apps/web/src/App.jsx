@@ -27,6 +27,7 @@ import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
 import DistributionChart from './components/DistributionChart';
 import Heatmap from './components/Heatmap';
+import PeriodComparison from './components/PeriodComparison';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
@@ -80,8 +81,18 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [insightToast, setInsightToast] = useState(null);
-  const [selectedEntity, setSelectedEntity] = useState(null);
   const [addMonthOpen, setAddMonthOpen] = useState(false);
+  const [selectedAssetClasses, setSelectedAssetClasses] = useState([]);
+
+  const handleDistributionEntitySelect = useCallback((name) => {
+    if (name == null) {
+      setSelectedAssetClasses([]);
+      return;
+    }
+    setSelectedAssetClasses((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
+  }, []);
   const insightTimer = useRef(null);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
@@ -130,6 +141,55 @@ export default function App() {
     lastUpdatedAt,
   } = useSheetFinanceData({ isTestData, accessToken, appJwt, profile, financeConfig });
 
+  const assetClassNetWorth = useMemo(() => {
+    if (!selectedAssetClasses.length || !stats?.assetClassEvolution?.length) return null;
+    const series = stats.assetClassEvolution;
+    const first = series[0];
+    const names = selectedAssetClasses.filter((n) =>
+      Object.prototype.hasOwnProperty.call(first, n),
+    );
+    if (!names.length) return null;
+    const totals = series.map((e) =>
+      names.reduce((sum, n) => sum + (e[n] ?? 0), 0),
+    );
+    if (!totals.some((v) => v !== 0)) return null;
+    return {
+      months: series.map((e) => ({ shortLabel: e.date, key: e.key })),
+      totals,
+      labels: names,
+    };
+  }, [selectedAssetClasses, stats]);
+
+  const entityChange = useMemo(() => {
+    if (!assetClassNetWorth) return null;
+    const t = assetClassNetWorth.totals;
+    if (t.length < 2) return null;
+    const current = t[t.length - 1];
+    const prev = t[t.length - 2];
+    const change = current - prev;
+    const pct = prev !== 0 ? (change / Math.abs(prev)) * 100 : null;
+    return { change, pct, current };
+  }, [assetClassNetWorth]);
+
+  useEffect(() => {
+    if (!selectedAssetClasses.length || !stats?.assetClassEvolution?.length) return;
+    const series = stats.assetClassEvolution;
+    const first = series[0];
+    const valid = selectedAssetClasses.filter((n) =>
+      Object.prototype.hasOwnProperty.call(first, n),
+    );
+    const totals = series.map((e) =>
+      valid.reduce((sum, n) => sum + (e[n] ?? 0), 0),
+    );
+    if (!valid.length || !totals.some((v) => v !== 0)) {
+      setSelectedAssetClasses([]);
+      return;
+    }
+    if (valid.length !== selectedAssetClasses.length) {
+      setSelectedAssetClasses(valid);
+    }
+  }, [selectedAssetClasses, stats]);
+
   const { pullPx, progress, isPulling } = usePullToRefresh({
     onRefresh: refresh,
     disabled: isTestData,
@@ -151,51 +211,6 @@ export default function App() {
     saveLocalProfileDisplay(patch);
     setLocalProfileUiTick((t) => t + 1);
   }, []);
-
-  const entityNetWorth = useMemo(() => {
-    if (!selectedEntity || !stats) return null;
-
-    const liquidTotals = stats.entityEvolution.map(e => e[selectedEntity] || 0);
-    const hasLiquidData = liquidTotals.some(v => v !== 0);
-
-    if (hasLiquidData) {
-      return {
-        months: stats.entityEvolution.map(e => ({ shortLabel: e.date, key: e.key })),
-        totals: liquidTotals,
-      };
-    }
-
-    // Entity not in liquid evolution — try housing data (e.g. "Hipoteca BBVA" → BBVA in byEntityHousing)
-    const housingKey = selectedEntity.replace(/^Hipoteca\s+|^Compte corrent\s+/i, '').trim();
-    const housingTotals = stats.months.map(m => {
-      const h = m.byEntityHousing?.[housingKey] || m.byEntityHousing?.[selectedEntity];
-      if (!h) return 0;
-      return (h.value || 0) + (h.debt || 0);
-    });
-    const hasHousingData = housingTotals.some(v => v !== 0);
-    if (hasHousingData) {
-      return {
-        months: stats.months.map(m => ({ shortLabel: m.shortLabel, key: m.key })),
-        totals: housingTotals,
-      };
-    }
-
-    return {
-      months: stats.entityEvolution.map(e => ({ shortLabel: e.date, key: e.key })),
-      totals: liquidTotals,
-    };
-  }, [selectedEntity, stats]);
-
-  const entityChange = useMemo(() => {
-    if (!selectedEntity || !entityNetWorth) return null;
-    const t = entityNetWorth.totals;
-    if (t.length < 2) return null;
-    const current = t[t.length - 1];
-    const prev = t[t.length - 2];
-    const change = current - prev;
-    const pct = prev !== 0 ? (change / Math.abs(prev)) * 100 : null;
-    return { change, pct, current };
-  }, [selectedEntity, entityNetWorth]);
 
   const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : (apiUser || user);
 
@@ -307,7 +322,7 @@ export default function App() {
   if (error || !stats) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-surface-alt/90 rounded-2xl p-8 border border-white/[0.06] shadow-xl text-center max-w-md space-y-4">
+        <div className="glass-card p-8 text-center max-w-md space-y-4">
           <p className="text-negative text-lg font-medium">{t.errorLoadingData}</p>
           <p className="text-text-secondary text-sm">{error}</p>
           <button
@@ -352,7 +367,7 @@ export default function App() {
         aria-hidden
       >
         <div
-          className="rounded-full bg-surface-alt/95 border border-white/10 px-3 py-1.5 text-xs text-text-secondary shadow-lg flex items-center gap-2"
+          className="rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.12] px-3 py-1.5 text-xs text-text-secondary shadow-lg flex items-center gap-2"
           style={{ opacity: 0.5 + progress * 0.5 }}
         >
           <span
@@ -363,7 +378,7 @@ export default function App() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-20 bg-surface/80 backdrop-blur-xl border-b border-white/[0.06] pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
+      <header className="sticky top-0 z-20 bg-white/[0.04] backdrop-blur-2xl border-b border-white/[0.08] pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
         <div className="mx-auto px-3 sm:px-6 lg:px-10 pb-2 sm:pb-3 pt-1 sm:pt-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 shrink min-w-0">
@@ -465,34 +480,58 @@ export default function App() {
           )}
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:items-stretch">
-          <DistributionChart
-            distribution={stats.distribution}
-            title={t.distributionTitle}
-            selectedEntity={selectedEntity}
-            onSelectEntity={setSelectedEntity}
-            entityEvolution={stats.entityEvolution}
-            distributionSparklineExtras={stats.distributionSparklineExtras}
-            hasHousing={stats.hasHousing}
-            hasTravel={stats.hasTravel}
-          />
-          <div className="h-full min-h-0">
-            <NetWorthChart
-              months={entityNetWorth ? entityNetWorth.months : stats.netWorthMonths}
-              totals={entityNetWorth ? entityNetWorth.totals : stats.netWorthTotals}
-              title={t.netWorthTitle}
-              subtitle={null}
-              tooltipLabel={selectedEntity || t.netWorthTooltip}
-              selectedEntity={selectedEntity}
-              onClearEntity={() => setSelectedEntity(null)}
+        {stats.assetClassDistribution?.length > 0 && (
+          <div className="max-w-full">
+            <DistributionChart
+              distribution={stats.assetClassDistribution}
+              title={t.assetClassTitle}
+              pieVariant="trivial"
+              privacyToggle
+              selectedEntities={selectedAssetClasses}
+              onSelectEntity={handleDistributionEntitySelect}
+              entityEvolution={stats.assetClassEvolution}
+              distributionSparklineExtras={{}}
+              hasHousing={stats.hasHousing}
             />
           </div>
+        )}
+
+        <div className="max-w-full">
+          <NetWorthChart
+            months={assetClassNetWorth?.months ?? stats.netWorthMonths}
+            totals={
+              assetClassNetWorth?.totals
+              ?? stats.netWorthTotalWealth
+              ?? stats.netWorthTotals
+            }
+            title={t.netWorthTitle}
+            subtitle={null}
+            tooltipLabel={
+              assetClassNetWorth?.labels?.length
+                ? assetClassNetWorth.labels.join(' · ')
+                : t.netWorthTooltip
+            }
+            selectedEntity={
+              assetClassNetWorth?.labels?.length
+                ? assetClassNetWorth.labels.join(' · ')
+                : null
+            }
+            onClearEntity={
+              assetClassNetWorth?.labels?.length
+                ? () => setSelectedAssetClasses([])
+                : undefined
+            }
+          />
         </div>
 
         <Heatmap data={stats.heatmap} />
 
         {stats.hasHousing && (
           <MortgageCard housing={stats.housing} />
+        )}
+
+        {stats.periodComparison && (
+          <PeriodComparison data={stats.periodComparison} />
         )}
 
         <Patterns yearComparison={stats.yearComparison} />
@@ -577,7 +616,7 @@ export default function App() {
         <div
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-[calc(100%-2rem)] animate-[fadeSlideUp_0.3s_ease-out]"
         >
-          <div className="relative bg-surface-alt/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-4 shadow-2xl">
+          <div className="relative glass-card px-5 py-4 shadow-2xl">
             <p className="text-sm text-text-primary leading-relaxed pr-6">{insightToast}</p>
             <button
               type="button"

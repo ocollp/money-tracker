@@ -7,6 +7,7 @@ import {
   TRAVEL_MONTHLY_SAVING,
   TRAVEL_PATRIMONY_SHARE,
 } from '../config.js';
+import { buildAssetClassSeries } from './assetClassBuckets.js';
 
 export function buildCarriedForwardSeries(values) {
   const n = values.length;
@@ -87,6 +88,57 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
     }
   }
   return { filledMonths, filledLiquidTotals, filledTotalWealth };
+}
+
+export function buildPeriodComparison(changesTotal) {
+  const nCh = changesTotal.length;
+  if (nCh === 0) return null;
+
+  const recentLen = Math.min(6, nCh);
+  const recent = changesTotal.slice(-recentLen);
+  const recentSum = recent.reduce((s, c) => s + c.value, 0);
+
+  const priorLen = Math.min(6, Math.max(0, nCh - recentLen));
+  const prior = priorLen > 0 ? changesTotal.slice(-(recentLen + priorLen), -recentLen) : [];
+  const priorSum = prior.reduce((s, c) => s + c.value, 0);
+
+  const rollingDelta = recentSum - priorSum;
+  const rollingPctVsPrior =
+    priorLen > 0 && priorSum !== 0 ? (rollingDelta / Math.abs(priorSum)) * 100 : null;
+
+  const lastChange = changesTotal[nCh - 1];
+  const ly = lastChange.month.date.getFullYear() - 1;
+  const lm = lastChange.month.date.getMonth();
+  const yoyPrior = changesTotal.find(
+    (c) => c.month.date.getFullYear() === ly && c.month.date.getMonth() === lm,
+  );
+
+  const yoyDelta =
+    yoyPrior != null ? lastChange.value - yoyPrior.value : null;
+  const yoyPctVsPrior =
+    yoyPrior != null && yoyPrior.value !== 0
+      ? ((lastChange.value - yoyPrior.value) / Math.abs(yoyPrior.value)) * 100
+      : null;
+
+  return {
+    rolling: {
+      recentSum,
+      recentMonths: recentLen,
+      priorSum,
+      priorMonths: priorLen,
+      delta: rollingDelta,
+      pctVsPrior: rollingPctVsPrior,
+    },
+    yoyMonth: {
+      currentChange: lastChange.value,
+      currentMonthLabel: lastChange.month.label,
+      priorChange: yoyPrior ? yoyPrior.value : null,
+      priorMonthLabel: yoyPrior ? yoyPrior.month.label : null,
+      delta: yoyDelta,
+      pctVsPrior: yoyPctVsPrior,
+      available: yoyPrior != null,
+    },
+  };
 }
 
 export function computeStatistics(months, options = {}) {
@@ -336,6 +388,8 @@ export function computeStatistics(months, options = {}) {
     monthIdx: c.month.date.getMonth(),
   }));
 
+  const periodComparison = buildPeriodComparison(changesTotal);
+
   const hasTravel = months.some(m => m.travelFund !== 0);
   const travelEvolution = months.map(m => ({
     date: m.shortLabel,
@@ -358,7 +412,6 @@ export function computeStatistics(months, options = {}) {
   distribution.sort((a, b) => b.value - a.value);
   const prevTravelFund = months.length > 1 ? (months[months.length - 2].travelFund || 0) : 0;
 
-  /** Same adjustment as App KPI «Patrimoni total»: raw wealth minus non-patrimony share of travel fund. */
   const travelAdjPatrimonyKpi = (fund) =>
     hasTravel && fund ? fund * (1 - TRAVEL_PATRIMONY_SHARE) : 0;
   const patrimonyKpiCurrent =
@@ -387,6 +440,15 @@ export function computeStatistics(months, options = {}) {
 
   const hasHousing =
     months.some((m) => m.housingValue > 0) || fixedHousingVal != null;
+
+  const { distribution: assetClassDistribution, evolution: assetClassEvolution } = buildAssetClassSeries(
+    months,
+    housingEffective,
+    mortgageEffective,
+    hasHousing,
+    TRAVEL_PATRIMONY_SHARE,
+  );
+
   const latestHousingValue = housingEffective[lastIdx] || 0;
   const latestMortgageDebtSigned = mortgageEffective[lastIdx] || 0;
   const housingEquity = latestHousingValue + latestMortgageDebtSigned;
@@ -539,11 +601,14 @@ export function computeStatistics(months, options = {}) {
     bestStreak,
     worstStreak,
     distribution,
+    assetClassDistribution,
+    assetClassEvolution,
     entityEvolution,
     distributionSparklineExtras,
     cashVsInvested,
     allEntities: allEntitiesLiquid,
     heatmap,
+    periodComparison,
     patterns,
     savingsRate,
     yearComparison,
