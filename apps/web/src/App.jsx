@@ -32,7 +32,6 @@ import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
 import { useI18n } from './i18n/I18nContext.jsx';
-import { generateInsight } from './utils/insights.js';
 import { ASSET_CLASS_LABELS } from './utils/assetClassBuckets.js';
 
 const PROFILE_KEY = 'mt_profile';
@@ -81,7 +80,6 @@ export default function App() {
   const [profile, setProfile] = useState(getInitialProfile);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [insightToast, setInsightToast] = useState(null);
   const [addMonthOpen, setAddMonthOpen] = useState(false);
   const [selectedAssetClasses, setSelectedAssetClasses] = useState([]);
 
@@ -94,7 +92,6 @@ export default function App() {
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
     );
   }, []);
-  const insightTimer = useRef(null);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
 
@@ -196,17 +193,6 @@ export default function App() {
     disabled: isTestData,
     loading,
   });
-
-  const showInsight = useCallback(() => {
-    if (!stats) return;
-    const msg = generateInsight(stats, t);
-    if (!msg) return;
-    if (insightTimer.current) clearTimeout(insightTimer.current);
-    setInsightToast(msg);
-    insightTimer.current = setTimeout(() => setInsightToast(null), 12000);
-  }, [stats, t]);
-
-  useEffect(() => () => { if (insightTimer.current) clearTimeout(insightTimer.current); }, []);
 
   const handleSaveLocalProfileDisplay = useCallback((patch) => {
     saveLocalProfileDisplay(patch);
@@ -613,28 +599,9 @@ export default function App() {
         isTestData={isTestData}
         t={t}
         stats={stats}
-        onInsight={showInsight}
         onAddMonth={() => { setAddMonthOpen(true); setDrawerOpen(false); }}
         passkey={passkey}
       />
-
-      {insightToast && (
-        <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-[calc(100%-2rem)] animate-[fadeSlideUp_0.3s_ease-out]"
-        >
-          <div className="relative glass-card px-5 py-4 shadow-2xl">
-            <p className="text-sm text-text-primary leading-relaxed pr-6">{insightToast}</p>
-            <button
-              type="button"
-              onClick={() => { if (insightTimer.current) clearTimeout(insightTimer.current); setInsightToast(null); }}
-              className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-text-secondary/50 hover:text-text-primary hover:bg-white/[0.06] transition-colors"
-              aria-label="Close"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

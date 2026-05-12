@@ -77,6 +77,7 @@ export default function CashVsInvestedChart({ data }) {
               tick={(props) => renderXAxisTick(props, data?.[0]?.date, data?.[data.length - 1]?.date, tickFontSize)}
             />
             <YAxis
+              domain={[0, 'auto']}
               axisLine={false}
               tickLine={false}
               tickFormatter={v => `${(v / 1000).toFixed(0)}k`}

@@ -40,10 +40,6 @@ const ExitIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" /></svg>
 );
 
-const InsightIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-);
-
 const FaceIdIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12h.01M15 12h.01M9.5 15.5a3.5 3.5 0 005 0M7 3.5A1.5 1.5 0 003.5 5v2M17 3.5A1.5 1.5 0 0120.5 5v2M7 20.5A1.5 1.5 0 003.5 19v-2M17 20.5A1.5 1.5 0 0020.5 19v-2" /></svg>
 );
@@ -64,7 +60,6 @@ export default function SideDrawer({
   isTestData,
   t,
   stats,
-  onInsight,
   onAddMonth,
   passkey,
 }) {
@@ -185,7 +180,6 @@ export default function SideDrawer({
               iconColor="text-emerald-400/70"
               disabled={!stats}
             />
-            <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={onInsight} collapsed={collapsed} iconColor="text-amber-400/70" disabled={!stats} />
             <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} collapsed={collapsed} iconColor="text-violet-400/70" />
             <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
           </>
@@ -248,7 +242,6 @@ export default function SideDrawer({
         <div className="px-3 py-3 border-t border-white/[0.06] space-y-1.5" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
           {!isTestData && (
             <>
-              <DrawerItem icon={<InsightIcon />} label={t.insightButton} onClick={() => { onInsight?.(); onClose(); }} iconColor="text-amber-400/70" disabled={!stats} />
               <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} onClick={onClose} iconColor="text-violet-400/70" />
               <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
             </>

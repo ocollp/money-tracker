@@ -1,6 +1,6 @@
 # Money Tracker
 
-Personal finance dashboard: net worth over time, monthly changes, burn rate, runway, heatmap, and insights. Data from Google Sheets; login with Google.
+Personal finance dashboard: net worth over time, monthly changes, burn rate, runway, and heatmap. Data from Google Sheets; login with Google.
 
 **Monorepo:** `apps/web` (Vite + React) · `apps/api` (Fastify + MongoDB + JWT for profile/settings sync).
 

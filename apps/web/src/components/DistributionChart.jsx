@@ -117,11 +117,19 @@ function ToggleButton({ active, onClick, children, label }) {
   );
 }
 
+/** % of radius so the pie stays inside the box (avoids SVG clipping with overflow-x-hidden on the card). */
 const PIE_LAYOUT = {
-  donut: { innerRadius: 52, outerRadius: 80, paddingAngle: 0, cornerRadius: 0, stroke: 'transparent', strokeWidth: 0 },
+  donut: {
+    innerRadius: '38%',
+    outerRadius: '58%',
+    paddingAngle: 0,
+    cornerRadius: 0,
+    stroke: 'transparent',
+    strokeWidth: 0,
+  },
   trivial: {
     innerRadius: 0,
-    outerRadius: 88,
+    outerRadius: '58%',
     paddingAngle: 0,
     cornerRadius: 0,
     stroke: 'transparent',
@@ -198,14 +206,16 @@ export default function DistributionChart({
 
   const hideMoney = privacyToggle && !privacyMode;
   const pieShape = PIE_LAYOUT[pieVariant] ?? PIE_LAYOUT.donut;
-  const hasDonutHole = pieShape.innerRadius > 0;
+  const hasDonutHole =
+    Number(pieShape.innerRadius) > 0
+    || (typeof pieShape.innerRadius === 'string' && parseFloat(pieShape.innerRadius) > 0);
 
   return (
     <div
-      className="h-full min-h-0 flex flex-col glass-card px-3 sm:px-5 pt-5 pb-3 max-w-full overflow-x-hidden"
+      className="flex min-h-0 flex-col glass-card max-w-full overflow-x-hidden px-3 pt-2 pb-2 sm:px-6 sm:pb-6 sm:pt-5"
       onDoubleClick={hasSelection ? clearFilter : undefined}
     >
-      <div className="flex flex-col gap-2 mb-3 shrink-0 min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <div className="mb-2 flex min-w-0 shrink-0 flex-col gap-1.5 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <h3 className="text-lg font-semibold truncate min-w-0 sm:flex-1 sm:min-w-0 sm:pr-2">
           {title}
         </h3>
@@ -251,15 +261,15 @@ export default function DistributionChart({
         </div>
       </div>
       {hasSelection && (
-        <p className="text-[11px] text-text-secondary mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
+        <p className="mb-1 text-[11px] text-text-secondary sm:mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
       )}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 flex-1 min-h-0">
+      <div className="flex min-h-0 w-full flex-col items-stretch justify-start gap-2 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
         <div
-          className="relative h-40 w-40 sm:h-48 sm:w-48 shrink-0"
+          className="relative mx-auto aspect-square w-full max-w-[min(100%,22.5rem)] shrink-0 sm:mx-0 sm:h-72 sm:w-72 sm:max-w-none lg:h-80 lg:w-80"
           onDoubleClick={hasSelection ? clearFilter : undefined}
         >
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
               <Pie
                 data={pieData} dataKey="value" nameKey="name"
                 cx="50%" cy="50%"
@@ -301,37 +311,53 @@ export default function DistributionChart({
               />
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-1">
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-2 text-center">
             {hasDonutHole ? (
-              hideMoney ? (
-                <>
-                  <span className="text-[10px] text-text-secondary leading-tight">{t.distributionPctOnlyLabel ?? '%'}</span>
-                  <span className="text-lg font-bold text-text-primary tabular-nums tracking-tight">100%</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-[10px] text-text-secondary">{t.distributionTotal}</span>
-                  <span className="text-sm font-bold text-text-primary">{formatMoney(visibleTotal)}</span>
-                </>
-              )
-            ) : (
-              <div className="rounded-full bg-black/45 backdrop-blur-md px-3 py-2 border border-white/[0.12] shadow-lg max-w-[78%]">
+              <div className="flex flex-col gap-0.5">
                 {hideMoney ? (
                   <>
-                    <span className="text-[10px] text-text-secondary leading-tight block">{t.distributionPctOnlyLabel ?? '%'}</span>
-                    <span className="text-xl font-bold text-text-primary tabular-nums tracking-tight">100%</span>
+                    <span className="text-[10px] leading-tight text-text-secondary sm:text-xs">
+                      {t.distributionPctOnlyLabel ?? '%'}
+                    </span>
+                    <span className="text-base font-bold tabular-nums tracking-tight text-text-primary sm:text-lg">
+                      100%
+                    </span>
                   </>
                 ) : (
                   <>
-                    <span className="text-[10px] text-text-secondary block">{t.distributionTotal}</span>
-                    <span className="text-sm font-bold text-text-primary">{formatMoney(visibleTotal)}</span>
+                    <span className="text-[10px] text-text-secondary sm:text-xs">{t.distributionTotal}</span>
+                    <span className="text-sm font-semibold tabular-nums text-text-primary sm:text-base">
+                      {formatMoney(visibleTotal)}
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="max-w-[min(92%,18rem)] rounded-full border border-white/[0.14] bg-black/50 px-3 py-2 shadow-lg backdrop-blur-md sm:max-w-[80%] sm:px-4 sm:py-2.5">
+                {hideMoney ? (
+                  <>
+                    <span className="block text-[10px] leading-tight text-text-secondary sm:text-xs">
+                      {t.distributionPctOnlyLabel ?? '%'}
+                    </span>
+                    <span className="text-sm font-bold tabular-nums tracking-tight text-text-primary sm:text-base">
+                      100%
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="block text-[10px] leading-tight text-text-secondary sm:text-xs">
+                      {t.distributionTotal}
+                    </span>
+                    <span className="text-xs font-semibold tabular-nums text-text-primary sm:text-sm">
+                      {formatMoney(visibleTotal)}
+                    </span>
                   </>
                 )}
               </div>
             )}
           </div>
         </div>
-        <div className="flex flex-col gap-1 w-full">
+        <div className="flex w-full min-w-0 flex-col gap-1 sm:flex-1 sm:justify-center sm:gap-1.5 sm:pt-1">
           {visibleList.map((d, index) => {
             const c = getColor(d.name, index);
             return (
