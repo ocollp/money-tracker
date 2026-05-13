@@ -34,6 +34,8 @@ export const t = {
   checkingAccess: 'Comprovant accés...',
   loadingTestData: 'Carregant dades de test...',
   loadingData: 'Carregant dades...',
+  dashboardLoadingHint: 'Les dades del full de càlcul apareixeran en aquestes targetes en uns segons.',
+  dashboardLoadingSheetId: 'Full',
   errorLoadingData: 'Error al carregar les dades',
   logoutAndRetry: 'Tancar sessió i tornar-ho a provar',
   pullToRefresh: 'Deixa anar per actualitzar',

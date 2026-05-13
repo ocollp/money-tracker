@@ -30,6 +30,7 @@ import Heatmap from './components/Heatmap';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
+import DashboardLoadingShell from './components/DashboardLoadingShell';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { ASSET_CLASS_LABELS } from './utils/assetClassBuckets.js';
 
@@ -136,6 +137,7 @@ export default function App() {
     error,
     refresh,
     lastUpdatedAt,
+    currentSheetId,
   } = useSheetFinanceData({ isTestData, accessToken, appJwt, profile, financeConfig });
 
   const assetClassNetWorth = useMemo(() => {
@@ -189,7 +191,7 @@ export default function App() {
 
   const { pullPx, progress, isPulling } = usePullToRefresh({
     onRefresh: refresh,
-    disabled: isTestData,
+    disabled: isTestData || !stats,
     loading,
   });
 
@@ -283,29 +285,18 @@ export default function App() {
     );
   }
 
-  if ((loading && !isTestData && !stats) || (isTestData && !stats)) {
+  if (isTestData && !stats) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">{isTestData ? t.loadingTestData : t.loadingData}</span>
+          <span className="text-text-secondary">{t.loadingTestData}</span>
         </div>
       </div>
     );
   }
 
-  if (!isTestData && user && sheetAccess === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">{t.checkingAccess}</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !stats) {
+  if (!isTestData && error && !stats && !loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="glass-card p-8 text-center max-w-md space-y-4">
@@ -321,6 +312,121 @@ export default function App() {
             {t.logoutAndRetry}
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (!isTestData && !stats) {
+    return (
+      <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
+        <div
+          className="fixed left-0 right-0 z-[25] flex justify-center pointer-events-none transition-opacity duration-150 sm:hidden"
+          style={{
+            top: 'max(4.5rem, calc(env(safe-area-inset-top, 0px) + 3.5rem))',
+            opacity: isPulling ? 1 : 0,
+            transform: `translateY(${Math.min(pullPx * 0.3, 24)}px)`,
+          }}
+          aria-hidden
+        >
+          <div
+            className="rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.12] px-3 py-1.5 text-xs text-text-secondary shadow-lg flex items-center gap-2"
+            style={{ opacity: 0.5 + progress * 0.5 }}
+          >
+            <span
+              className="inline-block w-4 h-4 border-2 border-brand border-t-transparent rounded-full"
+              style={{ transform: `rotate(${progress * 250}deg)` }}
+            />
+            {t.pullToRefresh}
+          </div>
+        </div>
+
+        <header className="sticky top-0 z-20 bg-white/[0.04] backdrop-blur-2xl border-b border-white/[0.08] pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
+          <div className="mx-auto px-3 sm:px-6 lg:px-10 pb-2 sm:pb-3 pt-1 sm:pt-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 shrink min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(true)}
+                  className="sm:hidden min-h-11 min-w-11 -ml-1 rounded-lg text-text-secondary hover:text-text-primary transition-colors inline-flex items-center justify-center"
+                  aria-label="Menu"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-text-primary shrink min-w-0">
+                  {t.appTitle}
+                </h1>
+              </div>
+
+              {(() => {
+                const active = effectiveProfiles.find((p) => p.id === effectiveProfile);
+                if (!active) return null;
+                return (
+                  <span className="sm:hidden text-xl shrink-0" aria-label={active.name}>
+                    {active.emoji}
+                  </span>
+                );
+              })()}
+            </div>
+
+          </div>
+        </header>
+
+        <DashboardLoadingShell
+          t={t}
+          effectiveUser={effectiveUser}
+          profile={profile}
+          financeConfig={financeConfig}
+          loading={loading}
+          currentSheetId={currentSheetId}
+          sheetAccess={sheetAccess}
+          mainRef={mainRef}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          touchAction={effectiveProfiles.length === 2 ? 'pan-y' : undefined}
+        />
+
+        <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+          {loading ? (
+            <p className="text-text-secondary/90 flex items-center justify-center gap-2">
+              <span className="inline-block w-3.5 h-3.5 border-2 border-brand/30 border-t-brand rounded-full animate-spin shrink-0" aria-hidden />
+              <span>{t.loadingData}</span>
+            </p>
+          ) : (
+            <p className="text-text-secondary/80">{t.dashboardLoadingHint}</p>
+          )}
+          <p className="sm:hidden text-text-secondary/80">{t.pullDownHint}</p>
+        </footer>
+
+        <ProfileSettings
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          settings={settingsModalValues}
+          settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
+          onSave={hasPersistedProfile ? patchSettings : undefined}
+          onSaveLocalDisplay={!hasPersistedProfile ? handleSaveLocalProfileDisplay : undefined}
+          readOnly={false}
+          readOnlySubtitle={!hasPersistedProfile ? settingsReadOnlySubtitle : null}
+        />
+
+        <SideDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
+          user={effectiveUser}
+          effectiveProfiles={effectiveProfiles}
+          effectiveProfile={effectiveProfile}
+          onSwitchProfile={switchProfile}
+          onSettings={() => setSettingsOpen(true)}
+          onRefresh={refresh}
+          onLogout={() => { googleLogout(); clearAppJwt(); }}
+          loading={loading}
+          isTestData={isTestData}
+          t={t}
+          stats={null}
+          onAddMonth={() => { setAddMonthOpen(true); setDrawerOpen(false); }}
+          passkey={passkey}
+        />
       </div>
     );
   }
