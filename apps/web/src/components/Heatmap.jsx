@@ -31,7 +31,7 @@ export default function Heatmap({ data }) {
 
   return (
     <div className="glass-card overflow-hidden">
-      <div className="px-5 pt-5 pb-3 flex items-center justify-between gap-2">
+      <div className="px-3 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-3 flex items-center justify-between gap-2">
         <h3 className="text-lg font-semibold">{t.heatmapTitle}</h3>
         <div className="flex items-center gap-3 text-xs shrink-0">
           <span className="flex items-center gap-1">
@@ -45,7 +45,7 @@ export default function Heatmap({ data }) {
         </div>
       </div>
 
-      <div className="px-2 sm:px-5 pb-2 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile -mx-1 sm:mx-0 max-w-full touch-pan-x">
+      <div className="px-3 pb-4 sm:px-5 sm:pb-5 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile max-w-full touch-pan-x">
         <table className="w-max min-w-full border-separate max-w-none" style={{ borderSpacing: '3px 4px' }}>
           <thead>
             <tr>
