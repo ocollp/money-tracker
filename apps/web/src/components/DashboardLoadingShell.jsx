@@ -10,13 +10,20 @@ export default function DashboardLoadingShell({
   onTouchStart,
   onTouchEnd,
   touchAction,
+  statusTitle,
+  statusHint,
 }) {
   const label = financeConfig?.profileLabels?.[profile] ?? '';
   const emoji = financeConfig?.profileEmojis?.[profile] ?? '';
   const sid = String(currentSheetId || '').trim();
   const sidTail = sid.length > 12 ? `…${sid.slice(-8)}` : sid;
 
-  const subHint = sheetAccess === null && !loading ? t.checkingAccess : t.dashboardLoadingHint;
+  const title = statusTitle ?? t.loadingData;
+  const hint =
+    statusHint
+    ?? (sheetAccess === null && !loading ? t.checkingAccess : t.dashboardLoadingHint);
+
+  const showSpinner = loading;
 
   return (
     <main
@@ -28,7 +35,7 @@ export default function DashboardLoadingShell({
     >
       <div className="glass-card flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5 sm:py-5">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          {loading ? (
+          {showSpinner ? (
             <span
               className="mt-0.5 inline-block h-8 w-8 shrink-0 rounded-full border-2 border-brand/30 border-t-brand animate-spin"
               aria-hidden
@@ -37,8 +44,8 @@ export default function DashboardLoadingShell({
             <span className="mt-0.5 inline-block h-8 w-8 shrink-0 rounded-full border border-white/[0.12]" aria-hidden />
           )}
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-text-primary">{t.loadingData}</p>
-            <p className="mt-0.5 text-xs leading-snug text-text-secondary">{subHint}</p>
+            <p className="text-sm font-semibold text-text-primary">{title}</p>
+            <p className="mt-0.5 text-xs leading-snug text-text-secondary">{hint}</p>
           </div>
         </div>
         <div className="min-w-0 border-t border-white/[0.08] pt-3 text-xs text-text-secondary sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 sm:text-right">

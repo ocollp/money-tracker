@@ -96,7 +96,7 @@ export default function App() {
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
 
   const passkey = usePasskey({ onLoginSuccess: loginWithPasskeyResult });
-  const { settings, backendReady, patchSettings, hasApi, apiUser } = useBackendProfile(accessToken, appJwt, clearAuth);
+  const { settings, backendReady, patchSettings, hasApi, apiUser, loading: backendProfileLoading } = useBackendProfile(accessToken, appJwt, clearAuth);
   const hasPersistedProfile = settings != null;
   const financeConfig = useMemo(() => {
     const base = buildFinanceConfig(settings);
@@ -274,17 +274,6 @@ export default function App() {
     );
   }
 
-  if (!isTestData && hasApi && !backendReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">{t.syncingProfile}</span>
-        </div>
-      </div>
-    );
-  }
-
   if (isTestData && !stats) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -317,6 +306,9 @@ export default function App() {
   }
 
   if (!isTestData && !stats) {
+    const profileSyncBlocking = hasApi && !backendReady;
+    const shellLoading = backendProfileLoading || loading;
+
     return (
       <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
         <div
@@ -376,23 +368,25 @@ export default function App() {
           effectiveUser={effectiveUser}
           profile={profile}
           financeConfig={financeConfig}
-          loading={loading}
+          loading={shellLoading}
           currentSheetId={currentSheetId}
           sheetAccess={sheetAccess}
           mainRef={mainRef}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           touchAction={effectiveProfiles.length === 2 ? 'pan-y' : undefined}
+          statusTitle={profileSyncBlocking ? t.syncingProfile : undefined}
+          statusHint={profileSyncBlocking ? t.syncingProfileHint : undefined}
         />
 
         <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
-          {loading ? (
+          {shellLoading ? (
             <p className="text-text-secondary/90 flex items-center justify-center gap-2">
               <span className="inline-block w-3.5 h-3.5 border-2 border-brand/30 border-t-brand rounded-full animate-spin shrink-0" aria-hidden />
-              <span>{t.loadingData}</span>
+              <span>{profileSyncBlocking ? t.syncingProfile : t.loadingData}</span>
             </p>
           ) : (
-            <p className="text-text-secondary/80">{t.dashboardLoadingHint}</p>
+            <p className="text-text-secondary/80">{profileSyncBlocking ? t.syncingProfileHint : t.dashboardLoadingHint}</p>
           )}
           <p className="sm:hidden text-text-secondary/80">{t.pullDownHint}</p>
         </footer>
@@ -420,7 +414,7 @@ export default function App() {
           onSettings={() => setSettingsOpen(true)}
           onRefresh={refresh}
           onLogout={() => { googleLogout(); clearAppJwt(); }}
-          loading={loading}
+          loading={shellLoading}
           isTestData={isTestData}
           t={t}
           stats={null}

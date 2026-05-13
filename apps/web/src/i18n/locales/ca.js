@@ -31,6 +31,7 @@ export const t = {
   back: 'Enrere',
   next: 'Següent',
   syncingProfile: 'Sincronitzant perfil…',
+  syncingProfileHint: 'Connectant amb el servidor; després es carregarà el full.',
   checkingAccess: 'Comprovant accés...',
   loadingTestData: 'Carregant dades de test...',
   loadingData: 'Carregant dades...',
