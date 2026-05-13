@@ -471,7 +471,6 @@ export default function App() {
             <DistributionChart
               distribution={stats.assetClassDistribution}
               title={t.assetClassTitle}
-              pieVariant="trivial"
               privacyToggle
               selectedEntities={selectedAssetClasses}
               onSelectEntity={handleDistributionEntitySelect}

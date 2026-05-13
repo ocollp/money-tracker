@@ -117,7 +117,6 @@ function ToggleButton({ active, onClick, children, label }) {
   );
 }
 
-/** % of maxRadius (half of min chart w/h). High values fill the square; keep <100% to avoid SVG edge clipping. */
 const PIE_LAYOUT = {
   donut: {
     innerRadius: '39%',
@@ -272,7 +271,8 @@ export default function DistributionChart({
             <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
               <Pie
                 data={pieData} dataKey="value" nameKey="name"
-                cx="50%" cy="50%"
+                cx="50%"
+                cy="50%"
                 innerRadius={pieShape.innerRadius}
                 outerRadius={pieShape.outerRadius}
                 paddingAngle={pieShape.paddingAngle}
@@ -297,21 +297,21 @@ export default function DistributionChart({
                   />
                 ))}
               </Pie>
-              <Tooltip
-                content={(props) => (
-                  <CustomTooltip
-                    {...props}
-                    formatDisplayName={displayName}
-                    total={visibleTotal}
-                    t={t}
-                    hideMoney={hideMoney}
-                  />
-                )}
-                wrapperStyle={{ zIndex: 50 }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-2 text-center sm:px-2">
+                <Tooltip
+                  content={(props) => (
+                    <CustomTooltip
+                      {...props}
+                      formatDisplayName={displayName}
+                      total={visibleTotal}
+                      t={t}
+                      hideMoney={hideMoney}
+                    />
+                  )}
+                  wrapperStyle={{ zIndex: 50 }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center gap-0.5 px-2 text-center sm:px-2">
             {hasDonutHole ? (
               <div className="flex flex-col gap-0.5">
                 {hideMoney ? (
