@@ -10,8 +10,14 @@ import {
 import { getTestStats } from '../data/testData';
 import { PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID, API_URL, HAS_BACKEND } from '../config';
 import { financeConfigToStatsOptions } from '../lib/mergeFinanceConfig.js';
+import { readCachedMonths, writeCachedMonths } from '../lib/financeStatsCache.js';
 
 const POLL_INTERVAL_MS = 45 * 1000;
+
+function buildStatsFromMonths(months, statsOpts, profileId) {
+  if (!months?.length) return null;
+  return computeStatistics(months, { ...statsOpts, profileId });
+}
 
 export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, financeConfig }) {
   const sid1 = financeConfig.spreadsheetId;
@@ -20,10 +26,14 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   const emojis = financeConfig.profileEmojis;
   const statsOpts = useMemo(
     () => financeConfigToStatsOptions(financeConfig),
-    [financeConfig]
+    [financeConfig],
   );
+  const statsOptsRef = useRef(statsOpts);
+  statsOptsRef.current = statsOpts;
 
   const { fixedHousingSheetValue, fixedHousingSheetEntity } = financeConfig;
+  const housingRef = useRef({ fixedHousingSheetValue, fixedHousingSheetEntity });
+  housingRef.current = { fixedHousingSheetValue, fixedHousingSheetEntity };
 
   const useBackend = Boolean(HAS_BACKEND && appJwt);
   const authReady = isTestData || (useBackend ? Boolean(appJwt) : Boolean(accessToken));
@@ -49,7 +59,7 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
       emoji: emojis[PROFILE_PRIMARY_ID],
       sheetId: sid1,
     }),
-    [labels, emojis, sid1]
+    [labels, emojis, sid1],
   );
 
   const PROFILE_SECONDARY = useMemo(
@@ -59,20 +69,38 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
       emoji: emojis[PROFILE_SECONDARY_ID],
       sheetId: sid2,
     }),
-    [labels, emojis, sid2]
+    [labels, emojis, sid2],
   );
 
-  const [sheetAccess, setSheetAccess] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [sheetAccess, setSheetAccess] = useState(() =>
+    sid1 ? { id1: true, id2: false } : null,
+  );
+  const [stats, setStats] = useState(() => {
+    if (isTestData) return null;
+    const sid = financeConfig.spreadsheetId;
+    if (!sid) return null;
+    const months = readCachedMonths(sid, profile);
+    if (!months?.length) return null;
+    return buildStatsFromMonths(months, statsOpts, profile);
+  });
+  const [loading, setLoading] = useState(() => {
+    if (isTestData) return false;
+    const sid = financeConfig.spreadsheetId;
+    if (!sid) return false;
+    return true;
+  });
   const [error, setError] = useState(null);
   const [fetchKey, setFetchKey] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
   const statsCacheKeyRef = useRef(null);
-  /** Result of secondary sheet HEAD-style check when it finishes before primary CSV load. */
   const pendingSecondaryAccessRef = useRef(undefined);
   const sheetAccessRef = useRef(sheetAccess);
   sheetAccessRef.current = sheetAccess;
+  const monthsCacheRef = useRef(
+    isTestData || !financeConfig.spreadsheetId
+      ? null
+      : readCachedMonths(financeConfig.spreadsheetId, profile),
+  );
 
   const effectiveProfiles = !sheetAccess
     ? []
@@ -91,6 +119,21 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   const currentSheetId =
     effectiveProfiles.find((p) => p.id === effectiveProfile)?.sheetId || sid1;
 
+  const statsKey = currentSheetId ? `${currentSheetId}\0${effectiveProfile}` : '';
+
+  const applyMonthsToStats = useCallback(
+    (months, profileId) => {
+      const s = buildStatsFromMonths(months, statsOptsRef.current, profileId);
+      if (s) {
+        setStats(s);
+        setLastUpdatedAt(new Date());
+        monthsCacheRef.current = months;
+      }
+      return s;
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!isTestData) return;
     setSheetAccess({ id1: true, id2: false });
@@ -98,7 +141,6 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     setLastUpdatedAt(new Date());
   }, [isTestData]);
 
-  /** Secondary sheet access probe — parallel with primary fetch; does not block first paint. */
   useEffect(() => {
     if (isTestData || !checkAccess || !sid2) return;
     let cancelled = false;
@@ -116,30 +158,50 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   }, [checkAccess, sid2, isTestData]);
 
   useEffect(() => {
-    if (isTestData || !fetchData) return;
-    if (!currentSheetId) return;
+    if (isTestData || !statsKey) return;
+
+    const keyChanged = statsCacheKeyRef.current !== statsKey;
+    if (keyChanged) {
+      statsCacheKeyRef.current = statsKey;
+      monthsCacheRef.current = null;
+      const cachedMonths = readCachedMonths(currentSheetId, effectiveProfile);
+      if (cachedMonths?.length) {
+        monthsCacheRef.current = cachedMonths;
+        applyMonthsToStats(cachedMonths, effectiveProfile);
+      } else {
+        setStats(null);
+      }
+    }
+  }, [statsKey, isTestData, currentSheetId, effectiveProfile, applyMonthsToStats]);
+
+  useEffect(() => {
+    if (isTestData || !monthsCacheRef.current?.length) return;
+    applyMonthsToStats(monthsCacheRef.current, effectiveProfile);
+  }, [statsOpts, isTestData, effectiveProfile, applyMonthsToStats]);
+
+  useEffect(() => {
+    if (isTestData || !fetchData || !currentSheetId) return;
     const access = sheetAccessRef.current;
     if (access !== null && !access.id1 && !access.id2) return;
 
-    const statsKey = `${currentSheetId}\0${effectiveProfile}`;
-    if (statsCacheKeyRef.current !== statsKey) {
-      statsCacheKeyRef.current = statsKey;
-      setStats(null);
-    }
-
+    const hadStats = Boolean(monthsCacheRef.current?.length);
     setLoading(true);
     setError(null);
 
+    let cancelled = false;
+
     fetchData(currentSheetId)
       .then((csvText) => {
+        if (cancelled) return;
+        const { fixedHousingSheetValue: hv, fixedHousingSheetEntity: he } = housingRef.current;
         const rows = mergeFixedHousingSheetRows(parseCSV(csvText), {
-          amount: fixedHousingSheetValue,
-          entity: fixedHousingSheetEntity,
+          amount: hv,
+          entity: he,
         });
         const months = groupByMonth(rows);
-        const s = computeStatistics(months, { ...statsOpts, profileId: effectiveProfile });
-        setStats(s);
-        setLastUpdatedAt(new Date());
+        writeCachedMonths(currentSheetId, effectiveProfile, months);
+        monthsCacheRef.current = months;
+        applyMonthsToStats(months, effectiveProfile);
 
         setSheetAccess((prev) => {
           const nextId1 = currentSheetId === sid1 ? true : (prev?.id1 ?? false);
@@ -153,15 +215,31 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
         });
       })
       .catch((err) => {
-        setError(err.message);
+        if (cancelled) return;
+        if (!hadStats) setError(err.message);
         setSheetAccess((prev) => {
           if (currentSheetId === sid1) return { id1: false, id2: false };
           if (currentSheetId === sid2 && prev) return { ...prev, id2: false };
           return prev ?? { id1: false, id2: false };
         });
       })
-      .finally(() => setLoading(false));
-  }, [fetchData, currentSheetId, fetchKey, effectiveProfile, isTestData, statsOpts, fixedHousingSheetValue, fixedHousingSheetEntity, sid1, sid2]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    fetchData,
+    currentSheetId,
+    fetchKey,
+    effectiveProfile,
+    isTestData,
+    sid1,
+    sid2,
+    applyMonthsToStats,
+  ]);
 
   useEffect(() => {
     if (isTestData || !fetchData) return;
@@ -170,22 +248,25 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     const intervalId = setInterval(() => {
       fetchData(currentSheetId)
         .then((csvText) => {
+          const { fixedHousingSheetValue: hv, fixedHousingSheetEntity: he } = housingRef.current;
           const rows = mergeFixedHousingSheetRows(parseCSV(csvText), {
-            amount: fixedHousingSheetValue,
-            entity: fixedHousingSheetEntity,
+            amount: hv,
+            entity: he,
           });
           const months = groupByMonth(rows);
-          const s = computeStatistics(months, { ...statsOpts, profileId: effectiveProfile });
-          setStats(s);
-          setLastUpdatedAt(new Date());
+          writeCachedMonths(currentSheetId, effectiveProfile, months);
+          monthsCacheRef.current = months;
+          applyMonthsToStats(months, effectiveProfile);
         })
         .catch(() => {});
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [fetchData, currentSheetId, effectiveProfile, stats, isTestData, statsOpts, fixedHousingSheetValue, fixedHousingSheetEntity]);
+  }, [fetchData, currentSheetId, effectiveProfile, stats, isTestData, applyMonthsToStats]);
 
   const refresh = useCallback(() => { setFetchKey((k) => k + 1); }, []);
+
+  const isRefreshing = Boolean(loading && stats);
 
   return {
     sheetAccess,
@@ -194,6 +275,7 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     currentSheetId,
     stats,
     loading,
+    isRefreshing,
     error,
     refresh,
     lastUpdatedAt,

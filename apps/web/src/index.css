@@ -93,6 +93,37 @@ button:active:not(:disabled) {
   }
 }
 
+.animate-fade-in {
+  animation: fadeSlideIn 0.45s ease-out both;
+}
+
+@keyframes loadingBar {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(380%);
+  }
+}
+
+.animate-loading-bar {
+  animation: loadingBar 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.skeleton-shimmer {
+  animation: skeletonShimmer 1.8s ease-in-out infinite;
+}
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;

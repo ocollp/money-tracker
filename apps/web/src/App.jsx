@@ -134,6 +134,7 @@ export default function App() {
     effectiveProfile,
     stats,
     loading,
+    isRefreshing,
     error,
     refresh,
     lastUpdatedAt,
@@ -192,7 +193,7 @@ export default function App() {
   const { pullPx, progress, isPulling } = usePullToRefresh({
     onRefresh: refresh,
     disabled: isTestData || !stats,
-    loading,
+    loading: loading && !stats,
   });
 
   const handleSaveLocalProfileDisplay = useCallback((patch) => {
@@ -308,6 +309,7 @@ export default function App() {
   if (!isTestData && !stats) {
     const profileSyncBlocking = hasApi && !backendReady;
     const shellLoading = backendProfileLoading || loading;
+    const loadPhase = profileSyncBlocking ? 'session' : 'sheet';
 
     return (
       <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
@@ -377,6 +379,7 @@ export default function App() {
           touchAction={effectiveProfiles.length === 2 ? 'pan-y' : undefined}
           statusTitle={profileSyncBlocking ? t.syncingProfile : undefined}
           statusHint={profileSyncBlocking ? t.syncingProfileHint : undefined}
+          loadPhase={loadPhase}
         />
 
         <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
@@ -502,6 +505,17 @@ export default function App() {
         onTouchEnd={handleTouchEnd}
         style={{ touchAction: effectiveProfiles.length === 2 ? 'pan-y' : undefined }}
       >
+        {isRefreshing ? (
+          <p
+            className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs text-text-secondary animate-fade-in"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 border-brand/30 border-t-brand animate-spin" aria-hidden />
+            {t.refreshingDataBanner}
+          </p>
+        ) : null}
+
         <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${kpiLgCols}`}>
           <KpiCard
             title={t.kpiCurrentMonth}

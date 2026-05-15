@@ -88,7 +88,7 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    setBackendReady(false);
+    setBackendReady(true);
 
     (async () => {
       try {
