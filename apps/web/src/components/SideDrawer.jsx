@@ -25,20 +25,8 @@ const SettingsIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
 );
 
-const RefreshIcon = ({ spinning }) => (
-  <svg className={`w-5 h-5 ${spinning ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-);
-
-const TestIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-);
-
 const LogoutIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-);
-
-const ExitIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" /></svg>
 );
 
 const FaceIdIcon = () => (
@@ -55,10 +43,7 @@ export default function SideDrawer({
   effectiveProfile,
   onSwitchProfile,
   onSettings,
-  onRefresh,
   onLogout,
-  loading,
-  isTestData,
   t,
   stats,
   onAddMonth,
@@ -162,31 +147,20 @@ export default function SideDrawer({
       {userSection(collapsed)}
       {profileSection(collapsed, onSwitchProfile)}
 
-      <div className={`flex-1 ${collapsed ? 'px-2' : 'px-3'}`}>
-        {isTestData && (
-          <div className="py-3">
-            <DrawerItem icon={<ExitIcon />} label={t.exit} href={import.meta.env.BASE_URL || '/'} collapsed={collapsed} iconColor="text-sky-400/70" />
-          </div>
-        )}
-      </div>
+      <div className={`flex-1 ${collapsed ? 'px-2' : 'px-3'}`} />
 
       <div className={`border-t border-white/[0.06] space-y-1.5 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
         <PrivacyMenuItem collapsed={collapsed} />
-        {!isTestData && (
-          <>
-            <DrawerItem
-              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v16m8-8H4" /></svg>}
-              label={t.addMonth ?? 'Afegir mes'}
-              onClick={onAddMonth}
-              collapsed={collapsed}
-              iconColor="text-emerald-400/70"
-              disabled={!stats}
-            />
-            <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} collapsed={collapsed} iconColor="text-violet-400/70" />
-            <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
-          </>
-        )}
-        {!isTestData && user && passkey?.supported && !passkey.hasRegistered && (
+        <DrawerItem
+          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v16m8-8H4" /></svg>}
+          label={t.addMonth ?? 'Afegir mes'}
+          onClick={onAddMonth}
+          collapsed={collapsed}
+          iconColor="text-emerald-400/70"
+          disabled={!stats}
+        />
+        <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
+        {user && passkey?.supported && !passkey.hasRegistered && (
           <DrawerItem
             icon={<FaceIdIcon />}
             label={t.registerFaceId ?? 'Activar Face ID'}
@@ -196,7 +170,7 @@ export default function SideDrawer({
             disabled={passkey.registering}
           />
         )}
-        {!isTestData && user && (
+        {user && (
           <DrawerItem icon={<LogoutIcon />} label={t.logout} onClick={onLogout} danger collapsed={collapsed} />
         )}
       </div>
@@ -233,23 +207,19 @@ export default function SideDrawer({
         {userSection(false, 'mb-1')}
         {profileSection(false, (id) => menuAction(() => onSwitchProfile(id))())}
 
-        <div className="flex-1 px-3">
-          {isTestData && (
-            <div className="py-3">
-              <DrawerItem icon={<ExitIcon />} label={t.exit} href={import.meta.env.BASE_URL || '/'} onClick={onClose} iconColor="text-sky-400/70" />
-            </div>
-          )}
-        </div>
+        <div className="flex-1 px-3" />
 
         <div className="px-3 py-3 border-t border-white/[0.06] space-y-1.5" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
           <PrivacyMenuItem collapsed={false} onAfterToggle={onClose} />
-          {!isTestData && (
-            <>
-              <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} onClick={onClose} iconColor="text-violet-400/70" />
-              <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
-            </>
-          )}
-          {!isTestData && user && passkey?.supported && !passkey.hasRegistered && (
+          <DrawerItem
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v16m8-8H4" /></svg>}
+            label={t.addMonth ?? 'Afegir mes'}
+            onClick={menuAction(onAddMonth)}
+            iconColor="text-emerald-400/70"
+            disabled={!stats}
+          />
+          <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
+          {user && passkey?.supported && !passkey.hasRegistered && (
             <DrawerItem
               icon={<FaceIdIcon />}
               label={t.registerFaceId ?? 'Activar Face ID'}
@@ -258,7 +228,7 @@ export default function SideDrawer({
               disabled={passkey.registering}
             />
           )}
-          {!isTestData && user && (
+          {user && (
             <DrawerItem icon={<LogoutIcon />} label={t.logout} onClick={menuAction(onLogout)} danger />
           )}
         </div>

@@ -37,12 +37,6 @@ import { ASSET_CLASS_LABELS } from './utils/assetClassBuckets.js';
 
 const PROFILE_KEY = 'mt_profile';
 
-function isTestDataPath() {
-  if (typeof window === 'undefined') return false;
-  const p = window.location.pathname;
-  return p === '/test' || p.endsWith('/test');
-}
-
 function normalizeStoredProfileId(saved) {
   if (!saved) return null;
   if (saved === PROFILE_PRIMARY_ID || saved === 'olga') return PROFILE_PRIMARY_ID;
@@ -63,7 +57,6 @@ function getInitialProfile() {
 
 export default function App() {
   const { t } = useI18n();
-  const isTestData = isTestDataPath();
   const {
     user,
     accessToken,
@@ -140,7 +133,7 @@ export default function App() {
     refresh,
     lastUpdatedAt,
     currentSheetId,
-  } = useSheetFinanceData({ isTestData, accessToken, appJwt, profile, financeConfig });
+  } = useSheetFinanceData({ accessToken, appJwt, profile, financeConfig });
 
   const assetClassNetWorth = useMemo(() => {
     if (!selectedAssetClasses.length || !stats?.assetClassEvolution?.length) return null;
@@ -193,7 +186,7 @@ export default function App() {
 
   const { pullPx, progress, isPulling } = usePullToRefresh({
     onRefresh: refresh,
-    disabled: isTestData || !stats,
+    disabled: !stats,
     loading: loading && !stats,
   });
 
@@ -202,7 +195,7 @@ export default function App() {
     setLocalProfileUiTick((t) => t + 1);
   }, []);
 
-  const effectiveUser = isTestData ? { name: 'Test', email: '', picture: null } : (apiUser || user);
+  const effectiveUser = apiUser || user;
 
   const switchProfile = (id) => {
     setProfile(id);
@@ -247,7 +240,7 @@ export default function App() {
     return () => el.removeEventListener('touchmove', handleTouchMove);
   }, [handleTouchMove]);
 
-  if (!isTestData && (!isLoggedIn || needsRefresh)) {
+  if (!isLoggedIn || needsRefresh) {
     return (
       <LoginScreen
         onLogin={() => login(PROFILE_EMAILS[profile])}
@@ -259,7 +252,7 @@ export default function App() {
     );
   }
 
-  if (!isTestData && user && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {
+  if (user && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {
     const primarySid = String(financeConfig.spreadsheetId || '').trim();
     const hasPrimarySheetId = Boolean(primarySid);
     const hasSecondarySheetConfigured = Boolean(String(financeConfig.spreadsheetId2 || '').trim());
@@ -276,18 +269,7 @@ export default function App() {
     );
   }
 
-  if (isTestData && !stats) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary">{t.loadingTestData}</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isTestData && error && !stats && !loading) {
+  if (error && !stats && !loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="glass-card p-8 text-center max-w-md space-y-4">
@@ -307,7 +289,7 @@ export default function App() {
     );
   }
 
-  if (!isTestData && !stats) {
+  if (!stats) {
     const profileSyncBlocking = hasApi && !backendReady;
     const shellLoading = backendProfileLoading || loading;
     const loadPhase = profileSyncBlocking ? 'session' : 'sheet';
@@ -388,10 +370,7 @@ export default function App() {
           effectiveProfile={effectiveProfile}
           onSwitchProfile={switchProfile}
           onSettings={() => setSettingsOpen(true)}
-          onRefresh={refresh}
           onLogout={() => { googleLogout(); clearAppJwt(); }}
-          loading={shellLoading}
-          isTestData={isTestData}
           t={t}
           stats={null}
           onAddMonth={() => { setAddMonthOpen(true); setDrawerOpen(false); }}
@@ -590,33 +569,27 @@ export default function App() {
       </main>
 
       <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
-        {isTestData ? (
-          <p>{t.testMode}</p>
-        ) : (
-          <>
-            {loading && stats ? (
-              <p className="text-text-secondary/90 flex items-center justify-center gap-2">
-                <span className="inline-block w-3.5 h-3.5 border-2 border-brand/30 border-t-brand rounded-full animate-spin shrink-0" aria-hidden />
-                <span>{t.refreshingData}</span>
-              </p>
-            ) : null}
-            {updatedLabel ? (
-              <p className="text-text-secondary">
-                {t.dataUpdatedAt}{' '}
-                <time
-                  dateTime={
-                    lastUpdatedAt instanceof Date && !Number.isNaN(lastUpdatedAt.getTime())
-                      ? lastUpdatedAt.toISOString()
-                      : undefined
-                  }
-                >
-                  {updatedLabel}
-                </time>
-              </p>
-            ) : null}
-            <p className="sm:hidden text-text-secondary/80">{t.pullDownHint}</p>
-          </>
-        )}
+        {loading && stats ? (
+          <p className="text-text-secondary/90 flex items-center justify-center gap-2">
+            <span className="inline-block w-3.5 h-3.5 border-2 border-brand/30 border-t-brand rounded-full animate-spin shrink-0" aria-hidden />
+            <span>{t.refreshingData}</span>
+          </p>
+        ) : null}
+        {updatedLabel ? (
+          <p className="text-text-secondary">
+            {t.dataUpdatedAt}{' '}
+            <time
+              dateTime={
+                lastUpdatedAt instanceof Date && !Number.isNaN(lastUpdatedAt.getTime())
+                  ? lastUpdatedAt.toISOString()
+                  : undefined
+              }
+            >
+              {updatedLabel}
+            </time>
+          </p>
+        ) : null}
+        <p className="sm:hidden text-text-secondary/80">{t.pullDownHint}</p>
       </footer>
 
       {addMonthOpen && stats && (
@@ -653,10 +626,7 @@ export default function App() {
         effectiveProfile={effectiveProfile}
         onSwitchProfile={switchProfile}
         onSettings={() => setSettingsOpen(true)}
-        onRefresh={refresh}
         onLogout={() => { googleLogout(); clearAppJwt(); }}
-        loading={loading}
-        isTestData={isTestData}
         t={t}
         stats={stats}
         onAddMonth={() => { setAddMonthOpen(true); setDrawerOpen(false); }}

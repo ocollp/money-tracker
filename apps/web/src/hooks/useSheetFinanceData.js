@@ -7,7 +7,6 @@ import {
   fetchSheetDataViaBackend,
   checkSheetAccessViaBackend,
 } from '../services/sheetsApi';
-import { getTestStats } from '../data/testData';
 import { PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID, API_URL, HAS_BACKEND } from '../config';
 import { financeConfigToStatsOptions } from '../lib/mergeFinanceConfig.js';
 import { readCachedMonths, writeCachedMonths } from '../lib/financeStatsCache.js';
@@ -19,7 +18,7 @@ function buildStatsFromMonths(months, statsOpts, profileId) {
   return computeStatistics(months, { ...statsOpts, profileId });
 }
 
-export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, financeConfig }) {
+export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfig }) {
   const sid1 = financeConfig.spreadsheetId;
   const sid2 = financeConfig.spreadsheetId2;
   const labels = financeConfig.profileLabels;
@@ -36,21 +35,21 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   housingRef.current = { fixedHousingSheetValue, fixedHousingSheetEntity };
 
   const useBackend = Boolean(HAS_BACKEND && appJwt);
-  const authReady = isTestData || (useBackend ? Boolean(appJwt) : Boolean(accessToken));
+  const authReady = useBackend ? Boolean(appJwt) : Boolean(accessToken);
 
   const checkAccess = useMemo(() => {
-    if (!authReady || isTestData) return null;
+    if (!authReady) return null;
     return useBackend
       ? (s) => checkSheetAccessViaBackend(appJwt, s, API_URL)
       : (s) => checkSheetAccess(accessToken, s);
-  }, [authReady, useBackend, appJwt, accessToken, isTestData]);
+  }, [authReady, useBackend, appJwt, accessToken]);
 
   const fetchData = useMemo(() => {
-    if (!authReady || isTestData) return null;
+    if (!authReady) return null;
     return useBackend
       ? (s) => fetchSheetDataViaBackend(appJwt, s, API_URL)
       : (s) => fetchSheetData(accessToken, s);
-  }, [authReady, useBackend, appJwt, accessToken, isTestData]);
+  }, [authReady, useBackend, appJwt, accessToken]);
 
   const PROFILE_PRIMARY = useMemo(
     () => ({
@@ -76,7 +75,6 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     sid1 ? { id1: true, id2: false } : null,
   );
   const [stats, setStats] = useState(() => {
-    if (isTestData) return null;
     const sid = financeConfig.spreadsheetId;
     if (!sid) return null;
     const months = readCachedMonths(sid, profile);
@@ -84,7 +82,6 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     return buildStatsFromMonths(months, statsOpts, profile);
   });
   const [loading, setLoading] = useState(() => {
-    if (isTestData) return false;
     const sid = financeConfig.spreadsheetId;
     if (!sid) return false;
     return true;
@@ -97,7 +94,7 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   const sheetAccessRef = useRef(sheetAccess);
   sheetAccessRef.current = sheetAccess;
   const monthsCacheRef = useRef(
-    isTestData || !financeConfig.spreadsheetId
+    !financeConfig.spreadsheetId
       ? null
       : readCachedMonths(financeConfig.spreadsheetId, profile),
   );
@@ -135,14 +132,7 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
   );
 
   useEffect(() => {
-    if (!isTestData) return;
-    setSheetAccess({ id1: true, id2: false });
-    setStats(getTestStats());
-    setLastUpdatedAt(new Date());
-  }, [isTestData]);
-
-  useEffect(() => {
-    if (isTestData || !checkAccess || !sid2) return;
+    if (!checkAccess || !sid2) return;
     let cancelled = false;
     checkAccess(sid2).then((ok) => {
       if (cancelled) return;
@@ -155,10 +145,10 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     return () => {
       cancelled = true;
     };
-  }, [checkAccess, sid2, isTestData]);
+  }, [checkAccess, sid2]);
 
   useEffect(() => {
-    if (isTestData || !statsKey) return;
+    if (!statsKey) return;
 
     const keyChanged = statsCacheKeyRef.current !== statsKey;
     if (keyChanged) {
@@ -172,15 +162,15 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
         setStats(null);
       }
     }
-  }, [statsKey, isTestData, currentSheetId, effectiveProfile, applyMonthsToStats]);
+  }, [statsKey, currentSheetId, effectiveProfile, applyMonthsToStats]);
 
   useEffect(() => {
-    if (isTestData || !monthsCacheRef.current?.length) return;
+    if (!monthsCacheRef.current?.length) return;
     applyMonthsToStats(monthsCacheRef.current, effectiveProfile);
-  }, [statsOpts, isTestData, effectiveProfile, applyMonthsToStats]);
+  }, [statsOpts, effectiveProfile, applyMonthsToStats]);
 
   useEffect(() => {
-    if (isTestData || !fetchData || !currentSheetId) return;
+    if (!fetchData || !currentSheetId) return;
     const access = sheetAccessRef.current;
     if (access !== null && !access.id1 && !access.id2) return;
 
@@ -235,14 +225,13 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     currentSheetId,
     fetchKey,
     effectiveProfile,
-    isTestData,
     sid1,
     sid2,
     applyMonthsToStats,
   ]);
 
   useEffect(() => {
-    if (isTestData || !fetchData) return;
+    if (!fetchData) return;
     if (!currentSheetId || !stats) return;
 
     const intervalId = setInterval(() => {
@@ -262,7 +251,7 @@ export function useSheetFinanceData({ isTestData, accessToken, appJwt, profile, 
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [fetchData, currentSheetId, effectiveProfile, stats, isTestData, applyMonthsToStats]);
+  }, [fetchData, currentSheetId, effectiveProfile, stats, applyMonthsToStats]);
 
   const refresh = useCallback(() => { setFetchKey((k) => k + 1); }, []);
 
