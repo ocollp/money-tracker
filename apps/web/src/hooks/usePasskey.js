@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { API_URL, HAS_BACKEND } from '../config.js';
-import { getAppJwt } from './useBackendProfile.js';
+import { getAppJwt } from '../lib/authStorage.js';
 
 export function usePasskey({ onLoginSuccess }) {
   const [registering, setRegistering] = useState(false);

@@ -1,32 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { API_URL, HAS_BACKEND } from '../config.js';
+import {
+  getAppJwt,
+  clearAppJwt,
+  JWT_STORAGE_KEY,
+} from '../lib/authStorage.js';
 
-const JWT_KEY = 'mt_app_jwt';
+export { getAppJwt, clearAppJwt } from '../lib/authStorage.js';
 
-export function getAppJwt() {
-  try { return localStorage.getItem(JWT_KEY); } catch { return null; }
+async function fetchMe(jwt) {
+  return fetch(`${API_URL}/me`, {
+    headers: { Authorization: `Bearer ${jwt}` },
+  });
 }
 
-export function clearAppJwt() {
-  try { localStorage.removeItem(JWT_KEY); } catch {}
-}
-
-/**
- * Manages backend profile + settings.
- *
- * Backend mode  (appJwt provided):  calls GET /me with the JWT.
- * Implicit mode (accessToken only): calls POST /auth/google to exchange the
- *   Google access token for a JWT, then reads user + settings from the response.
- *
- * onJwtExpired is called when the backend returns 401 (JWT invalid/expired)
- * so the parent can clear auth state and show the login screen.
- */
 export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
   const [settings, setSettings] = useState(null);
   const [apiUser, setApiUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  /** With a stored app JWT, don’t block first paint on /me (cold Render is slow). */
   const [backendReady, setBackendReady] = useState(() => !HAS_BACKEND || Boolean(getAppJwt()));
 
   useEffect(() => {
@@ -35,49 +27,41 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
       return;
     }
 
-    // ── Backend mode: JWT already in hand, just fetch settings ──
-    if (appJwt) {
-      let cancelled = false;
+    let cancelled = false;
+
+    const loadProfile = async (loader) => {
       setLoading(true);
       setError(null);
-      /** Don’t block the whole app on /me: sheet + local finance config can load in parallel. */
       setBackendReady(true);
+      try {
+        await loader();
+      } catch (e) {
+        if (!cancelled) setError(e.message || 'API error');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
 
-      (async () => {
-        try {
-          const res = await fetch(`${API_URL}/me`, {
-            headers: { Authorization: `Bearer ${appJwt}` },
-          });
-          if (cancelled) return;
-          if (res.status === 401) {
-            clearAppJwt();
-            onJwtExpired?.();
-            setSettings(null);
-            setApiUser(null);
-            return;
-          }
-          if (res.status === 503) {
-            return;
-          }
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-          }
-          const data = await res.json();
-          setApiUser(data.user);
-          setSettings(data.settings);
-        } catch (e) {
-          if (!cancelled) {
-            setError(e.message || 'API error');
-          }
-        } finally {
-          if (!cancelled) setLoading(false);
+    if (appJwt) {
+      loadProfile(async () => {
+        const res = await fetchMe(appJwt);
+        if (cancelled) return;
+        if (res.status === 401) {
+          clearAppJwt();
+          onJwtExpired?.();
+          setSettings(null);
+          setApiUser(null);
+          return;
         }
-      })();
-
+        if (res.status === 503) return;
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setApiUser(data.user);
+        setSettings(data.settings);
+      });
       return () => { cancelled = true; };
     }
 
-    // ── Implicit mode: exchange Google access token for JWT ──
     if (!accessToken) {
       setSettings(null);
       setApiUser(null);
@@ -85,54 +69,36 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
       return;
     }
 
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setBackendReady(true);
-
-    (async () => {
-      try {
-        const res = await fetch(`${API_URL}/auth/google`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accessToken }),
-        });
-        if (cancelled) return;
-        if (res.status === 503) {
-          setSettings(null);
-          setApiUser(null);
-          setBackendReady(true);
-          return;
-        }
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || `HTTP ${res.status}`);
-        }
-        const data = await res.json();
-        localStorage.setItem(JWT_KEY, data.token);
-        setApiUser(data.user);
-        setSettings(data.settings);
-        setBackendReady(true);
-      } catch (e) {
-        if (!cancelled) {
-          setError(e.message || 'API error');
-          setBackendReady(true);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+    loadProfile(async () => {
+      const res = await fetch(`${API_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken }),
+      });
+      if (cancelled) return;
+      if (res.status === 503) {
+        setSettings(null);
+        setApiUser(null);
+        return;
       }
-    })();
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      localStorage.setItem(JWT_STORAGE_KEY, data.token);
+      setApiUser(data.user);
+      setSettings(data.settings);
+    });
 
     return () => { cancelled = true; };
-  }, [accessToken, appJwt]);
+  }, [accessToken, appJwt, onJwtExpired]);
 
   const refreshProfile = useCallback(async () => {
     if (!HAS_BACKEND) return;
     const jwt = getAppJwt();
     if (!jwt) return;
-    const res = await fetch(`${API_URL}/me`, {
-      headers: { Authorization: `Bearer ${jwt}` },
-    });
+    const res = await fetchMe(jwt);
     if (res.status === 401) {
       clearAppJwt();
       onJwtExpired?.();

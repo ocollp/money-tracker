@@ -1,6 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GOOGLE_CLIENT_ID, SCOPES, API_URL, HAS_BACKEND } from '../config';
 import { useI18n } from '../i18n/I18nContext.jsx';
+import {
+  loadStoredUser,
+  loadImplicitSession,
+  saveImplicitSession,
+  saveBackendSession,
+  clearAuthStorage,
+  getAppJwt,
+} from '../lib/authStorage.js';
+import {
+  GIS_LOAD_ERROR,
+  isGisAvailable,
+  pollUntilGisReady,
+  waitForGisClient,
+} from '../lib/gisClient.js';
+
+const USE_BACKEND = HAS_BACKEND;
+const REFRESH_BEFORE_MS = 20 * 60 * 1000;
+const EXPIRING_SOON_MS = 25 * 60 * 1000;
+const SILENT_CHECK_MS = 1200;
 
 function mapAuthApiError(body, t) {
   if (body?.error === 'database_not_configured') {
@@ -15,54 +34,6 @@ function mapAuthApiError(body, t) {
   return body?.error || null;
 }
 
-const STORAGE_KEY = 'mt_auth';
-const JWT_KEY = 'mt_app_jwt';
-const REFRESH_BEFORE_MS = 20 * 60 * 1000;
-const EXPIRING_SOON_MS = 25 * 60 * 1000;
-const SILENT_CHECK_MS = 3000;
-const GIS_LOAD_TIMEOUT_MS = 15000;
-
-// True when the app is backed by an API that can proxy Sheets + store refresh tokens
-const USE_BACKEND = HAS_BACKEND;
-
-// ─── storage helpers ───────────────────────────────────────────────────────
-
-function loadStoredUser() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return parsed?.user ?? null;
-  } catch { return null; }
-}
-
-function loadImplicitSession() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch { return null; }
-}
-
-function saveImplicitSession(token, expiresIn, user) {
-  const session = {
-    accessToken: token,
-    expiresAt: Date.now() + Math.max(0, (expiresIn - 120)) * 1000,
-    user,
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  return session;
-}
-
-function saveBackendSession(user, jwt) {
-  localStorage.setItem(JWT_KEY, jwt);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ user }));
-}
-
-function clearBackendSession() {
-  localStorage.removeItem(JWT_KEY);
-  localStorage.removeItem(STORAGE_KEY);
-}
-
 async function fetchUserInfo(token) {
   try {
     const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -75,29 +46,31 @@ async function fetchUserInfo(token) {
   }
 }
 
-// ─── hook ─────────────────────────────────────────────────────────────────
+function requestLogin(client, loginHint) {
+  const opts = loginHint ? { login_hint: loginHint } : {};
+  if (USE_BACKEND) client.requestCode(opts);
+  else client.requestAccessToken(opts);
+}
 
 export default function useGoogleAuth() {
   const { t } = useI18n();
   const implicitSaved = !USE_BACKEND ? loadImplicitSession() : null;
   const implicitHasValidToken = Boolean(
-    implicitSaved?.expiresAt && Date.now() < implicitSaved.expiresAt
+    implicitSaved?.expiresAt && Date.now() < implicitSaved.expiresAt,
   );
 
   const [user, setUser] = useState(() =>
-    USE_BACKEND ? loadStoredUser() : (implicitSaved?.user ?? null)
+    USE_BACKEND ? loadStoredUser() : (implicitSaved?.user ?? null),
   );
   const [appJwt, setAppJwt] = useState(() =>
-    USE_BACKEND ? (localStorage.getItem(JWT_KEY) || null) : null
+    USE_BACKEND ? getAppJwt() : null,
   );
   const [accessToken, setAccessToken] = useState(() =>
-    !USE_BACKEND && implicitHasValidToken ? (implicitSaved?.accessToken ?? null) : null
+    !USE_BACKEND && implicitHasValidToken ? (implicitSaved?.accessToken ?? null) : null,
   );
-  const [ready, setReady] = useState(false);
   const [authError, setAuthError] = useState(null);
-  const [gisClient, setGisClient] = useState(null);
   const [silentCheckDone, setSilentCheckDone] = useState(() =>
-    USE_BACKEND ? true : (!implicitSaved?.user || implicitHasValidToken)
+    USE_BACKEND ? true : !implicitSaved?.user || implicitHasValidToken,
   );
 
   const refreshTimer = useRef(null);
@@ -111,35 +84,33 @@ export default function useGoogleAuth() {
     expiresAtRef.current = expiresAt;
     const ms = Math.max(expiresAt - Date.now() - REFRESH_BEFORE_MS, 15_000);
     refreshTimer.current = setTimeout(() => {
-      if (client) client.requestAccessToken({ prompt: '' });
+      client?.requestAccessToken({ prompt: '' });
     }, ms);
   }, []);
 
   const trySilentRefresh = useCallback((client, promptNone = false) => {
-    if (USE_BACKEND) return;
-    if (client) client.requestAccessToken({ prompt: promptNone ? 'none' : '' });
+    if (USE_BACKEND || !client) return;
+    client.requestAccessToken({ prompt: promptNone ? 'none' : '' });
   }, []);
 
   useEffect(() => {
     if (!String(GOOGLE_CLIENT_ID || '').trim()) {
       setAuthError(
-        'Falta VITE_GOOGLE_CLIENT_ID. Afegeix-la al .env i reinicia el servidor de Vite.'
+        'Falta VITE_GOOGLE_CLIENT_ID. Afegeix-la al .env i reinicia el servidor de Vite.',
       );
-      setReady(true);
       return;
     }
 
-    let interval;
-    let loadTimeout;
+    const registerClient = (client) => {
+      clientRef.current = client;
+    };
 
     const setup = () => {
-      if (!window.google?.accounts?.oauth2) return false;
+      if (!isGisAvailable()) return false;
 
-      if (USE_BACKEND) {
-        // ── Code flow (authorization code → backend stores refresh token) ──
-        let client;
-        try {
-          client = window.google.accounts.oauth2.initCodeClient({
+      try {
+        if (USE_BACKEND) {
+          const client = window.google.accounts.oauth2.initCodeClient({
             client_id: GOOGLE_CLIENT_ID,
             scope: SCOPES,
             ux_mode: 'popup',
@@ -181,51 +152,28 @@ export default function useGoogleAuth() {
               }
             },
           });
-        } catch (e) {
-          clearTimeout(loadTimeout);
-          setAuthError(e?.message || "No s'ha pogut iniciar Google Sign-In.");
-          setReady(true);
+          registerClient(client);
           return true;
         }
 
-        clientRef.current = client;
-        setGisClient(client);
-        setReady(true);
-        clearTimeout(loadTimeout);
-      } else {
-        // ── Implicit / token flow (existing behaviour, no backend) ──
         const saved = loadImplicitSession();
         const hasValidToken = Boolean(saved?.expiresAt && Date.now() < saved.expiresAt);
-
-        let client;
-        try {
-          client = window.google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID,
-            scope: SCOPES,
-            callback: (response) => {
-              if (response?.access_token) {
-                setSilentCheckDone(true);
-                const expiresIn = response.expires_in || 3600;
-                fetchUserInfo(response.access_token).then((userInfo) => {
-                  const session = saveImplicitSession(response.access_token, expiresIn, userInfo);
-                  setAccessToken(session.accessToken);
-                  setUser(userInfo);
-                  scheduleRefresh(session.expiresAt, client);
-                });
-              }
-            },
-          });
-        } catch (e) {
-          clearTimeout(loadTimeout);
-          setAuthError(e?.message || "No s'ha pogut iniciar Google Sign-In.");
-          setReady(true);
-          return true;
-        }
-
-        clientRef.current = client;
-        setGisClient(client);
-        setReady(true);
-        clearTimeout(loadTimeout);
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: SCOPES,
+          callback: (response) => {
+            if (!response?.access_token) return;
+            setSilentCheckDone(true);
+            const expiresIn = response.expires_in || 3600;
+            fetchUserInfo(response.access_token).then((userInfo) => {
+              const session = saveImplicitSession(response.access_token, expiresIn, userInfo);
+              setAccessToken(session.accessToken);
+              setUser(userInfo);
+              scheduleRefresh(session.expiresAt, client);
+            });
+          },
+        });
+        registerClient(client);
 
         if (hasValidToken && saved?.expiresAt) {
           scheduleRefresh(saved.expiresAt, client);
@@ -233,51 +181,45 @@ export default function useGoogleAuth() {
           trySilentRefresh(client, true);
           silentCheckTimer.current = setTimeout(() => setSilentCheckDone(true), SILENT_CHECK_MS);
         }
+        return true;
+      } catch (e) {
+        setAuthError(e?.message || "No s'ha pogut iniciar Google Sign-In.");
+        return true;
       }
-      return true;
     };
 
-    loadTimeout = setTimeout(() => {
-      if (clientRef.current) return;
-      clearInterval(interval);
-      setAuthError(
-        "No s'ha carregat el script de Google (timeout). Comprova la connexió i recarrega."
-      );
-      setReady(true);
-    }, GIS_LOAD_TIMEOUT_MS);
-
-    interval = setInterval(() => { if (setup()) clearInterval(interval); }, 100);
+    const stopPolling = pollUntilGisReady(setup, {
+      onTimeout: () => {
+        if (!clientRef.current) setAuthError(GIS_LOAD_ERROR);
+      },
+    });
 
     const onVisibility = () => {
-      if (USE_BACKEND) return;
-      if (document.visibilityState !== 'visible') return;
+      if (USE_BACKEND || document.visibilityState !== 'visible') return;
       const exp = expiresAtRef.current;
-      const now = Date.now();
       const client = clientRef.current;
-      if (exp != null && exp - now < EXPIRING_SOON_MS && client) {
+      if (exp != null && exp - Date.now() < EXPIRING_SOON_MS && client) {
         trySilentRefresh(client);
       }
     };
     document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
-      clearInterval(interval);
-      clearTimeout(loadTimeout);
+      stopPolling();
       document.removeEventListener('visibilitychange', onVisibility);
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
       if (silentCheckTimer.current) clearTimeout(silentCheckTimer.current);
     };
-  }, [t]);
+  }, [scheduleRefresh, trySilentRefresh, t]);
 
   const login = useCallback((loginHint) => {
-    if (USE_BACKEND) {
-      clientRef.current?.requestCode(loginHint ? { login_hint: loginHint } : {});
-    } else {
-      gisClient?.requestAccessToken(loginHint ? { login_hint: loginHint } : {});
-    }
-  }, [gisClient]);
+    const cleanup = waitForGisClient(clientRef, {
+      onReady: (client) => requestLogin(client, loginHint),
+      onTimeout: () => setAuthError(GIS_LOAD_ERROR),
+    });
+    return cleanup;
+  }, []);
 
-  // Called by usePasskey after successful WebAuthn login — sets session without Google
   const loginWithPasskeyResult = useCallback((data) => {
     if (!data?.token || !data?.user) return;
     saveBackendSession(data.user, data.token);
@@ -288,14 +230,16 @@ export default function useGoogleAuth() {
 
   const clearAuth = useCallback(() => {
     if (USE_BACKEND) {
-      clearBackendSession();
+      clearAuthStorage();
       setUser(null);
       setAppJwt(null);
     } else {
       if (accessToken) {
-        try { window.google.accounts.oauth2.revoke(accessToken); } catch {}
+        try {
+          window.google.accounts.oauth2.revoke(accessToken);
+        } catch {}
       }
-      localStorage.removeItem(STORAGE_KEY);
+      clearAuthStorage();
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
       expiresAtRef.current = null;
       setUser(null);
@@ -303,21 +247,19 @@ export default function useGoogleAuth() {
     }
   }, [accessToken]);
 
-  const needsRefresh = USE_BACKEND ? false : (!!user && !accessToken && silentCheckDone);
-  const checkingSession = USE_BACKEND ? false : (!!user && !accessToken && !silentCheckDone);
+  const needsRefresh = USE_BACKEND ? false : Boolean(user && !accessToken && silentCheckDone);
+  const checkingSession = USE_BACKEND ? false : Boolean(user && !accessToken && !silentCheckDone);
 
   return {
     user,
     accessToken: USE_BACKEND ? null : accessToken,
     appJwt: USE_BACKEND ? appJwt : null,
-    ready,
     authError,
-    canLogin: !!gisClient,
     login,
     loginWithPasskeyResult,
     logout: clearAuth,
     clearAuth,
-    isLoggedIn: USE_BACKEND ? (!!user && !!appJwt) : !!user,
+    isLoggedIn: USE_BACKEND ? Boolean(user && appJwt) : Boolean(user),
     needsRefresh,
     checkingSession,
   };

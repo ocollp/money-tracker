@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { parseCSV, groupByMonth, mergeFixedHousingSheetRows } from '../utils/parseCSV';
 import { computeStatistics } from '../utils/statistics';
 import {
   fetchSheetData,
@@ -10,12 +9,20 @@ import {
 import { PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID, API_URL, HAS_BACKEND } from '../config';
 import { financeConfigToStatsOptions } from '../lib/mergeFinanceConfig.js';
 import { readCachedMonths, writeCachedMonths } from '../lib/financeStatsCache.js';
+import { csvTextToMonths } from '../lib/sheetMonths.js';
 
 const POLL_INTERVAL_MS = 45 * 1000;
 
 function buildStatsFromMonths(months, statsOpts, profileId) {
   if (!months?.length) return null;
   return computeStatistics(months, { ...statsOpts, profileId });
+}
+
+function readInitialCache(sheetId, profile) {
+  if (!sheetId) return { months: null, stats: null, loading: false };
+  const months = readCachedMonths(sheetId, profile);
+  if (!months?.length) return { months: null, stats: null, loading: true };
+  return { months, stats: null, loading: false };
 }
 
 export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfig }) {
@@ -30,9 +37,14 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
   const statsOptsRef = useRef(statsOpts);
   statsOptsRef.current = statsOpts;
 
-  const { fixedHousingSheetValue, fixedHousingSheetEntity } = financeConfig;
-  const housingRef = useRef({ fixedHousingSheetValue, fixedHousingSheetEntity });
-  housingRef.current = { fixedHousingSheetValue, fixedHousingSheetEntity };
+  const housingRef = useRef({
+    amount: financeConfig.fixedHousingSheetValue,
+    entity: financeConfig.fixedHousingSheetEntity,
+  });
+  housingRef.current = {
+    amount: financeConfig.fixedHousingSheetValue,
+    entity: financeConfig.fixedHousingSheetEntity,
+  };
 
   const useBackend = Boolean(HAS_BACKEND && appJwt);
   const authReady = useBackend ? Boolean(appJwt) : Boolean(accessToken);
@@ -71,21 +83,17 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     [labels, emojis, sid2],
   );
 
+  const initialCache = readInitialCache(financeConfig.spreadsheetId, profile);
+
   const [sheetAccess, setSheetAccess] = useState(() =>
     sid1 ? { id1: true, id2: false } : null,
   );
-  const [stats, setStats] = useState(() => {
-    const sid = financeConfig.spreadsheetId;
-    if (!sid) return null;
-    const months = readCachedMonths(sid, profile);
-    if (!months?.length) return null;
-    return buildStatsFromMonths(months, statsOpts, profile);
-  });
-  const [loading, setLoading] = useState(() => {
-    const sid = financeConfig.spreadsheetId;
-    if (!sid) return false;
-    return true;
-  });
+  const [stats, setStats] = useState(() =>
+    initialCache.months
+      ? buildStatsFromMonths(initialCache.months, statsOpts, profile)
+      : null,
+  );
+  const [loading, setLoading] = useState(initialCache.loading);
   const [error, setError] = useState(null);
   const [fetchKey, setFetchKey] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
@@ -93,11 +101,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
   const pendingSecondaryAccessRef = useRef(undefined);
   const sheetAccessRef = useRef(sheetAccess);
   sheetAccessRef.current = sheetAccess;
-  const monthsCacheRef = useRef(
-    !financeConfig.spreadsheetId
-      ? null
-      : readCachedMonths(financeConfig.spreadsheetId, profile),
-  );
+  const monthsCacheRef = useRef(initialCache.months);
 
   const effectiveProfiles = !sheetAccess
     ? []
@@ -118,18 +122,42 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
 
   const statsKey = currentSheetId ? `${currentSheetId}\0${effectiveProfile}` : '';
 
-  const applyMonthsToStats = useCallback(
-    (months, profileId) => {
-      const s = buildStatsFromMonths(months, statsOptsRef.current, profileId);
-      if (s) {
-        setStats(s);
-        setLastUpdatedAt(new Date());
-        monthsCacheRef.current = months;
-      }
-      return s;
-    },
+  const applyMonthsToStats = useCallback((months, profileId) => {
+    const next = buildStatsFromMonths(months, statsOptsRef.current, profileId);
+    if (next) {
+      setStats(next);
+      setLastUpdatedAt(new Date());
+      monthsCacheRef.current = months;
+    }
+    return next;
+  }, []);
+
+  const ingestCsv = useCallback(
+    (csvText) => csvTextToMonths(csvText, housingRef.current),
     [],
   );
+
+  const persistMonths = useCallback(
+    (months, profileId) => {
+      writeCachedMonths(currentSheetId, profileId, months);
+      monthsCacheRef.current = months;
+      return applyMonthsToStats(months, profileId);
+    },
+    [applyMonthsToStats, currentSheetId],
+  );
+
+  const updateSheetAccessAfterFetch = useCallback(() => {
+    setSheetAccess((prev) => {
+      const nextId1 = currentSheetId === sid1 ? true : (prev?.id1 ?? false);
+      const nextId2 =
+        currentSheetId === sid2
+          ? true
+          : pendingSecondaryAccessRef.current !== undefined
+            ? pendingSecondaryAccessRef.current
+            : (prev?.id2 ?? false);
+      return { id1: nextId1, id2: nextId2 };
+    });
+  }, [currentSheetId, sid1, sid2]);
 
   useEffect(() => {
     if (!checkAccess || !sid2) return;
@@ -137,30 +165,22 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     checkAccess(sid2).then((ok) => {
       if (cancelled) return;
       pendingSecondaryAccessRef.current = !!ok;
-      setSheetAccess((prev) => {
-        if (!prev) return null;
-        return { ...prev, id2: !!ok };
-      });
+      setSheetAccess((prev) => (prev ? { ...prev, id2: !!ok } : null));
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [checkAccess, sid2]);
 
   useEffect(() => {
     if (!statsKey) return;
+    if (statsCacheKeyRef.current === statsKey) return;
 
-    const keyChanged = statsCacheKeyRef.current !== statsKey;
-    if (keyChanged) {
-      statsCacheKeyRef.current = statsKey;
-      monthsCacheRef.current = null;
-      const cachedMonths = readCachedMonths(currentSheetId, effectiveProfile);
-      if (cachedMonths?.length) {
-        monthsCacheRef.current = cachedMonths;
-        applyMonthsToStats(cachedMonths, effectiveProfile);
-      } else {
-        setStats(null);
-      }
+    statsCacheKeyRef.current = statsKey;
+    const cachedMonths = readCachedMonths(currentSheetId, effectiveProfile);
+    monthsCacheRef.current = cachedMonths?.length ? cachedMonths : null;
+    if (cachedMonths?.length) {
+      applyMonthsToStats(cachedMonths, effectiveProfile);
+    } else {
+      setStats(null);
     }
   }, [statsKey, currentSheetId, effectiveProfile, applyMonthsToStats]);
 
@@ -174,8 +194,8 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     const access = sheetAccessRef.current;
     if (access !== null && !access.id1 && !access.id2) return;
 
-    const hadStats = Boolean(monthsCacheRef.current?.length);
-    setLoading(true);
+    const hadCachedMonths = Boolean(monthsCacheRef.current?.length);
+    if (!hadCachedMonths) setLoading(true);
     setError(null);
 
     let cancelled = false;
@@ -183,30 +203,13 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     fetchData(currentSheetId)
       .then((csvText) => {
         if (cancelled) return;
-        const { fixedHousingSheetValue: hv, fixedHousingSheetEntity: he } = housingRef.current;
-        const rows = mergeFixedHousingSheetRows(parseCSV(csvText), {
-          amount: hv,
-          entity: he,
-        });
-        const months = groupByMonth(rows);
-        writeCachedMonths(currentSheetId, effectiveProfile, months);
-        monthsCacheRef.current = months;
-        applyMonthsToStats(months, effectiveProfile);
-
-        setSheetAccess((prev) => {
-          const nextId1 = currentSheetId === sid1 ? true : (prev?.id1 ?? false);
-          const nextId2 =
-            currentSheetId === sid2
-              ? true
-              : pendingSecondaryAccessRef.current !== undefined
-                ? pendingSecondaryAccessRef.current
-                : (prev?.id2 ?? false);
-          return { id1: nextId1, id2: nextId2 };
-        });
+        const months = ingestCsv(csvText);
+        persistMonths(months, effectiveProfile);
+        updateSheetAccessAfterFetch();
       })
       .catch((err) => {
         if (cancelled) return;
-        if (!hadStats) setError(err.message);
+        if (!hadCachedMonths) setError(err.message);
         setSheetAccess((prev) => {
           if (currentSheetId === sid1) return { id1: false, id2: false };
           if (currentSheetId === sid2 && prev) return { ...prev, id2: false };
@@ -217,9 +220,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
         if (!cancelled) setLoading(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [
     fetchData,
     currentSheetId,
@@ -227,35 +228,27 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     effectiveProfile,
     sid1,
     sid2,
-    applyMonthsToStats,
+    ingestCsv,
+    persistMonths,
+    updateSheetAccessAfterFetch,
   ]);
 
   useEffect(() => {
-    if (!fetchData) return;
-    if (!currentSheetId || !stats) return;
+    if (!fetchData || !currentSheetId || !stats) return;
 
     const intervalId = setInterval(() => {
       fetchData(currentSheetId)
         .then((csvText) => {
-          const { fixedHousingSheetValue: hv, fixedHousingSheetEntity: he } = housingRef.current;
-          const rows = mergeFixedHousingSheetRows(parseCSV(csvText), {
-            amount: hv,
-            entity: he,
-          });
-          const months = groupByMonth(rows);
-          writeCachedMonths(currentSheetId, effectiveProfile, months);
-          monthsCacheRef.current = months;
-          applyMonthsToStats(months, effectiveProfile);
+          const months = ingestCsv(csvText);
+          persistMonths(months, effectiveProfile);
         })
         .catch(() => {});
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [fetchData, currentSheetId, effectiveProfile, stats, applyMonthsToStats]);
+  }, [fetchData, currentSheetId, effectiveProfile, stats, ingestCsv, persistMonths]);
 
-  const refresh = useCallback(() => { setFetchKey((k) => k + 1); }, []);
-
-  const isRefreshing = Boolean(loading && stats);
+  const refresh = useCallback(() => setFetchKey((k) => k + 1), []);
 
   return {
     sheetAccess,
@@ -264,7 +257,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     currentSheetId,
     stats,
     loading,
-    isRefreshing,
+    isRefreshing: Boolean(loading && stats),
     error,
     refresh,
     lastUpdatedAt,

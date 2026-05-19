@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getAppJwt } from '../hooks/useBackendProfile';
+import { getAppJwt } from '../lib/authStorage.js';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 function NoSheetStep1Line({ t }) {

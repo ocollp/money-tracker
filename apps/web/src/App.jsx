@@ -68,7 +68,6 @@ export default function App() {
     isLoggedIn,
     needsRefresh,
     checkingSession,
-    canLogin,
     authError,
   } = useGoogleAuth();
   const [profile, setProfile] = useState(getInitialProfile);
@@ -90,7 +89,7 @@ export default function App() {
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
 
   const passkey = usePasskey({ onLoginSuccess: loginWithPasskeyResult });
-  const { settings, backendReady, patchSettings, hasApi, apiUser, loading: backendProfileLoading } = useBackendProfile(accessToken, appJwt, clearAuth);
+  const { settings, backendReady, patchSettings, hasApi, apiUser } = useBackendProfile(accessToken, appJwt, clearAuth);
   const hasPersistedProfile = settings != null;
   const financeConfig = useMemo(() => {
     const base = buildFinanceConfig(settings);
@@ -245,7 +244,6 @@ export default function App() {
       <LoginScreen
         onLogin={() => login(PROFILE_EMAILS[profile])}
         checkingSession={checkingSession}
-        canLogin={canLogin}
         authError={authError}
         passkey={passkey}
       />
@@ -291,7 +289,7 @@ export default function App() {
 
   if (!stats) {
     const profileSyncBlocking = hasApi && !backendReady;
-    const shellLoading = backendProfileLoading || loading;
+    const shellLoading = loading;
     const loadPhase = profileSyncBlocking ? 'session' : 'sheet';
 
     return (
