@@ -29,12 +29,13 @@ const ENTITY_COLORS = {
   'Fons de viatges': '#9333ea',
   Habitatge: '#0891b2',
   Crowdfunding: '#f97316',
-  'Fons indexat': '#a855f7',
+  ETFs: '#a855f7',
+  'Fons indexat': '#7c3aed',
   'Pla de pensions': '#1d4ed8',
   Accions: '#22c55e',
   Cripto: '#ec4899',
   'Compte remunerat': '#ca8a04',
-  "Fons d'emergència": '#ef4444',
+  'Estalvi líquid': '#ef4444',
 };
 
 const REPARTIMENT_DISPLAY_LABELS = {

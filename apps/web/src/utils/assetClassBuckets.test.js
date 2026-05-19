@@ -26,7 +26,7 @@ describe('classifyLiquidEntry', () => {
     ).toBe('indexed');
   });
 
-  it('classifies generic bank Cash as other (Compte remunerat is only TR cuenta flexible)', () => {
+  it('classifies generic bank Cash as other', () => {
     expect(
       classifyLiquidEntry({
         category: 'Efectivo',
@@ -59,8 +59,29 @@ describe('classifyLiquidEntry', () => {
     ).toBe('cash');
     expect(
       classifyLiquidEntry({
-        category: 'Invertido',
+        category: 'Acciones',
         entity: 'Trade Republic',
+        type: 'Invertido',
+        isHousing: false,
+        isTravel: false,
+      }),
+    ).toBe('equities');
+    expect(
+      classifyLiquidEntry({
+        category: 'ETF VWCE',
+        entity: 'Trade Republic',
+        type: 'Invertido',
+        isHousing: false,
+        isTravel: false,
+      }),
+    ).toBe('etfs');
+  });
+
+  it('classifies Revolut ETFs as indexed', () => {
+    expect(
+      classifyLiquidEntry({
+        category: 'ETF',
+        entity: 'Revolut',
         type: 'Invertido',
         isHousing: false,
         isTravel: false,
@@ -148,7 +169,7 @@ describe('classifyLiquidEntry', () => {
 });
 
 describe('buildAssetClassSeries', () => {
-  it('adds travel fund share into Fons d\'emergència, not a separate Viatges slice', () => {
+  it('adds travel fund to Estalvi líquid bucket', () => {
     const months = [
       {
         shortLabel: 'Gen 24',
@@ -193,6 +214,30 @@ describe('buildAssetClassSeries', () => {
             isHousing: false,
             isTravel: false,
           },
+          {
+            category: 'Acciones',
+            entity: 'Trade Republic',
+            type: 'Invertido',
+            amount: 3000,
+            isHousing: false,
+            isTravel: false,
+          },
+          {
+            category: 'Acciones',
+            entity: 'Revolut',
+            type: 'Invertido',
+            amount: 2000,
+            isHousing: false,
+            isTravel: false,
+          },
+          {
+            category: 'ETF VWCE',
+            entity: 'Trade Republic',
+            type: 'Invertido',
+            amount: 4000,
+            isHousing: false,
+            isTravel: false,
+          },
         ],
         travelFund: 0,
       },
@@ -211,10 +256,14 @@ describe('buildAssetClassSeries', () => {
     expect(evolution[0][ASSET_CLASS_LABELS.cash]).toBe(2500);
     expect(evolution[0][ASSET_CLASS_LABELS.other]).toBe(1000);
     expect(evolution[0][ASSET_CLASS_LABELS.indexed]).toBe(5000);
+    expect(evolution[0][ASSET_CLASS_LABELS.etfs]).toBe(4000);
+    expect(evolution[0][ASSET_CLASS_LABELS.equities]).toBe(5000);
     const names = new Set(distribution.map((d) => d.name));
     expect(names.has(ASSET_CLASS_LABELS.immo)).toBe(true);
     expect(distribution.find((d) => d.name === ASSET_CLASS_LABELS.immo)?.isHousing).toBe(true);
     expect(names.has(ASSET_CLASS_LABELS.cash)).toBe(true);
     expect(names.has(ASSET_CLASS_LABELS.indexed)).toBe(true);
+    expect(names.has(ASSET_CLASS_LABELS.etfs)).toBe(true);
+    expect(names.has(ASSET_CLASS_LABELS.equities)).toBe(true);
   });
 });

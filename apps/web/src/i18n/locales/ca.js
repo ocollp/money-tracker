@@ -55,7 +55,7 @@ export const t = {
   projection1yLabel: (change) => `En 12 mesos: ~${change}`,
   netWorthTitle: 'Diners i inversions',
   netWorthTooltip: 'Diners i inversions',
-  assetClassTitle: 'Repartiment',
+  assetClassTitle: 'Distribució',
   distributionPctOnlyLabel: '% del total',
   distributionPrivacyHideMoney: 'Ocultar imports',
   distributionPrivacyShowMoney: 'Mostrar imports en euros',

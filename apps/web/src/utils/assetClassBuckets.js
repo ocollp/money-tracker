@@ -1,12 +1,13 @@
 export const ASSET_CLASS_LABELS = {
   immo: 'Habitatge',
   crowdfunding: 'Crowdfunding',
+  etfs: 'ETFs',
   indexed: 'Fons indexat',
   pension: 'Pla de pensions',
   equities: 'Accions',
   crypto: 'Cripto',
   cash: 'Compte remunerat',
-  other: "Fons d'emergència",
+  other: 'Estalvi líquid',
 };
 
 function addTravelToOtherBucket(point, month, travelPatrimonyShare) {
@@ -16,9 +17,43 @@ function addTravelToOtherBucket(point, month, travelPatrimonyShare) {
   }
 }
 
+function rowText(row) {
+  return `${row.category || ''} ${row.entity || ''} ${row.type || ''}`.toLowerCase();
+}
+
+function isTradeRepublicBrokerEntity(row) {
+  return /\btrade\s*republic\b/i.test(`${row.entity || ''}`);
+}
+
+function isRevolutBrokerEntity(row) {
+  const e = `${row.entity || ''}`.trim().toLowerCase();
+  if (!e) return false;
+  return /^revolut\b/.test(e);
+}
+
 function isTradeRepublicCuentaFlexible(row, s) {
-  if (!/\btrade\s*republic\b/i.test(s)) return false;
+  if (!isTradeRepublicBrokerEntity(row)) return false;
   return /(?:cuenta|compte)\s+flexible|(?:cuenta|compte)\s+flex\b|flexkonto|flex-konto/i.test(s);
+}
+
+function isIndexedProvider(row) {
+  const s = rowText(row);
+  return /indexa|finizens|myinvestor|simple\s*fund|justetf/i.test(s);
+}
+
+function looksLikeEtf(row) {
+  const s = rowText(row);
+  return /etf\b|msci|stoxx|s\s*&\s*p|sp500|ishares|vanguard|fondo[s]?\s*index|fons\s*index|indexat|indexed|core\s*accum|all[-\s]?world|acwi|vwce|accumulat|ucits|renta\s*variable\s*index|renta\s*fixa\s*index/i.test(
+    s,
+  );
+}
+
+function isBrokerEquitiesRow(row) {
+  if (!isTradeRepublicBrokerEntity(row) && !isRevolutBrokerEntity(row)) return false;
+  const s = rowText(row);
+  if (isTradeRepublicCuentaFlexible(row, s)) return false;
+  if (!/invertid|invertit|accion|acció|acciones|stocks?|bolsa|valores/i.test(s)) return false;
+  return true;
 }
 
 function looksLikeCrypto(row, s) {
@@ -34,14 +69,8 @@ function looksLikeCrypto(row, s) {
   return /\b(binance|coinbase|kraken|bit2me|crypto\.com|gate\.io|mexc|kucoin|ledger\s*live)\b/i.test(s);
 }
 
-function isRevolutBrokerEntity(row) {
-  const e = `${row.entity || ''}`.trim().toLowerCase();
-  if (!e) return false;
-  return /^revolut\b/.test(e);
-}
-
 export function classifyLiquidEntry(row) {
-  const s = `${row.category || ''} ${row.entity || ''} ${row.type || ''}`.toLowerCase();
+  const s = rowText(row);
   const entity = `${row.entity || ''}`.toLowerCase();
 
   if (/plan\s*de\s*pensi|pensi[oó]n|jubili|plans?vap|ter\s*pensi|frei[iy]nstieg|pka\b|pere\b/i.test(s)) {
@@ -53,21 +82,16 @@ export function classifyLiquidEntry(row) {
   if (isTradeRepublicCuentaFlexible(row, s)) {
     return 'cash';
   }
-  if (
-    /indexa|etf\b|msci|stoxx|s\s*&\s*p|sp500|ishares|vanguard|fondo\s*index|fons\s*index|indexat|indexed|core\s*accum|all[-\s]?world|acwi|trade\s*republic|finizens|myinvestor|simple\s*fund|justetf/i.test(
-      s,
-    )
-  ) {
+  if (isTradeRepublicBrokerEntity(row) && looksLikeEtf(row)) {
+    return 'etfs';
+  }
+  if (looksLikeEtf(row) || isIndexedProvider(row)) {
     return 'indexed';
   }
   if (looksLikeCrypto(row, s)) {
     return 'crypto';
   }
-  if (
-    isRevolutBrokerEntity(row) &&
-    /invertid|invertit/i.test(`${row.type || ''}`.toLowerCase()) &&
-    !/etf|msci|index|fons\s*index|fondo\s*index|accumul|vwce|all[-\s]?world|acwi|ishares|vanguard/i.test(s)
-  ) {
+  if (isBrokerEquitiesRow(row)) {
     return 'equities';
   }
   return 'other';

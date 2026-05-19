@@ -58,7 +58,7 @@ export const t = {
   projection1yLabel: (change) => `En 12 meses: ~${change}`,
   netWorthTitle: 'Dinero e inversiones',
   netWorthTooltip: 'Dinero e inversiones',
-  assetClassTitle: 'Reparto',
+  assetClassTitle: 'Distribución',
   distributionPctOnlyLabel: '% del total',
   distributionPrivacyHideMoney: 'Ocultar importes',
   distributionPrivacyShowMoney: 'Mostrar importes en euros',
