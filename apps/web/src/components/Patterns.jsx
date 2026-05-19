@@ -1,8 +1,10 @@
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
+import { usePrivacy } from '../context/PrivacyContext.jsx';
 
 export default function Patterns({ yearComparison }) {
   const { t } = useI18n();
+  const { hideMoney } = usePrivacy();
   const sortedYears = [...(yearComparison || [])].sort((a, b) => b.year - a.year);
   const best = Math.max(...sortedYears.map(y => Math.abs(y.total)), 1);
 
@@ -34,16 +36,24 @@ export default function Patterns({ yearComparison }) {
                 <div className="relative flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <span className="text-sm font-bold">{y.year}</span>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className={`text-[11px] font-medium ${isPositive ? 'text-positive/80' : 'text-negative/80'}`}>
-                        ~{isPositive ? '+' : ''}{formatMoney(avgPerMonth)}/{t.patternsPerMonth}
-                      </span>
-                    </div>
+                    {!hideMoney && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className={`text-[11px] font-medium ${isPositive ? 'text-positive/80' : 'text-negative/80'}`}>
+                          ~{isPositive ? '+' : ''}{formatMoney(avgPerMonth)}/{t.patternsPerMonth}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  <span className={`text-sm font-bold tabular-nums shrink-0 ${isPositive ? 'text-positive' : 'text-negative'}`}>
-                    {isPositive ? '+' : ''}{formatMoney(y.total)}
-                  </span>
+                  {hideMoney ? (
+                    <span className={`text-sm font-bold shrink-0 ${isPositive ? 'text-positive' : 'text-negative'}`}>
+                      {isPositive ? '↑' : '↓'}
+                    </span>
+                  ) : (
+                    <span className={`text-sm font-bold tabular-nums shrink-0 ${isPositive ? 'text-positive' : 'text-negative'}`}>
+                      {isPositive ? '+' : ''}{formatMoney(y.total)}
+                    </span>
+                  )}
                 </div>
               </div>
             );

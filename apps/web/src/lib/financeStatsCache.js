@@ -39,7 +39,5 @@ export function writeCachedMonths(sheetId, profileId, months) {
       cacheKey(sheetId, profileId),
       JSON.stringify({ months: serializeMonths(months), at: Date.now() }),
     );
-  } catch {
-    /* quota or private mode */
-  }
+  } catch {}
 }

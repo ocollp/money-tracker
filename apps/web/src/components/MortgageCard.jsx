@@ -1,8 +1,10 @@
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
+import { usePrivacy } from '../context/PrivacyContext.jsx';
 
 export default function MortgageCard({ housing }) {
   const { t } = useI18n();
+  const { hideMoney } = usePrivacy();
 
   const debtPaidPct = housing.initialDebt > 0
     ? ((housing.totalPaid / housing.initialDebt) * 100).toFixed(1)
@@ -17,22 +19,24 @@ export default function MortgageCard({ housing }) {
     <div className="h-full min-h-0 flex flex-col glass-card px-5 pt-5 pb-5 gap-4">
       <h3 className="text-lg font-semibold">{t.housingTitle}</h3>
 
-      <div className="grid grid-cols-2 gap-3 flex-1">
-        <div>
-          <p className="text-[11px] text-text-secondary mb-1">{t.housingDebt}</p>
-          <p className="text-base sm:text-xl font-bold tracking-tight text-negative">{formatMoney(housing.fullDebt)}</p>
-          {showMyDebt && (
-            <p className="text-[10px] text-text-secondary/70 mt-0.5">{formatMoney(housing.debt)}</p>
-          )}
+      {!hideMoney ? (
+        <div className="grid grid-cols-2 gap-3 flex-1">
+          <div>
+            <p className="text-[11px] text-text-secondary mb-1">{t.housingDebt}</p>
+            <p className="text-base sm:text-xl font-bold tracking-tight text-negative">{formatMoney(housing.fullDebt)}</p>
+            {showMyDebt && (
+              <p className="text-[10px] text-text-secondary/70 mt-0.5">{formatMoney(housing.debt)}</p>
+            )}
+          </div>
+          <div>
+            <p className="text-[11px] text-text-secondary mb-1">{t.housingEquity}</p>
+            <p className="text-base sm:text-xl font-bold text-positive">{formatMoney(housing.totalEquity ?? housing.equity)}</p>
+            {showMyShare && (
+              <p className="text-[10px] text-text-secondary/70 mt-0.5">{formatMoney(housing.equity)}</p>
+            )}
+          </div>
         </div>
-        <div>
-          <p className="text-[11px] text-text-secondary mb-1">{t.housingEquity}</p>
-          <p className="text-base sm:text-xl font-bold text-positive">{formatMoney(housing.totalEquity ?? housing.equity)}</p>
-          {showMyShare && (
-            <p className="text-[10px] text-text-secondary/70 mt-0.5">{formatMoney(housing.equity)}</p>
-          )}
-        </div>
-      </div>
+      ) : null}
 
       <div className="space-y-1.5">
         <div className="flex justify-between items-center text-[11px] text-text-secondary">

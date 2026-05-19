@@ -63,7 +63,7 @@ export const t = {
   netWorthTooltip: 'Dinero e inversiones',
   assetClassTitle: 'Reparto',
   distributionPctOnlyLabel: '% del total',
-  distributionPrivacyHideMoney: 'Ocultar importes (solo %)',
+  distributionPrivacyHideMoney: 'Ocultar importes',
   distributionPrivacyShowMoney: 'Mostrar importes en euros',
   distributionTotal: 'Total',
   cashVsInvestedTitle: 'Invertido vs efectivo',

@@ -60,7 +60,7 @@ export const t = {
   netWorthTooltip: 'Diners i inversions',
   assetClassTitle: 'Repartiment',
   distributionPctOnlyLabel: '% del total',
-  distributionPrivacyHideMoney: 'Ocultar imports (només %)',
+  distributionPrivacyHideMoney: 'Ocultar imports',
   distributionPrivacyShowMoney: 'Mostrar imports en euros',
   distributionTotal: 'Total',
   cashVsInvestedTitle: 'Invertit vs Cash',

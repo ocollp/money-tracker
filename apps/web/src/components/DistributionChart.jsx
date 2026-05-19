@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
+import { usePrivacy } from '../context/PrivacyContext.jsx';
 
 const DISTRIBUTION_COLORS = [
   '#2563eb',
@@ -149,8 +150,8 @@ export default function DistributionChart({
   privacyToggle = false,
 }) {
   const { t } = useI18n();
+  const { hideMoney: hideMoneyGlobal } = usePrivacy();
   const [showHousing, setShowHousing] = useState(true);
-  const [privacyMode, setPrivacyMode] = useState(true);
 
   const hasSelection = selectedEntities.length > 0;
   const isSliceSelected = (name) => selectedEntities.includes(name);
@@ -203,7 +204,7 @@ export default function DistributionChart({
 
   const clearFilter = () => onSelectEntity?.(null);
 
-  const hideMoney = privacyToggle && !privacyMode;
+  const hideMoney = privacyToggle && hideMoneyGlobal;
   const pieShape = PIE_LAYOUT[pieVariant] ?? PIE_LAYOUT.donut;
   const hasDonutHole =
     Number(pieShape.innerRadius) > 0
@@ -243,19 +244,6 @@ export default function DistributionChart({
             >
               <span className="text-sm leading-none">🏠</span>
             </ToggleButton>
-          )}
-          {privacyToggle && (
-            <button
-              type="button"
-              onClick={() => setPrivacyMode((v) => !v)}
-              aria-pressed={privacyMode}
-              aria-label={privacyMode ? (t.distributionPrivacyHideMoney ?? '') : (t.distributionPrivacyShowMoney ?? '')}
-              className={`${TOGGLE_BTN_BASE} text-sm leading-none ${
-                privacyMode ? TOGGLE_ACTIVE_BRAND : TOGGLE_INACTIVE
-              }`}
-            >
-              👀
-            </button>
           )}
         </div>
       </div>

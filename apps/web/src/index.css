@@ -124,6 +124,12 @@ button:active:not(:disabled) {
   animation: skeletonShimmer 1.8s ease-in-out infinite;
 }
 
+.privacy-blur {
+  filter: blur(7px);
+  user-select: none;
+  pointer-events: none;
+}
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;

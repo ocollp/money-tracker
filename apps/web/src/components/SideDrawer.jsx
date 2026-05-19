@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import PrivacyMenuItem from './PrivacyMenuItem.jsx';
 
 const COLLAPSED_KEY = 'mt_sidebar_collapsed';
 const EXPANDED_W = 240;
@@ -170,6 +171,7 @@ export default function SideDrawer({
       </div>
 
       <div className={`border-t border-white/[0.06] space-y-1.5 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
+        <PrivacyMenuItem collapsed={collapsed} />
         {!isTestData && (
           <>
             <DrawerItem
@@ -240,6 +242,7 @@ export default function SideDrawer({
         </div>
 
         <div className="px-3 py-3 border-t border-white/[0.06] space-y-1.5" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
+          <PrivacyMenuItem collapsed={false} onAfterToggle={onClose} />
           {!isTestData && (
             <>
               <DrawerItem icon={<TestIcon />} label={t.testData} href={`${import.meta.env.BASE_URL || ''}test`} onClick={onClose} iconColor="text-violet-400/70" />

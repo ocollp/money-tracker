@@ -1,9 +1,29 @@
 import { useState } from 'react';
+import { usePrivacy } from '../context/PrivacyContext.jsx';
+import { formatPct } from '../utils/formatters';
 
-export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, className = '', highlight = false, subtitleColor }) {
+export default function KpiCard({
+  title,
+  value,
+  subtitle,
+  trend,
+  icon,
+  tooltip,
+  className = '',
+  highlight = false,
+  subtitleColor,
+  privacyPct,
+}) {
+  const { hideMoney } = usePrivacy();
   const [showTip, setShowTip] = useState(false);
   const trendColor = subtitleColor ?? (trend > 0 ? 'text-positive' : trend < 0 ? 'text-negative' : 'text-text-secondary');
   const arrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '';
+
+  const hasPrivacyPct = hideMoney && privacyPct != null && !Number.isNaN(privacyPct);
+  const displayValue = hideMoney
+    ? (hasPrivacyPct ? formatPct(privacyPct) : '—')
+    : value;
+  const displaySubtitle = hideMoney && hasPrivacyPct ? null : subtitle;
 
   return (
     <div className={`glass-card p-3 sm:p-5 relative ${highlight ? 'ring-1 ring-brand/35' : ''} ${className}`.trim()}>
@@ -25,10 +45,12 @@ export default function KpiCard({ title, value, subtitle, trend, icon, tooltip, 
         </div>
         {icon && <span className="text-lg sm:text-2xl">{icon}</span>}
       </div>
-      <div className="text-lg sm:text-2xl font-bold tracking-tight text-text-primary">{value}</div>
-      {subtitle && (
+      <div className={`text-lg sm:text-2xl font-bold tracking-tight ${hasPrivacyPct ? trendColor : 'text-text-primary'}`}>
+        {displayValue}
+      </div>
+      {displaySubtitle && (
         <div className={`text-xs sm:text-sm mt-0.5 sm:mt-1.5 ${trendColor} font-medium`}>
-          {arrow} {subtitle}
+          {arrow} {displaySubtitle}
         </div>
       )}
       {tooltip && showTip && (

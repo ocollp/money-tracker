@@ -1,8 +1,10 @@
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { formatChange } from '../utils/formatters';
+import { usePrivacy } from '../context/PrivacyContext.jsx';
 
 export default function Heatmap({ data }) {
   const { t } = useI18n();
+  const { hideMoney } = usePrivacy();
   const rows = Array.isArray(data) ? data : [];
   const years = [...new Set(rows.map(d => d.year))].sort((a, b) => b - a);
   const monthNames = t.monthsShort;
@@ -68,14 +70,20 @@ export default function Heatmap({ data }) {
                         style={getCellStyle(cell?.value)}
                       >
                         {cell && (
-                          <>
-                            <span className="text-[9px] sm:text-[12px] font-bold leading-snug text-center drop-shadow-sm tabular-nums hyphens-none">
-                              {formatChange(cell.value)}
-                            </span>
-                            <span className="mt-0.5 text-[7px] sm:text-[10px] text-text-primary/70 leading-none font-medium tabular-nums hidden sm:block text-center w-full">
+                          hideMoney ? (
+                            <span className="text-[9px] sm:text-[12px] font-bold leading-snug text-center tabular-nums text-text-primary/90">
                               {Math.abs(cell.pct).toFixed(1)}%
                             </span>
-                          </>
+                          ) : (
+                            <>
+                              <span className="text-[9px] sm:text-[12px] font-bold leading-snug text-center drop-shadow-sm tabular-nums hyphens-none">
+                                {formatChange(cell.value)}
+                              </span>
+                              <span className="mt-0.5 text-[7px] sm:text-[10px] text-text-primary/70 leading-none font-medium tabular-nums hidden sm:block text-center w-full">
+                                {Math.abs(cell.pct).toFixed(1)}%
+                              </span>
+                            </>
+                          )
                         )}
                       </div>
                     </td>

@@ -1,10 +1,6 @@
 export default function DashboardLoadingShell({
   t,
-  effectiveUser,
-  profile,
-  financeConfig,
   loading,
-  currentSheetId,
   sheetAccess,
   mainRef,
   onTouchStart,
@@ -14,11 +10,6 @@ export default function DashboardLoadingShell({
   statusHint,
   loadPhase = 'sheet',
 }) {
-  const label = financeConfig?.profileLabels?.[profile] ?? '';
-  const emoji = financeConfig?.profileEmojis?.[profile] ?? '';
-  const sid = String(currentSheetId || '').trim();
-  const sidTail = sid.length > 12 ? `…${sid.slice(-8)}` : sid;
-
   const title = statusTitle ?? t.loadingData;
   const hint =
     statusHint
@@ -38,24 +29,8 @@ export default function DashboardLoadingShell({
       onTouchEnd={onTouchEnd}
       style={touchAction != null ? { touchAction } : undefined}
     >
-      <div className="glass-card flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:gap-4 sm:px-5 sm:py-5 animate-fade-in">
+      <div className="glass-card px-4 py-4 sm:px-5 sm:py-5 animate-fade-in">
         <StatusCardContent title={title} hint={hint} loading={loading} steps={steps} activeIdx={activeIdx} />
-        <div className="min-w-0 border-t border-white/[0.08] pt-3 text-xs text-text-secondary sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 sm:text-right">
-          {effectiveUser?.email ? (
-            <p className="truncate sm:ml-auto sm:max-w-[20rem]">{effectiveUser.email}</p>
-          ) : null}
-          {label || emoji ? (
-            <p className="mt-1 font-medium text-text-primary/90">
-              {emoji ? <span className="mr-1">{emoji}</span> : null}
-              {label}
-            </p>
-          ) : null}
-          {sid ? (
-            <p className="mt-1 truncate font-mono text-[11px] opacity-80" title={sid}>
-              {t.dashboardLoadingSheetId}: {sidTail}
-            </p>
-          ) : null}
-        </div>
       </div>
 
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -72,7 +47,7 @@ export default function DashboardLoadingShell({
 
 function StatusCardContent({ title, hint, loading, steps, activeIdx }) {
   return (
-    <div className="flex min-w-0 flex-1 items-start gap-3">
+    <div className="flex min-w-0 items-start gap-3">
       <span
         className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${
           loading

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
-import { formatMoney, formatChange } from '../utils/formatters';
+import { formatMoney, formatChange, formatPct } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
+import { usePrivacy } from '../context/PrivacyContext.jsx';
 
 function getXAxisTicks(data, isNarrow) {
   if (!data?.length) return [];
@@ -60,6 +61,7 @@ const RANGE_KEYS = ['3', '6', '12', 'all'];
 
 export default function NetWorthChart({ months, totals, title = 'Patrimoni', subtitle = 'Diners i inversions', tooltipLabel = 'Patrimoni', selectedEntity, onClearEntity }) {
   const { t } = useI18n();
+  const { hideMoney } = usePrivacy();
   const [range, setRange] = useState('12');
   const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
   const [animKey, setAnimKey] = useState(0);
@@ -136,21 +138,30 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
     const idx = data.findIndex(d => d.date === label);
     const prev = idx > 0 ? data[idx - 1].total : null;
     const diff = prev != null ? val - prev : null;
+    const diffPct = diff != null && prev != null && prev !== 0 ? (diff / Math.abs(prev)) * 100 : null;
     return (
       <div
         className="rounded-xl px-3.5 py-2.5 shadow-xl backdrop-blur-sm"
         style={{ background: 'rgba(15, 23, 42, 0.88)', border: '1px solid rgba(56, 189, 248, 0.22)' }}
       >
         <div className="text-[11px] font-medium mb-1" style={{ color: '#94a3b8' }}>{label}</div>
-        <div className="text-sm font-bold" style={{ color: '#f1f5f9' }}>{formatMoney(val)}</div>
-        {diff != null && typeof t.netWorthTooltipVsPrev === 'function' && (
+        {hideMoney ? (
+          diffPct != null && !Number.isNaN(diffPct) ? (
+            <div className="text-sm font-bold" style={{ color: diffPct >= 0 ? '#4ade80' : '#f87171' }}>
+              {formatPct(diffPct)}
+            </div>
+          ) : null
+        ) : (
+          <div className="text-sm font-bold" style={{ color: '#f1f5f9' }}>{formatMoney(val)}</div>
+        )}
+        {!hideMoney && diff != null && typeof t.netWorthTooltipVsPrev === 'function' && (
           <div className="text-[11px] font-medium mt-0.5" style={{ color: diff >= 0 ? '#4ade80' : '#f87171' }}>
             {t.netWorthTooltipVsPrev(formatChange(diff))}
           </div>
         )}
       </div>
     );
-  }, [data, t]);
+  }, [data, t, hideMoney]);
 
   const rangeLabel = (k) => {
     if (k === '3') return t.netWorthRange3 ?? '3';
@@ -200,7 +211,10 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
         </div>
       </div>
       {subtitle && <p className="text-xs text-text-secondary mb-4 shrink-0">{subtitle}</p>}
-      <div className="w-full touch-none shrink-0" style={{ touchAction: 'none', height: 280 }}>
+      <div
+        className="w-full touch-none shrink-0"
+        style={{ touchAction: 'none', height: 280 }}
+      >
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart key={animKey} data={data} margin={chartMargin}>
             <defs>
@@ -224,7 +238,7 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
               tickLine={false}
               tickFormatter={formatNetWorthAxisTick}
               width={narrow ? 40 : 44}
-              tick={(props) => {
+              tick={hideMoney ? false : (props) => {
                 const { y, payload } = props;
                 const text = formatNetWorthAxisTick(payload.value);
                 return (
