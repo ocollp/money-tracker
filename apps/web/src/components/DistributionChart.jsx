@@ -213,10 +213,10 @@ export default function DistributionChart({
 
   return (
     <div
-      className="flex min-h-0 flex-col gap-0 glass-card max-w-full overflow-x-hidden px-3 pb-1 pt-1 sm:gap-0 sm:px-5 sm:py-4"
+      className="flex min-h-0 flex-col gap-4 glass-card max-w-full overflow-x-hidden px-3 pt-5 pb-4 sm:px-5 sm:pb-5"
       onDoubleClick={hasSelection ? clearFilter : undefined}
     >
-      <div className="flex min-w-0 shrink-0 flex-row flex-wrap items-center justify-between gap-x-1.5 gap-y-0.5 pb-0 sm:mb-2 sm:gap-x-4 sm:gap-y-1 sm:pb-0">
+      <div className="flex min-w-0 shrink-0 flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h3 className="min-w-0 flex-1 truncate text-lg font-semibold leading-tight sm:min-w-0 sm:pr-2">
           {title}
         </h3>
@@ -249,11 +249,11 @@ export default function DistributionChart({
         </div>
       </div>
       {hasSelection && (
-        <p className="mb-0.5 text-[11px] leading-snug text-text-secondary sm:mb-2 sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
+        <p className="-mt-2 text-[11px] leading-snug text-text-secondary sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
       )}
-      <div className="flex min-h-0 w-full flex-col items-stretch gap-0 sm:flex-row sm:items-center sm:gap-4 lg:gap-5">
+      <div className="flex min-h-0 w-full flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-5 lg:gap-6">
         <div
-          className="relative -mt-px mx-auto aspect-square w-full max-w-[min(100%,17rem)] shrink-0 leading-none sm:mx-0 sm:mt-0 sm:h-64 sm:w-64 sm:max-w-none lg:h-72 lg:w-72"
+          className="relative mx-auto aspect-square w-full max-w-[min(100%,17rem)] shrink-0 leading-none sm:mx-0 sm:h-64 sm:w-64 sm:max-w-none lg:h-72 lg:w-72"
           onDoubleClick={hasSelection ? clearFilter : undefined}
         >
           <ResponsiveContainer width="100%" height="100%">
@@ -346,13 +346,13 @@ export default function DistributionChart({
             )}
           </div>
         </div>
-        <div className="-mt-1 flex w-full min-w-0 flex-col gap-1 sm:mt-0 sm:flex-1 sm:gap-1.5">
+        <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-1 sm:gap-2.5">
           {visibleList.map((d, index) => {
             const c = getColor(d.name, index);
             return (
               <div
                 key={d.name}
-                className={`space-y-0.5 rounded-xl px-2 py-1.5 transition-all duration-200 sm:px-2.5 ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
+                className={`space-y-1 rounded-xl px-1 py-2 transition-all duration-200 sm:px-2 sm:py-2.5 ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
                 style={{ opacity: selectionAppliesToPie && !isSliceSelected(d.name) ? 0.3 : 1 }}
                 onClick={() => onSelectEntity?.(d.name)}
                 onDoubleClick={clearFilter}

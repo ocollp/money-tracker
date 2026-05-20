@@ -288,10 +288,6 @@ export default function App() {
   }
 
   if (!stats) {
-    const profileSyncBlocking = hasApi && !backendReady;
-    const shellLoading = loading;
-    const loadPhase = profileSyncBlocking ? 'session' : 'sheet';
-
     return (
       <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
         <div
@@ -323,29 +319,11 @@ export default function App() {
         />
 
         <DashboardLoadingShell
-          t={t}
-          loading={shellLoading}
-          sheetAccess={sheetAccess}
           mainRef={mainRef}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           touchAction={effectiveProfiles.length === 2 ? 'pan-y' : undefined}
-          statusTitle={profileSyncBlocking ? t.syncingProfile : undefined}
-          statusHint={profileSyncBlocking ? t.syncingProfileHint : undefined}
-          loadPhase={loadPhase}
         />
-
-        <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
-          {shellLoading ? (
-            <p className="text-text-secondary/90 flex items-center justify-center gap-2">
-              <span className="inline-block w-3.5 h-3.5 border-2 border-brand/30 border-t-brand rounded-full animate-spin shrink-0" aria-hidden />
-              <span>{profileSyncBlocking ? t.syncingProfile : t.loadingData}</span>
-            </p>
-          ) : (
-            <p className="text-text-secondary/80">{profileSyncBlocking ? t.syncingProfileHint : t.dashboardLoadingHint}</p>
-          )}
-          <p className="sm:hidden text-text-secondary/80">{t.pullDownHint}</p>
-        </footer>
 
         <ProfileSettings
           open={settingsOpen}
@@ -426,22 +404,14 @@ export default function App() {
 
       <main
         ref={mainRef}
-        className="mx-auto px-3 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4 sm:space-y-6 touch-pan-y flex-1 pb-2 w-full"
+        className={`mx-auto px-3 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4 sm:space-y-6 touch-pan-y flex-1 pb-2 w-full transition-opacity duration-300 ${
+          isRefreshing ? 'opacity-[0.92]' : 'opacity-100'
+        }`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{ touchAction: effectiveProfiles.length === 2 ? 'pan-y' : undefined }}
+        aria-busy={isRefreshing || undefined}
       >
-        {isRefreshing ? (
-          <p
-            className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs text-text-secondary animate-fade-in"
-            role="status"
-            aria-live="polite"
-          >
-            <span className="inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 border-brand/30 border-t-brand animate-spin" aria-hidden />
-            {t.refreshingDataBanner}
-          </p>
-        ) : null}
-
         <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${kpiLgCols}`}>
           <KpiCard
             title={t.kpiCurrentMonth}
@@ -510,8 +480,7 @@ export default function App() {
         </section>
 
         {stats.assetClassDistribution?.length > 0 && (
-          <div className="max-w-full">
-            <DistributionChart
+          <DistributionChart
               distribution={stats.assetClassDistribution}
               title={t.assetClassTitle}
               privacyToggle
@@ -526,11 +495,9 @@ export default function App() {
                 }
               }}
             />
-          </div>
         )}
 
-        <div className="max-w-full">
-          <NetWorthChart
+        <NetWorthChart
             months={assetClassNetWorth?.months ?? stats.netWorthMonths}
             totals={
               assetClassNetWorth?.totals
@@ -555,7 +522,6 @@ export default function App() {
                 : undefined
             }
           />
-        </div>
 
         <Heatmap data={stats.heatmap} />
 
@@ -567,12 +533,6 @@ export default function App() {
       </main>
 
       <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
-        {loading && stats ? (
-          <p className="text-text-secondary/90 flex items-center justify-center gap-2">
-            <span className="inline-block w-3.5 h-3.5 border-2 border-brand/30 border-t-brand rounded-full animate-spin shrink-0" aria-hidden />
-            <span>{t.refreshingData}</span>
-          </p>
-        ) : null}
         {updatedLabel ? (
           <p className="text-text-secondary">
             {t.dataUpdatedAt}{' '}
