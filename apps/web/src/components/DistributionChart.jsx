@@ -3,6 +3,11 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
+import {
+  DASHBOARD_SECTION_CARD,
+  DASHBOARD_SECTION_HEADER,
+  DASHBOARD_SECTION_TITLE,
+} from '../lib/dashboardSectionStyles.js';
 
 const DISTRIBUTION_COLORS = [
   '#2563eb',
@@ -213,11 +218,11 @@ export default function DistributionChart({
 
   return (
     <div
-      className="flex min-h-0 flex-col gap-4 glass-card max-w-full overflow-x-hidden px-3 pt-5 pb-4 sm:px-5 sm:pb-5"
+      className={DASHBOARD_SECTION_CARD}
       onDoubleClick={hasSelection ? clearFilter : undefined}
     >
-      <div className="flex min-w-0 shrink-0 flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <h3 className="min-w-0 flex-1 truncate text-lg font-semibold leading-tight sm:min-w-0 sm:pr-2">
+      <div className={`${DASHBOARD_SECTION_HEADER} sm:items-center`}>
+        <h3 className={`${DASHBOARD_SECTION_TITLE} sm:flex-1 sm:pr-2`}>
           {title}
         </h3>
         <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-1">
@@ -249,7 +254,7 @@ export default function DistributionChart({
         </div>
       </div>
       {hasSelection && (
-        <p className="-mt-2 text-[11px] leading-snug text-text-secondary sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
+        <p className="mb-3 -mt-1 text-[11px] leading-snug text-text-secondary sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
       )}
       <div className="flex min-h-0 w-full flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-5 lg:gap-6">
         <div

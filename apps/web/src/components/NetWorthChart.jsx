@@ -3,6 +3,11 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceD
 import { formatMoney, formatChange, formatPct } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
+import {
+  DASHBOARD_SECTION_CARD,
+  DASHBOARD_SECTION_HEADER,
+  DASHBOARD_SECTION_TITLE,
+} from '../lib/dashboardSectionStyles.js';
 
 function getXAxisTicks(data, isNarrow) {
   if (!data?.length) return [];
@@ -171,10 +176,10 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col glass-card px-3 sm:px-5 pt-5 pb-3 max-w-full overflow-x-hidden">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 mb-3 shrink-0 min-w-0">
+    <div className={`h-full ${DASHBOARD_SECTION_CARD}`}>
+      <div className={DASHBOARD_SECTION_HEADER}>
         <div className="flex min-w-0 w-full flex-col gap-1.5 sm:flex-1 sm:min-w-0">
-          <h3 className="text-lg font-semibold text-text-primary transition-all duration-300 truncate">
+          <h3 className={`${DASHBOARD_SECTION_TITLE} transition-all duration-300`}>
             {title}
           </h3>
           {selectedEntity && onClearEntity && (
