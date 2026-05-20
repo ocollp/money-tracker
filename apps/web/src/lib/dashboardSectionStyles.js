@@ -6,3 +6,6 @@ export const DASHBOARD_SECTION_HEADER =
 
 export const DASHBOARD_SECTION_TITLE =
   'min-w-0 text-lg font-semibold text-text-primary truncate';
+
+export const DISTRIBUTION_SECTION_HEADER =
+  'flex min-w-0 shrink-0 flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-3';

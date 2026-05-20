@@ -5,8 +5,8 @@ import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
 import {
   DASHBOARD_SECTION_CARD,
-  DASHBOARD_SECTION_HEADER,
   DASHBOARD_SECTION_TITLE,
+  DISTRIBUTION_SECTION_HEADER,
 } from '../lib/dashboardSectionStyles.js';
 
 const DISTRIBUTION_COLORS = [
@@ -221,8 +221,8 @@ export default function DistributionChart({
       className={DASHBOARD_SECTION_CARD}
       onDoubleClick={hasSelection ? clearFilter : undefined}
     >
-      <div className={`${DASHBOARD_SECTION_HEADER} sm:items-center`}>
-        <h3 className={`${DASHBOARD_SECTION_TITLE} sm:flex-1 sm:pr-2`}>
+      <div className={DISTRIBUTION_SECTION_HEADER}>
+        <h3 className={`${DASHBOARD_SECTION_TITLE} flex-1 pr-2`}>
           {title}
         </h3>
         <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-1">
