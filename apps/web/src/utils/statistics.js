@@ -486,7 +486,7 @@ export function computeStatistics(months, options = {}) {
     if (c.value > 0) yearSummary[y].positive++;
     else yearSummary[y].negative++;
   }
-  const yearComparison = Object.values(yearSummary).sort((a, b) => a.year - b.year);
+  const yearComparison = buildYearComparison(yearSummary);
 
   let currentStreak = { count: 0, type: null };
   for (let i = changes.length - 1; i >= 0; i--) {
@@ -600,6 +600,10 @@ export function computeStatistics(months, options = {}) {
       principalPaidYtd: mortgagePrincipalPaidYtd,
     },
   };
+}
+
+export function buildYearComparison(yearSummary) {
+  return Object.values(yearSummary).sort((a, b) => a.year - b.year);
 }
 
 function findStreak(changes, positive) {

@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { formatChange } from '../utils/formatters';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
+import { computeHeatmapScaleMax, heatmapCellBackground } from '../lib/heatmapCellStyle.js';
 
 export default function Heatmap({ data }) {
   const { t } = useI18n();
@@ -15,18 +17,8 @@ export default function Heatmap({ data }) {
     grid[d.year][d.monthIdx] = d;
   }
 
-  const absValues = rows.map(d => Math.abs(d.value)).sort((a, b) => a - b);
-  const p90 = absValues.length > 0 ? absValues[Math.floor(absValues.length * 0.9)] : 1;
-  const scaleMax = Math.max(p90, 1);
-
-  const getCellStyle = (value) => {
-    if (value == null) return { backgroundColor: 'rgba(148, 163, 184, 0.05)' };
-    const intensity = Math.min(Math.abs(value) / scaleMax, 1);
-    const alpha = 0.2 + intensity * 0.65;
-    if (value > 0) return { backgroundColor: `rgba(34, 197, 94, ${alpha})`, boxShadow: intensity > 0.5 ? `0 0 8px rgba(34, 197, 94, ${intensity * 0.3})` : 'none' };
-    if (value < 0) return { backgroundColor: `rgba(239, 68, 68, ${alpha})`, boxShadow: intensity > 0.5 ? `0 0 8px rgba(239, 68, 68, ${intensity * 0.3})` : 'none' };
-    return { backgroundColor: 'rgba(148, 163, 184, 0.08)' };
-  };
+  const scaleMax = useMemo(() => computeHeatmapScaleMax(rows), [rows]);
+  const getCellStyle = (value) => heatmapCellBackground(value, scaleMax, { withGlow: true });
 
   const positiveMonths = rows.filter(d => d.value > 0).length;
   const negativeMonths = rows.filter(d => d.value < 0).length;

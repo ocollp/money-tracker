@@ -557,7 +557,7 @@ export default function App() {
           <MortgageCard housing={stats.housing} />
         )}
 
-        <Patterns yearComparison={stats.yearComparison} />
+        <Patterns yearComparison={stats.yearComparison} heatmap={stats.heatmap} />
       </main>
 
       <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
