@@ -124,23 +124,6 @@ button:active:not(:disabled) {
   animation: skeletonShimmer 1.8s ease-in-out infinite;
 }
 
-@keyframes loaderOverlayOut {
-  0% {
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
-.animate-loader-overlay-out {
-  animation: loaderOverlayOut 0.55s ease-out forwards;
-}
-
 .privacy-blur {
   filter: blur(7px);
   user-select: none;

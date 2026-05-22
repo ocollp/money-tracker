@@ -1,28 +1,34 @@
-import LoadingProgressRing from './LoadingProgressRing';
-import { useLoadingProgress } from '../hooks/useLoadingProgress';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 export default function DashboardLoadingShell({
-  loading = true,
   loadingLabel,
   mainRef,
   onTouchStart,
   onTouchEnd,
   touchAction,
 }) {
-  const progress = useLoadingProgress(loading);
+  const { t } = useI18n();
+  const label = loadingLabel ?? t.loadingData;
 
   return (
     <main
       ref={mainRef}
-      className="relative mx-auto w-full flex-1 space-y-4 px-3 py-4 touch-pan-y sm:space-y-6 sm:px-6 sm:py-6 lg:px-10 pb-2"
+      className="relative mx-auto w-full flex-1 space-y-4 px-3 py-4 touch-pan-y sm:space-y-6 sm:px-6 sm:py-6 lg:px-10 pb-2 overflow-x-hidden"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       style={touchAction != null ? { touchAction } : undefined}
       aria-busy="true"
       aria-label="Dashboard"
     >
-      <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none min-h-[min(70vh,32rem)]">
-        <LoadingProgressRing progress={progress} label={loadingLabel} />
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none overflow-hidden">
+        <span
+          className="h-10 w-10 rounded-full border-2 border-white/15 border-t-brand animate-spin"
+          role="status"
+          aria-label={label}
+        />
+        {label ? (
+          <p className="mt-4 text-xs text-text-secondary/70 text-center max-w-[14rem]">{label}</p>
+        ) : null}
       </div>
 
       <div className="opacity-[0.32] pointer-events-none select-none" aria-hidden>
