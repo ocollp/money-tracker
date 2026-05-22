@@ -1,4 +1,4 @@
-import { formatMoney } from '../utils/formatters';
+import { formatMoney, splitYearsAndMonths } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
 
@@ -14,6 +14,11 @@ export default function MortgageCard({ housing }) {
     && Math.round(housing.totalEquity) !== Math.round(housing.equity);
   const showMyDebt = showMyShare && housing.fullDebt != null && housing.debt != null
     && Math.round(housing.fullDebt) !== Math.round(housing.debt);
+
+  const remainingLabel =
+    housing.monthsRemaining != null
+      ? t.mortgageTimeRemaining(splitYearsAndMonths(housing.monthsRemaining))
+      : null;
 
   return (
     <div className="h-full min-h-0 flex flex-col glass-card px-5 pt-5 pb-5 gap-4">
@@ -39,9 +44,11 @@ export default function MortgageCard({ housing }) {
       ) : null}
 
       <div className="space-y-1.5">
-        <div className="flex justify-between items-center text-[11px] text-text-secondary">
-          <span>{t.mortgageProgress}</span>
-          <span className="font-semibold text-positive">{debtPaidPct}%</span>
+        <div className="flex justify-between items-center gap-2 text-[11px] text-text-secondary">
+          <span className="min-w-0 leading-snug">
+            {remainingLabel ?? t.mortgageProgress}
+          </span>
+          <span className="font-semibold text-positive shrink-0">{debtPaidPct}%</span>
         </div>
         <div className="w-full bg-surface rounded-full h-2 overflow-hidden">
           <div

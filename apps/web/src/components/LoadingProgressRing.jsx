@@ -20,11 +20,7 @@ export default function LoadingProgressRing({ progress = 0, label, className = '
       aria-valuemin={0}
       aria-valuemax={100}
     >
-      <div
-        className={`relative transition-transform duration-500 ease-out ${
-          complete ? 'scale-100' : 'scale-100'
-        }`}
-      >
+      <div className="relative transition-transform duration-500 ease-out">
         {complete ? (
           <div
             className="absolute inset-[-12px] rounded-full bg-brand/25 blur-2xl animate-pulse"

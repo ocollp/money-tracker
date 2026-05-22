@@ -21,6 +21,11 @@ export function formatChange(value) {
   return `${sign}${formatMoney(value)}`;
 }
 
+export function splitYearsAndMonths(totalMonths) {
+  const total = Math.max(0, Math.round(Number(totalMonths)) || 0);
+  return { years: Math.floor(total / 12), months: total % 12, total };
+}
+
 export function formatUpdatedClock(date) {
   if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) return '';
   try {

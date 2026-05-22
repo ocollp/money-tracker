@@ -106,7 +106,13 @@ export const t = {
   housingEquityMine: 'Mi parte',
   mortgageProgress: 'Progreso de la hipoteca',
   mortgagePayment: (amount) => `Cuota: ${amount}/mes`,
-  mortgageRemaining: (months) => `Quedan ${months} meses`,
+  mortgageTimeRemaining: ({ years, months }) => {
+    if (years === 0 && months === 0) return 'Sin cuotas pendientes';
+    const parts = [];
+    if (years > 0) parts.push(years === 1 ? '1 año' : `${years} años`);
+    if (months > 0) parts.push(months === 1 ? '1 mes' : `${months} meses`);
+    return `Quedan ${parts.join(' y ')}`;
+  },
   mortgageDebtLabel: 'Deuda',
   mortgageEquityLabel: 'Patrimonio neto',
   monthsShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],

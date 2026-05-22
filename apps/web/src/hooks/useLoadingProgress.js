@@ -3,9 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 const PROGRESS_CAP = 88;
 const PROGRESS_COMPLETE = 100;
 
-/**
- * Simulates smooth progress while `active` is true, then jumps to 100% when inactive.
- */
 export function useLoadingProgress(active) {
   const [progress, setProgress] = useState(active ? 0 : PROGRESS_COMPLETE);
   const activeRef = useRef(active);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatMoney, formatPct, formatChange, formatUpdatedClock } from './formatters.js';
+import { formatMoney, formatPct, formatChange, formatUpdatedClock, splitYearsAndMonths } from './formatters.js';
 
 describe('formatMoney', () => {
   it('formats integers with euro suffix', () => {
@@ -33,6 +33,15 @@ describe('formatChange', () => {
 
   it('returns em dash for invalid', () => {
     expect(formatChange(null)).toBe('—');
+  });
+});
+
+describe('splitYearsAndMonths', () => {
+  it('splits total months into years and remainder', () => {
+    expect(splitYearsAndMonths(340)).toEqual({ years: 28, months: 4, total: 340 });
+    expect(splitYearsAndMonths(14)).toEqual({ years: 1, months: 2, total: 14 });
+    expect(splitYearsAndMonths(5)).toEqual({ years: 0, months: 5, total: 5 });
+    expect(splitYearsAndMonths(12)).toEqual({ years: 1, months: 0, total: 12 });
   });
 });
 

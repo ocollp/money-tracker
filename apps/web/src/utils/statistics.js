@@ -427,7 +427,12 @@ export function computeStatistics(months, options = {}) {
     if (mortgageEndYear != null && mortgageEndMonth != null) {
       const now = new Date();
       const end = new Date(mortgageEndYear, mortgageEndMonth - 1, 1);
-      mortgageMonthsRemaining = Math.max(0, (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()));
+      mortgageMonthsRemaining = Math.max(
+        0,
+        (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()),
+      );
+    } else if (mortgageMonthlyPaymentOpt != null && mortgageMonthlyPaymentOpt > 0) {
+      mortgageMonthsRemaining = Math.ceil(currentDebt / mortgageMonthlyPaymentOpt);
     }
   }
   const monthlyMortgagePayment = currentDebt > 0 && mortgageMonthlyPaymentOpt != null ? mortgageMonthlyPaymentOpt : 0;

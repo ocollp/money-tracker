@@ -103,7 +103,13 @@ export const t = {
   housingEquityMine: 'La meva part',
   mortgageProgress: 'Progrés de la hipoteca',
   mortgagePayment: (amount) => `Quota: ${amount}/mes`,
-  mortgageRemaining: (months) => `Queden ${months} mesos`,
+  mortgageTimeRemaining: ({ years, months }) => {
+    if (years === 0 && months === 0) return 'Sense quotes pendents';
+    const parts = [];
+    if (years > 0) parts.push(years === 1 ? '1 any' : `${years} anys`);
+    if (months > 0) parts.push(months === 1 ? '1 mes' : `${months} mesos`);
+    return `Queden ${parts.join(' i ')}`;
+  },
   mortgageDebtLabel: 'Deute',
   mortgageEquityLabel: 'Patrimoni net',
   monthsShort: ['Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'],
