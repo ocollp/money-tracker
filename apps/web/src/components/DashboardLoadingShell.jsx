@@ -1,28 +1,41 @@
+import LoadingProgressRing from './LoadingProgressRing';
+import { useLoadingProgress } from '../hooks/useLoadingProgress';
+
 export default function DashboardLoadingShell({
+  loading = true,
+  loadingLabel,
   mainRef,
   onTouchStart,
   onTouchEnd,
   touchAction,
 }) {
+  const progress = useLoadingProgress(loading);
+
   return (
     <main
       ref={mainRef}
-      className="mx-auto w-full flex-1 space-y-4 px-3 py-4 touch-pan-y sm:space-y-6 sm:px-6 sm:py-6 lg:px-10 pb-2"
+      className="relative mx-auto w-full flex-1 space-y-4 px-3 py-4 touch-pan-y sm:space-y-6 sm:px-6 sm:py-6 lg:px-10 pb-2"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       style={touchAction != null ? { touchAction } : undefined}
       aria-busy="true"
       aria-label="Dashboard"
     >
-      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
-          <SkeletonCard key={i} delayMs={i * 60} />
-        ))}
-      </section>
+      <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none min-h-[min(70vh,32rem)]">
+        <LoadingProgressRing progress={progress} label={loadingLabel} />
+      </div>
 
-      <SkeletonBlock className="h-52 sm:h-60" delayMs={200} />
-      <SkeletonBlock className="h-44 sm:h-52" delayMs={280} />
-      <SkeletonBlock className="h-36 sm:h-44" delayMs={360} />
+      <div className="opacity-[0.32] pointer-events-none select-none" aria-hidden>
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <SkeletonCard key={i} delayMs={i * 60} />
+          ))}
+        </section>
+
+        <SkeletonBlock className="h-52 sm:h-60 mt-4 sm:mt-6" delayMs={200} />
+        <SkeletonBlock className="h-44 sm:h-52" delayMs={280} />
+        <SkeletonBlock className="h-36 sm:h-44" delayMs={360} />
+      </div>
     </main>
   );
 }

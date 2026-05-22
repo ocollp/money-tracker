@@ -31,6 +31,7 @@ import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
 import DashboardLoadingShell from './components/DashboardLoadingShell';
+import LoadingProgressRing from './components/LoadingProgressRing';
 import DashboardHeader from './components/DashboardHeader';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { ASSET_CLASS_LABELS } from './utils/assetClassBuckets.js';
@@ -75,6 +76,8 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [addMonthOpen, setAddMonthOpen] = useState(false);
   const [selectedAssetClasses, setSelectedAssetClasses] = useState([]);
+  const [loaderCompleteOverlay, setLoaderCompleteOverlay] = useState(false);
+  const showedInitialLoaderRef = useRef(false);
 
   const handleDistributionEntitySelect = useCallback((name) => {
     if (name == null) {
@@ -183,6 +186,18 @@ export default function App() {
     }
   }, [selectedAssetClasses, stats]);
 
+  useEffect(() => {
+    if (!stats) {
+      setLoaderCompleteOverlay(false);
+      return;
+    }
+    if (!showedInitialLoaderRef.current) return;
+    showedInitialLoaderRef.current = false;
+    setLoaderCompleteOverlay(true);
+    const id = setTimeout(() => setLoaderCompleteOverlay(false), 560);
+    return () => clearTimeout(id);
+  }, [stats]);
+
   const { pullPx, progress, isPulling } = usePullToRefresh({
     onRefresh: refresh,
     disabled: !stats,
@@ -288,6 +303,7 @@ export default function App() {
   }
 
   if (!stats) {
+    showedInitialLoaderRef.current = true;
     return (
       <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
         <div
@@ -319,6 +335,8 @@ export default function App() {
         />
 
         <DashboardLoadingShell
+          loading={loading}
+          loadingLabel={t.loadingData}
           mainRef={mainRef}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -401,6 +419,16 @@ export default function App() {
         effectiveProfiles={effectiveProfiles}
         effectiveProfile={effectiveProfile}
       />
+
+      {loaderCompleteOverlay ? (
+        <div
+          className="fixed top-0 right-0 bottom-0 z-[28] flex items-center justify-center bg-[#080c10]/80 backdrop-blur-md animate-loader-overlay-out pointer-events-none"
+          style={{ left: 'var(--sidebar-w, 0px)' }}
+          aria-hidden
+        >
+          <LoadingProgressRing progress={100} label={t.loadingData} />
+        </div>
+      ) : null}
 
       <main
         ref={mainRef}
