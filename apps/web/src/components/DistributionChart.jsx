@@ -32,15 +32,15 @@ const ENTITY_COLORS = {
   'Indexa Capital': '#8b5cf6',
   Fundeen: '#ea580c',
   'Fons de viatges': '#9333ea',
-  Habitatge: '#0891b2',
+  Habitatge: '#7c3aed',
   Crowdfunding: '#f97316',
   ETFs: '#a855f7',
-  'Fons indexat': '#7c3aed',
+  'Fons indexat': '#0891b2',
   'Pla de pensions': '#1d4ed8',
   Accions: '#22c55e',
   Cripto: '#ec4899',
-  'Compte remunerat': '#ca8a04',
-  'Estalvi líquid': '#ef4444',
+  'Compte remunerat': '#ef4444',
+  'Estalvi líquid': '#ca8a04',
 };
 
 const REPARTIMENT_DISPLAY_LABELS = {
@@ -53,13 +53,77 @@ function getColor(name, index) {
   return ENTITY_COLORS[name] ?? DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
 }
 
-const TOGGLE_BTN_BASE =
-  'w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200';
-const TOGGLE_INACTIVE =
-  'bg-white/[0.03] border-white/[0.06] text-text-secondary/30 hover:bg-white/[0.08] hover:text-text-secondary/55 hover:border-white/[0.1]';
-const TOGGLE_ACTIVE_NEUTRAL = 'bg-white/[0.14] border-white/[0.2] text-white';
-const TOGGLE_ACTIVE_BRAND =
-  'bg-brand/25 text-text-primary border-brand/45 shadow-sm shadow-brand/10';
+function EyeIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function EyeOffIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+    </svg>
+  );
+}
+
+function HousingHiddenRow({ name, color, formatName, onShow, t }) {
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2 rounded-2xl px-2 py-2.5 sm:px-2.5 opacity-40 hover:opacity-70 transition-opacity duration-200">
+      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: color }} />
+      <span className="text-xs sm:text-sm text-text-secondary truncate">{formatName(name)}</span>
+      <VisibilityButton
+        visible={false}
+        onToggle={onShow}
+        label={t.toggleHousingShow ?? t.toggleHousing ?? 'Habitatge'}
+        stopPropagation={false}
+      />
+    </div>
+  );
+}
+
+function VisibilityButton({ visible, onToggle, label, stopPropagation = true }) {
+  const [pressed, setPressed] = useState(false);
+  const showOpenEye = (visible && !pressed) || (!visible && pressed);
+
+  const endPress = () => setPressed(false);
+
+  return (
+    <button
+      type="button"
+      onPointerDown={(e) => {
+        if (stopPropagation) e.stopPropagation();
+        setPressed(true);
+      }}
+      onPointerUp={endPress}
+      onPointerLeave={endPress}
+      onPointerCancel={endPress}
+      onClick={(e) => {
+        if (stopPropagation) e.stopPropagation();
+        onToggle();
+      }}
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-text-secondary/45 transition-all duration-200 hover:bg-white/[0.08] hover:text-text-primary active:scale-90"
+      aria-pressed={visible}
+      aria-label={label}
+    >
+      <span className="relative h-[15px] w-[15px]">
+        <EyeIcon
+          className={`absolute inset-0 transition-all duration-150 ease-out ${
+            showOpenEye ? 'scale-100 opacity-100' : 'scale-75 opacity-0'
+          }`}
+        />
+        <EyeOffIcon
+          className={`absolute inset-0 transition-all duration-150 ease-out ${
+            showOpenEye ? 'scale-75 opacity-0' : 'scale-100 opacity-100'
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
 
 const CustomTooltip = ({ active, payload, formatDisplayName, total, t, hideMoney }) => {
   if (!active || !payload?.length) return null;
@@ -110,20 +174,6 @@ function MiniSparkline({ data, color, width = 48, height = 18 }) {
     </svg>
   );
 }
-
-function ToggleButton({ active, onClick, children, label }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`${TOGGLE_BTN_BASE} text-sm leading-none ${active ? TOGGLE_ACTIVE_NEUTRAL : TOGGLE_INACTIVE}`}
-      aria-label={label}
-    >
-      {children}
-    </button>
-  );
-}
-
 const PIE_LAYOUT = {
   donut: {
     innerRadius: '39%',
@@ -205,10 +255,15 @@ export default function DistributionChart({
     .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
 
   const pieData = recalculated.filter(d => !d.hidden);
-  const visibleList = recalculated.filter((d) => !d.hidden);
+  const housingEntry = recalculated.find((d) => d.isHousing);
   const selectionAppliesToPie = selectedEntities.some((n) => pieData.some((p) => p.name === n));
 
   const clearFilter = () => onSelectEntity?.(null);
+
+  const setHousingVisible = (next) => {
+    setShowHousing(next);
+    onShowHousingChange?.(next);
+  };
 
   const hideMoney = privacyToggle && hideMoneyGlobal;
   const pieShape = PIE_LAYOUT[pieVariant] ?? PIE_LAYOUT.donut;
@@ -225,33 +280,16 @@ export default function DistributionChart({
         <h3 className={`${DASHBOARD_SECTION_TITLE} flex-1 pr-2`}>
           {title}
         </h3>
-        <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-1">
-          {hasSelection && onSelectEntity && (
-            <button
-              type="button"
-              onClick={clearFilter}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary transition-all duration-150 flex items-center gap-1.5"
-            >
-              <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              {t.distributionAllEntities ?? 'Totes'}
-            </button>
-          )}
-          {hasHousing && (
-            <ToggleButton
-              active={showHousing}
-              onClick={() => {
-                setShowHousing((v) => {
-                  const next = !v;
-                  onShowHousingChange?.(next);
-                  return next;
-                });
-              }}
-              label={t.toggleHousing ?? 'Habitatge'}
-            >
-              <span className="text-sm leading-none">🏠</span>
-            </ToggleButton>
-          )}
-        </div>
+        {hasSelection && onSelectEntity && (
+          <button
+            type="button"
+            onClick={clearFilter}
+            className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.05] text-text-secondary border border-white/[0.08] hover:bg-white/[0.09] hover:text-text-primary transition-all duration-150 flex items-center gap-1.5"
+          >
+            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            {t.distributionAllEntities ?? 'Totes'}
+          </button>
+        )}
       </div>
       {hasSelection && (
         <p className="mb-3 -mt-1 text-[11px] leading-snug text-text-secondary sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
@@ -352,22 +390,38 @@ export default function DistributionChart({
           </div>
         </div>
         <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-1 sm:gap-2.5">
-          {visibleList.map((d, index) => {
+          {recalculated.map((d, index) => {
+            if (d.hidden) return null;
+
             const c = getColor(d.name, index);
+            const isHousingRow = d.isHousing && hasHousing;
             return (
               <div
                 key={d.name}
-                className={`space-y-1 rounded-xl px-1 py-2 transition-all duration-200 sm:px-2 sm:py-2.5 ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
+                className={`group space-y-1 rounded-2xl transition-all duration-200 ${
+                  isHousingRow
+                    ? 'ring-1 ring-inset ring-cyan-500/15 bg-gradient-to-r from-cyan-500/[0.06] to-transparent px-2 py-2.5 sm:px-2.5'
+                    : 'rounded-xl px-1 py-2 sm:px-2 sm:py-2.5'
+                } ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
                 style={{ opacity: selectionAppliesToPie && !isSliceSelected(d.name) ? 0.3 : 1 }}
                 onClick={() => onSelectEntity?.(d.name)}
                 onDoubleClick={clearFilter}
               >
                 <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: c }} />
-                    <span className="text-text-secondary text-xs sm:text-sm truncate">{displayName(d.name)}</span>
+                    <span className={`text-xs sm:text-sm truncate ${isHousingRow ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
+                      {displayName(d.name)}
+                    </span>
+                    {isHousingRow ? (
+                      <VisibilityButton
+                        visible
+                        onToggle={() => setHousingVisible(false)}
+                        label={t.toggleHousingHide ?? t.toggleHousing ?? 'Habitatge'}
+                      />
+                    ) : null}
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                  <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                     {!hideMoney ? <MiniSparkline data={sparklines[d.name]} color={c} /> : null}
                     {!hideMoney ? (
                       <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(d.value)}</span>
@@ -395,6 +449,17 @@ export default function DistributionChart({
           })}
         </div>
       </div>
+      {hasHousing && !showHousing && housingEntry ? (
+        <div className="mt-2 pt-2 border-t border-white/[0.06]">
+          <HousingHiddenRow
+            name={housingEntry.name}
+            color={getColor(housingEntry.name, recalculated.indexOf(housingEntry))}
+            formatName={displayName}
+            onShow={() => setHousingVisible(true)}
+            t={t}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
