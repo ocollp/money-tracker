@@ -31,6 +31,7 @@ import DistributionChart from './components/DistributionChart';
 import Heatmap from './components/Heatmap';
 import MonthViewBanner from './components/MonthViewBanner';
 import Patterns from './components/Patterns';
+import MilestonesCard from './components/MilestonesCard';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
 import DashboardLoadingShell from './components/DashboardLoadingShell';
@@ -421,6 +422,12 @@ export default function App() {
   const liquidDelta = entityChange ? entityChange.change : viewStats.changeVsPrev;
   const liquidPct = entityChange ? entityChange.pct : viewStats.changeVsPrevPct;
 
+  const patrimonyForMilestones =
+    viewStats.currentTotalWealth -
+    (viewStats.hasTravel && viewStats.travel
+      ? (viewStats.travel.current ?? 0) * (1 - TRAVEL_PATRIMONY_SHARE)
+      : 0);
+
   return (
     <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
       <div
@@ -589,6 +596,13 @@ export default function App() {
         {viewStats.hasHousing && (
           <MortgageCard housing={viewStats.housing} />
         )}
+
+        {effectiveProfile === PROFILE_PRIMARY_ID ? (
+          <MilestonesCard
+            liquidCurrent={viewStats.current}
+            patrimonyCurrent={patrimonyForMilestones}
+          />
+        ) : null}
 
         <Patterns yearComparison={viewStats.yearComparison} heatmap={viewStats.heatmap} />
       </main>
