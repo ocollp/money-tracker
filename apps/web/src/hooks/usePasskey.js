@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { API_URL, HAS_BACKEND } from '../config.js';
-import { getAppJwt } from '../lib/authStorage.js';
+import { getAppJwt, setPasskeyHint, hasPasskeyHint } from '../lib/authStorage.js';
 
 export function usePasskey({ onLoginSuccess }) {
   const [registering, setRegistering] = useState(false);
@@ -9,8 +9,10 @@ export function usePasskey({ onLoginSuccess }) {
   const [error, setError] = useState(null);
 
   const supported = HAS_BACKEND && browserSupportsWebAuthn();
-  const [hasRegistered, setHasRegistered] = useState(false);
-  const [checkingCredentials, setCheckingCredentials] = useState(supported);
+  const [hasRegistered, setHasRegistered] = useState(() => supported && hasPasskeyHint());
+  const [checkingCredentials, setCheckingCredentials] = useState(
+    () => supported && !hasPasskeyHint(),
+  );
 
   useEffect(() => {
     if (!supported) return;
@@ -20,7 +22,10 @@ export function usePasskey({ onLoginSuccess }) {
         const res = await fetch(`${API_URL}/auth/webauthn/has-credentials`);
         if (res.ok) {
           const { hasCredentials } = await res.json();
-          if (!cancelled) setHasRegistered(hasCredentials);
+          if (!cancelled) {
+            setHasRegistered(hasCredentials);
+            setPasskeyHint(hasCredentials);
+          }
         }
       } catch {}
       if (!cancelled) setCheckingCredentials(false);
@@ -63,6 +68,7 @@ export function usePasskey({ onLoginSuccess }) {
       }
 
       setHasRegistered(true);
+      setPasskeyHint(true);
     } catch (e) {
       if (e.name !== 'NotAllowedError') {
         setError(e.message || 'Error registrant Face ID');
@@ -100,6 +106,8 @@ export function usePasskey({ onLoginSuccess }) {
       }
 
       const data = await verRes.json();
+      setPasskeyHint(true);
+      setHasRegistered(true);
       onLoginSuccess?.(data);
     } catch (e) {
       if (e.name !== 'NotAllowedError') {

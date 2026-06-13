@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext.jsx';
+import { hasPasskeyHint } from '../lib/authStorage.js';
 
 function InlineSpinner({ className = 'w-3.5 h-3.5' }) {
   return (
@@ -56,15 +57,20 @@ export default function LoginScreen({
 }) {
   const { t } = useI18n();
   const autoTriggered = useRef(false);
+  const passkeyHint = hasPasskeyHint();
   const showPasskey = passkey?.supported && passkey.hasRegistered;
+  const canAutoPasskey = passkey?.supported && (showPasskey || passkeyHint);
 
   useEffect(() => {
     if (autoTriggered.current || checkingSession) return;
-    if (!showPasskey || passkey.checkingCredentials || passkey.authenticating) return;
+    if (!canAutoPasskey || passkey.authenticating) return;
+    if (passkey.checkingCredentials && !passkeyHint) return;
     autoTriggered.current = true;
-    const timer = setTimeout(() => passkey.authenticate(), 350);
-    return () => clearTimeout(timer);
-  }, [checkingSession, passkey, showPasskey]);
+    const frame = requestAnimationFrame(() => {
+      passkey.authenticate();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [checkingSession, passkey, canAutoPasskey, passkeyHint]);
 
   if (authError) {
     return (

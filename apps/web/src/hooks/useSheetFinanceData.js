@@ -25,7 +25,7 @@ function readInitialCache(sheetId, profile) {
   return { months, stats: null, loading: false };
 }
 
-export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfig }) {
+export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfig, onAuthExpired }) {
   const sid1 = financeConfig.spreadsheetId;
   const sid2 = financeConfig.spreadsheetId2;
   const labels = financeConfig.profileLabels;
@@ -209,6 +209,10 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
       })
       .catch((err) => {
         if (cancelled) return;
+        if (err.message === 'jwt_expired') {
+          onAuthExpired?.();
+          return;
+        }
         if (!hadCachedMonths) setError(err.message);
         setSheetAccess((prev) => {
           if (currentSheetId === sid1) return { id1: false, id2: false };
@@ -231,6 +235,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     ingestCsv,
     persistMonths,
     updateSheetAccessAfterFetch,
+    onAuthExpired,
   ]);
 
   useEffect(() => {

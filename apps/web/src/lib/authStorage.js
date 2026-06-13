@@ -1,11 +1,36 @@
+import { isAppJwtExpired } from './jwtClient.js';
+
 export const AUTH_STORAGE_KEY = 'mt_auth';
 export const JWT_STORAGE_KEY = 'mt_app_jwt';
+export const PASSKEY_HINT_KEY = 'mt_passkey_hint';
 
 export function getAppJwt() {
   try {
     return localStorage.getItem(JWT_STORAGE_KEY);
   } catch {
     return null;
+  }
+}
+
+/** JWT from storage, or null if missing / expired. */
+export function getValidAppJwt() {
+  const jwt = getAppJwt();
+  if (!jwt || isAppJwtExpired(jwt)) return null;
+  return jwt;
+}
+
+export function setPasskeyHint(enabled) {
+  try {
+    if (enabled) localStorage.setItem(PASSKEY_HINT_KEY, '1');
+    else localStorage.removeItem(PASSKEY_HINT_KEY);
+  } catch {}
+}
+
+export function hasPasskeyHint() {
+  try {
+    return localStorage.getItem(PASSKEY_HINT_KEY) === '1';
+  } catch {
+    return false;
   }
 }
 
@@ -53,4 +78,5 @@ export function saveBackendSession(user, jwt) {
 export function clearAuthStorage() {
   localStorage.removeItem(JWT_STORAGE_KEY);
   localStorage.removeItem(AUTH_STORAGE_KEY);
+  // Keep PASSKEY_HINT_KEY — Face ID registration is independent of JWT session.
 }

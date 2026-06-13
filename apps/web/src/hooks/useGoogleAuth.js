@@ -8,7 +8,9 @@ import {
   saveBackendSession,
   clearAuthStorage,
   getAppJwt,
+  getValidAppJwt,
 } from '../lib/authStorage.js';
+import { isAppJwtExpired } from '../lib/jwtClient.js';
 import {
   GIS_LOAD_ERROR,
   isGisAvailable,
@@ -59,12 +61,11 @@ export default function useGoogleAuth() {
     implicitSaved?.expiresAt && Date.now() < implicitSaved.expiresAt,
   );
 
-  const [user, setUser] = useState(() =>
-    USE_BACKEND ? loadStoredUser() : (implicitSaved?.user ?? null),
-  );
-  const [appJwt, setAppJwt] = useState(() =>
-    USE_BACKEND ? getAppJwt() : null,
-  );
+  const [user, setUser] = useState(() => {
+    if (!USE_BACKEND) return implicitSaved?.user ?? null;
+    return getValidAppJwt() ? loadStoredUser() : null;
+  });
+  const [appJwt, setAppJwt] = useState(() => (USE_BACKEND ? getValidAppJwt() : null));
   const [accessToken, setAccessToken] = useState(() =>
     !USE_BACKEND && implicitHasValidToken ? (implicitSaved?.accessToken ?? null) : null,
   );
@@ -91,6 +92,12 @@ export default function useGoogleAuth() {
   const trySilentRefresh = useCallback((client, promptNone = false) => {
     if (USE_BACKEND || !client) return;
     client.requestAccessToken({ prompt: promptNone ? 'none' : '' });
+  }, []);
+
+  useEffect(() => {
+    if (!USE_BACKEND) return;
+    const jwt = getAppJwt();
+    if (jwt && isAppJwtExpired(jwt)) clearAuthStorage();
   }, []);
 
   useEffect(() => {

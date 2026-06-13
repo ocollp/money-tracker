@@ -19,10 +19,10 @@ function deserializeMonths(rows) {
   }));
 }
 
-export function readCachedMonths(sheetId, profileId) {
-  if (!sheetId || typeof sessionStorage === 'undefined') return null;
+function readFromStorage(storage, sheetId, profileId) {
+  if (!storage) return null;
   try {
-    const raw = sessionStorage.getItem(cacheKey(sheetId, profileId));
+    const raw = storage.getItem(cacheKey(sheetId, profileId));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed?.months)) return null;
@@ -32,12 +32,26 @@ export function readCachedMonths(sheetId, profileId) {
   }
 }
 
-export function writeCachedMonths(sheetId, profileId, months) {
-  if (!sheetId || !months?.length || typeof sessionStorage === 'undefined') return;
+function writeToStorage(storage, sheetId, profileId, months) {
+  if (!storage || !sheetId || !months?.length) return;
   try {
-    sessionStorage.setItem(
+    storage.setItem(
       cacheKey(sheetId, profileId),
       JSON.stringify({ months: serializeMonths(months), at: Date.now() }),
     );
   } catch {}
+}
+
+export function readCachedMonths(sheetId, profileId) {
+  if (!sheetId || typeof window === 'undefined') return null;
+  return (
+    readFromStorage(typeof sessionStorage !== 'undefined' ? sessionStorage : null, sheetId, profileId)
+    ?? readFromStorage(typeof localStorage !== 'undefined' ? localStorage : null, sheetId, profileId)
+  );
+}
+
+export function writeCachedMonths(sheetId, profileId, months) {
+  if (!sheetId || !months?.length || typeof window === 'undefined') return;
+  writeToStorage(typeof sessionStorage !== 'undefined' ? sessionStorage : null, sheetId, profileId, months);
+  writeToStorage(typeof localStorage !== 'undefined' ? localStorage : null, sheetId, profileId, months);
 }

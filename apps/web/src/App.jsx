@@ -135,7 +135,13 @@ export default function App() {
     refresh,
     lastUpdatedAt,
     currentSheetId,
-  } = useSheetFinanceData({ accessToken, appJwt, profile, financeConfig });
+  } = useSheetFinanceData({
+    accessToken,
+    appJwt,
+    profile,
+    financeConfig,
+    onAuthExpired: clearAuth,
+  });
 
   const statsOpts = useMemo(
     () => ({ ...financeConfigToStatsOptions(financeConfig), profileId: effectiveProfile }),
