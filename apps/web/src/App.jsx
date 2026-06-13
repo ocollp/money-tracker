@@ -7,8 +7,10 @@ import { useSheetFinanceData } from './hooks/useSheetFinanceData';
 import {
   buildFinanceConfig,
   financeConfigToSettingsFormShape,
+  financeConfigToStatsOptions,
   applyLocalProfileDisplay,
 } from './lib/mergeFinanceConfig.js';
+import { computeStatisticsAsOf } from './lib/statsForMonth.js';
 import { loadLocalProfileDisplay, saveLocalProfileDisplay } from './lib/localProfileDisplay.js';
 import {
   PROFILE_EMAILS,
@@ -27,6 +29,7 @@ import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
 import DistributionChart from './components/DistributionChart';
 import Heatmap from './components/Heatmap';
+import MonthViewBanner from './components/MonthViewBanner';
 import Patterns from './components/Patterns';
 import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
@@ -75,6 +78,7 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [addMonthOpen, setAddMonthOpen] = useState(false);
   const [selectedAssetClasses, setSelectedAssetClasses] = useState([]);
+  const [selectedMonthKey, setSelectedMonthKey] = useState(null);
   const handleDistributionEntitySelect = useCallback((name) => {
     if (name == null) {
       setSelectedAssetClasses([]);
@@ -133,9 +137,47 @@ export default function App() {
     currentSheetId,
   } = useSheetFinanceData({ accessToken, appJwt, profile, financeConfig });
 
+  const statsOpts = useMemo(
+    () => ({ ...financeConfigToStatsOptions(financeConfig), profileId: effectiveProfile }),
+    [financeConfig, effectiveProfile],
+  );
+
+  const displayStats = useMemo(() => {
+    if (!stats) return null;
+    if (!selectedMonthKey || selectedMonthKey === stats.dataAsOf?.key) return stats;
+    return computeStatisticsAsOf(stats.months, selectedMonthKey, statsOpts) ?? stats;
+  }, [stats, selectedMonthKey, statsOpts]);
+
+  const selectedMonthLabel = useMemo(() => {
+    if (!selectedMonthKey || !stats?.months) return null;
+    if (selectedMonthKey === stats.dataAsOf?.key) return null;
+    const month = stats.months.find((m) => m.key === selectedMonthKey);
+    return month?.label ?? month?.shortLabel ?? selectedMonthKey;
+  }, [selectedMonthKey, stats]);
+
+  useEffect(() => {
+    setSelectedMonthKey(null);
+    setSelectedAssetClasses([]);
+  }, [effectiveProfile, currentSheetId]);
+
+  useEffect(() => {
+    if (!selectedMonthKey || !stats?.months) return;
+    if (!stats.months.some((m) => m.key === selectedMonthKey)) {
+      setSelectedMonthKey(null);
+    }
+  }, [stats, selectedMonthKey]);
+
+  const handleHeatmapSelectMonth = useCallback((cell) => {
+    if (!cell?.key) return;
+    setSelectedMonthKey((prev) => {
+      if (cell.key === stats?.dataAsOf?.key) return null;
+      return prev === cell.key ? null : cell.key;
+    });
+  }, [stats?.dataAsOf?.key]);
+
   const assetClassNetWorth = useMemo(() => {
-    if (!selectedAssetClasses.length || !stats?.assetClassEvolution?.length) return null;
-    const series = stats.assetClassEvolution;
+    if (!selectedAssetClasses.length || !displayStats?.assetClassEvolution?.length) return null;
+    const series = displayStats.assetClassEvolution;
     const first = series[0];
     const names = selectedAssetClasses.filter((n) =>
       Object.prototype.hasOwnProperty.call(first, n),
@@ -150,7 +192,7 @@ export default function App() {
       totals,
       labels: names,
     };
-  }, [selectedAssetClasses, stats]);
+  }, [selectedAssetClasses, displayStats]);
 
   const entityChange = useMemo(() => {
     if (!assetClassNetWorth) return null;
@@ -164,8 +206,8 @@ export default function App() {
   }, [assetClassNetWorth]);
 
   useEffect(() => {
-    if (!selectedAssetClasses.length || !stats?.assetClassEvolution?.length) return;
-    const series = stats.assetClassEvolution;
+    if (!selectedAssetClasses.length || !displayStats?.assetClassEvolution?.length) return;
+    const series = displayStats.assetClassEvolution;
     const first = series[0];
     const valid = selectedAssetClasses.filter((n) =>
       Object.prototype.hasOwnProperty.call(first, n),
@@ -180,11 +222,11 @@ export default function App() {
     if (valid.length !== selectedAssetClasses.length) {
       setSelectedAssetClasses(valid);
     }
-  }, [selectedAssetClasses, stats]);
+  }, [selectedAssetClasses, displayStats]);
 
   const { pullPx, progress, isPulling } = usePullToRefresh({
     onRefresh: refresh,
-    disabled: !stats,
+    disabled: !displayStats,
     loading: loading && !stats,
   });
 
@@ -357,20 +399,21 @@ export default function App() {
   }
 
   const updatedLabel = formatUpdatedClock(lastUpdatedAt);
+  const viewStats = displayStats;
 
-  const kpiCount = 2 + (stats.hasTravel ? 1 : 0) + (stats.hasHousing ? 1 : 0);
+  const kpiCount = 2 + (viewStats.hasTravel ? 1 : 0) + (viewStats.hasHousing ? 1 : 0);
   const kpiLgCols =
     kpiCount >= 4 ? 'lg:grid-cols-4' : kpiCount === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2';
 
   const monthDelta = entityChange
     ? entityChange.change
-    : (stats.changeVsPrevTotal ?? stats.changeVsPrev);
+    : (viewStats.changeVsPrevTotal ?? viewStats.changeVsPrev);
   const monthDeltaPct = entityChange
     ? entityChange.pct
-    : (stats.changeVsPrevPctTotal ?? stats.changeVsPrevPct);
+    : (viewStats.changeVsPrevPctTotal ?? viewStats.changeVsPrevPct);
 
-  const liquidDelta = entityChange ? entityChange.change : stats.changeVsPrev;
-  const liquidPct = entityChange ? entityChange.pct : stats.changeVsPrevPct;
+  const liquidDelta = entityChange ? entityChange.change : viewStats.changeVsPrev;
+  const liquidPct = entityChange ? entityChange.pct : viewStats.changeVsPrevPct;
 
   return (
     <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
@@ -402,6 +445,14 @@ export default function App() {
         effectiveProfile={effectiveProfile}
       />
 
+      {selectedMonthLabel ? (
+        <MonthViewBanner
+          label={t.monthViewActive(selectedMonthLabel)}
+          clearLabel={t.monthViewClear}
+          onClear={() => setSelectedMonthKey(null)}
+        />
+      ) : null}
+
       <main
         ref={mainRef}
         className={`mx-auto px-3 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4 sm:space-y-6 touch-pan-y flex-1 pb-2 w-full transition-opacity duration-300 ${
@@ -427,7 +478,7 @@ export default function App() {
           />
           <KpiCard
             title={t.kpiMoneyAndInvestments}
-            value={formatMoney(entityChange ? entityChange.current : stats.current)}
+            value={formatMoney(entityChange ? entityChange.current : viewStats.current)}
             privacyPct={liquidPct}
             subtitle={
               liquidPct != null && !Number.isNaN(liquidPct)
@@ -437,58 +488,58 @@ export default function App() {
             trend={liquidDelta != null ? liquidDelta : 0}
             icon="💰"
           />
-          {stats.hasTravel && stats.travel && (
+          {viewStats.hasTravel && viewStats.travel && (
             <KpiCard
-              className={stats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
+              className={viewStats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
               title={t.travelTitle}
-              value={formatMoney(stats.travel.current ?? 0)}
+              value={formatMoney(viewStats.travel.current ?? 0)}
               subtitle={
-                (stats.travel.spentLastMonth ?? 0) > 0
+                (viewStats.travel.spentLastMonth ?? 0) > 0
                   ? typeof t.travelSpentLastMonth === 'function'
-                    ? t.travelSpentLastMonth(formatMoney(stats.travel.spentLastMonth ?? 0))
-                    : `${t.travelSpentLastMonth}: ${formatMoney(stats.travel.spentLastMonth ?? 0)}`
+                    ? t.travelSpentLastMonth(formatMoney(viewStats.travel.spentLastMonth ?? 0))
+                    : `${t.travelSpentLastMonth}: ${formatMoney(viewStats.travel.spentLastMonth ?? 0)}`
                   : null
               }
               trend={0}
-              subtitleColor={(stats.travel.spentLastMonth ?? 0) > 0 ? 'text-text-secondary' : undefined}
+              subtitleColor={(viewStats.travel.spentLastMonth ?? 0) > 0 ? 'text-text-secondary' : undefined}
               icon="✈️"
             />
           )}
-          {stats.hasHousing && (
+          {viewStats.hasHousing && (
             <KpiCard
               className={kpiCount === 3 ? 'col-span-2 lg:col-span-1' : ''}
               title={t.kpiTotalWealth}
               value={formatMoney(
-                stats.currentTotalWealth -
-                  (stats.hasTravel && stats.travel
-                    ? (stats.travel.current ?? 0) * (1 - TRAVEL_PATRIMONY_SHARE)
+                viewStats.currentTotalWealth -
+                  (viewStats.hasTravel && viewStats.travel
+                    ? (viewStats.travel.current ?? 0) * (1 - TRAVEL_PATRIMONY_SHARE)
                     : 0),
               )}
               subtitle={
-                stats.patrimonyKpiChangeVsPrevPct != null &&
-                !Number.isNaN(stats.patrimonyKpiChangeVsPrevPct)
-                  ? t.kpiVsPrevMonth(formatPct(stats.patrimonyKpiChangeVsPrevPct))
+                viewStats.patrimonyKpiChangeVsPrevPct != null &&
+                !Number.isNaN(viewStats.patrimonyKpiChangeVsPrevPct)
+                  ? t.kpiVsPrevMonth(formatPct(viewStats.patrimonyKpiChangeVsPrevPct))
                   : null
               }
-              privacyPct={stats.patrimonyKpiChangeVsPrevPct}
+              privacyPct={viewStats.patrimonyKpiChangeVsPrevPct}
               trend={
-                stats.patrimonyKpiChangeVsPrev != null ? stats.patrimonyKpiChangeVsPrev : 0
+                viewStats.patrimonyKpiChangeVsPrev != null ? viewStats.patrimonyKpiChangeVsPrev : 0
               }
               icon="💸"
             />
           )}
         </section>
 
-        {stats.assetClassDistribution?.length > 0 && (
+        {viewStats.assetClassDistribution?.length > 0 && (
           <DistributionChart
-              distribution={stats.assetClassDistribution}
+              distribution={viewStats.assetClassDistribution}
               title={t.assetClassTitle}
               privacyToggle
               selectedEntities={selectedAssetClasses}
               onSelectEntity={handleDistributionEntitySelect}
-              entityEvolution={stats.assetClassEvolution}
+              entityEvolution={viewStats.assetClassEvolution}
               distributionSparklineExtras={{}}
-              hasHousing={stats.hasHousing}
+              hasHousing={viewStats.hasHousing}
               onShowHousingChange={(show) => {
                 if (!show) {
                   setSelectedAssetClasses((p) => p.filter((n) => n !== ASSET_CLASS_LABELS.immo));
@@ -498,11 +549,11 @@ export default function App() {
         )}
 
         <NetWorthChart
-            months={assetClassNetWorth?.months ?? stats.netWorthMonths}
+            months={assetClassNetWorth?.months ?? viewStats.netWorthMonths}
             totals={
               assetClassNetWorth?.totals
-              ?? stats.netWorthTotals
-              ?? stats.netWorthTotalWealth
+              ?? viewStats.netWorthTotals
+              ?? viewStats.netWorthTotalWealth
             }
             title={t.netWorthTitle}
             subtitle={null}
@@ -523,13 +574,17 @@ export default function App() {
             }
           />
 
-        <Heatmap data={stats.heatmap} />
+        <Heatmap
+          data={stats.heatmap}
+          selectedMonthKey={selectedMonthKey}
+          onSelectMonth={handleHeatmapSelectMonth}
+        />
 
-        {stats.hasHousing && (
-          <MortgageCard housing={stats.housing} />
+        {viewStats.hasHousing && (
+          <MortgageCard housing={viewStats.housing} />
         )}
 
-        <Patterns yearComparison={stats.yearComparison} heatmap={stats.heatmap} />
+        <Patterns yearComparison={viewStats.yearComparison} heatmap={viewStats.heatmap} />
       </main>
 
       <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">

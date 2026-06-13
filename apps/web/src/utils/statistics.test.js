@@ -224,4 +224,46 @@ describe('computeStatistics', () => {
     expect(compte.value).toBe(200_000);
     expect(hip.value).toBe(50_000);
   });
+
+  it('excludes housing from total wealth before the first Hipoteca month', () => {
+    const base = {
+      shortLabel: 'x',
+      label: 'x',
+      byEntity: { Bank: 86_000 },
+      byEntityLiquid: { Bank: 86_000 },
+      byEntityHousing: {},
+      cash: 86_000,
+      cashLiquid: 86_000,
+      invested: 0,
+      investedLiquid: 0,
+      travelFund: 0,
+      total: 86_000,
+      housingValue: 150_000,
+      mortgageDebt: 0,
+    };
+    const may = {
+      ...base,
+      key: '2025-05',
+      date: new Date(2025, 4, 1),
+      liquidTotal: 86_000,
+    };
+    const ago = {
+      ...base,
+      key: '2025-08',
+      date: new Date(2025, 7, 1),
+      liquidTotal: 80_000,
+      mortgageDebt: -148_000,
+    };
+    const all = computeStatistics([may, ago], {
+      fixedHousingSheetValue: 150_000,
+      fixedHousingSheetEntity: 'BBVA',
+    });
+    const asOfMay = computeStatistics([may], {
+      fixedHousingSheetValue: 150_000,
+      fixedHousingSheetEntity: 'BBVA',
+    });
+    expect(all.hasHousing).toBe(true);
+    expect(asOfMay.hasHousing).toBe(false);
+    expect(asOfMay.currentTotalWealth).toBe(86_000);
+  });
 });

@@ -29,6 +29,27 @@ export function buildEffectiveMortgageSeries(months) {
   return buildCarriedForwardSeries(months.map((m) => m.mortgageDebt || 0));
 }
 
+export function findFirstMortgageMonthIndex(months) {
+  return months.findIndex((m) => (m.mortgageDebt || 0) < 0);
+}
+
+function buildForwardFromFirstMortgage(months, valueAtIndex) {
+  const first = findFirstMortgageMonthIndex(months);
+  if (first < 0) return months.map(() => 0);
+  const out = new Array(months.length).fill(0);
+  let last = valueAtIndex(first);
+  for (let i = first; i < months.length; i++) {
+    const v = valueAtIndex(i);
+    if (v !== 0) last = v;
+    out[i] = last;
+  }
+  return out;
+}
+
+function buildForwardMortgageWealthSeries(months) {
+  return buildForwardFromFirstMortgage(months, (i) => months[i].mortgageDebt || 0);
+}
+
 function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0), mortgageByKey, housingByKey) {
   const mdFor = (m) =>
     mortgageByKey && mortgageByKey.has(m.key)
@@ -103,11 +124,18 @@ export function computeStatistics(months, options = {}) {
     .trim()
     .toLowerCase();
 
+  const firstMortgageIdx = findFirstMortgageMonthIndex(months);
+
   const housingValueAsUsed = (m) => {
     if (fixedHousingVal != null && Object.prototype.hasOwnProperty.call(m, 'housingValue')) {
       return fixedHousingVal;
     }
     return m.housingValue || 0;
+  };
+
+  const housingValueForWealth = (i) => {
+    if (firstMortgageIdx < 0 || i < firstMortgageIdx) return 0;
+    return housingValueAsUsed(months[i]);
   };
 
   const housingValueBaseSeries = months.map((m) => housingValueAsUsed(m));
@@ -117,11 +145,16 @@ export function computeStatistics(months, options = {}) {
   const mortgageEffective = buildEffectiveMortgageSeries(months);
   const mortgageByKey = new Map(months.map((m, i) => [m.key, mortgageEffective[i]]));
 
+  const housingWealth = buildForwardFromFirstMortgage(months, housingValueForWealth);
+  const mortgageWealth = buildForwardMortgageWealthSeries(months);
+  const housingWealthByKey = new Map(months.map((m, i) => [m.key, housingWealth[i]]));
+  const mortgageWealthByKey = new Map(months.map((m, i) => [m.key, mortgageWealth[i]]));
+
   const { filledMonths, filledLiquidTotals, filledTotalWealth } = fillMissingMonths(
     months,
-    housingValueAsUsed,
-    mortgageByKey,
-    housingByKey,
+    () => 0,
+    mortgageWealthByKey,
+    housingWealthByKey,
   );
 
   const lastIdx = months.length - 1;
@@ -131,16 +164,16 @@ export function computeStatistics(months, options = {}) {
   const totalWealthByMonth = months.map(
     (m, i) =>
       (m.liquidTotal || 0) +
-      (housingEffective[i] || 0) +
-      (mortgageEffective[i] || 0) +
+      (housingWealth[i] || 0) +
+      (mortgageWealth[i] || 0) +
       (m.travelFund || 0),
   );
 
   const totalWealthOperationalByMonth = months.map(
     (m, i) =>
       (m.liquidTotal || 0) +
-      (housingEffective[i] || 0) +
-      (mortgageEffective[i] || 0),
+      (housingWealth[i] || 0) +
+      (mortgageWealth[i] || 0),
   );
 
   const current = liquidTotals[liquidTotals.length - 1];
@@ -258,11 +291,12 @@ export function computeStatistics(months, options = {}) {
     ...Object.keys(byEntityHousing),
   ])];
   const totalForDistribution =
-    current + (housingEffective[lastIdx] || 0) + (mortgageEffective[lastIdx] || 0);
+    current + (housingWealth[lastIdx] || 0) + (mortgageWealth[lastIdx] || 0);
   const distributionRaw = [];
+  const includeHousingWealth = firstMortgageIdx >= 0 && lastIdx >= firstMortgageIdx;
   for (const name of allEntityNames) {
     const liquid = latestMonth.byEntityLiquid[name] ?? 0;
-    const housing = byEntityHousing[name];
+    const housing = includeHousingWealth ? byEntityHousing[name] : null;
     const entityNorm = String(name).trim().toLowerCase();
     const housingValuePart =
       fixedHousingVal != null && entityNorm === fixedHousingEntityNorm
@@ -293,12 +327,12 @@ export function computeStatistics(months, options = {}) {
       const h = m.byEntityHousing?.BBVA;
       const hasBbvaHousing = h && Object.prototype.hasOwnProperty.call(m, 'housingValue');
       const v =
-        fixedHousingVal != null && fixedHousingEntityNorm === 'bbva'
+        fixedHousingVal != null && fixedHousingEntityNorm === 'bbva' && firstMortgageIdx >= 0 && i >= firstMortgageIdx
           ? fixedHousingVal
           : hasBbvaHousing
-            ? (housingEffective[i] ?? 0)
+            ? (housingWealth[i] ?? 0)
             : h?.value || 0;
-      return v + (mortgageEffective[i] || 0);
+      return v + (mortgageWealth[i] || 0);
     }),
     'Fons de viatges': months.map(m => (m.travelFund || 0) * TRAVEL_PATRIMONY_SHARE),
   };
@@ -327,15 +361,30 @@ export function computeStatistics(months, options = {}) {
     ? normalChangesTotal.reduce((s, c) => s + c.value, 0) / normalChangesTotal.length
     : 0;
 
-  const heatmap = changesTotal.map(c => ({
-    month: c.month.shortLabel,
-    fullMonth: c.month.label,
-    key: c.month.key,
-    value: c.value,
-    pct: c.pct,
-    year: c.month.date.getFullYear(),
-    monthIdx: c.month.date.getMonth(),
-  }));
+  const heatmap = (() => {
+    const rows = changesTotal.map((c) => ({
+      month: c.month.shortLabel,
+      fullMonth: c.month.label,
+      key: c.month.key,
+      value: c.value,
+      pct: c.pct,
+      year: c.month.date.getFullYear(),
+      monthIdx: c.month.date.getMonth(),
+    }));
+    if (months.length > 0 && !rows.some((r) => r.key === months[0].key)) {
+      const m0 = months[0];
+      rows.unshift({
+        month: m0.shortLabel,
+        fullMonth: m0.label,
+        key: m0.key,
+        value: 0,
+        pct: 0,
+        year: m0.date.getFullYear(),
+        monthIdx: m0.date.getMonth(),
+      });
+    }
+    return rows;
+  })();
 
   const hasTravel = months.some(m => m.travelFund !== 0);
   const travelEvolution = months.map(m => ({
@@ -385,35 +434,34 @@ export function computeStatistics(months, options = {}) {
     else if (travelSpentLastMonth > myHalfSaving * 1.5) travelPace = 'watch';
   }
 
-  const hasHousing =
-    months.some((m) => m.housingValue > 0) || fixedHousingVal != null;
+  const hasHousing = firstMortgageIdx >= 0 && lastIdx >= firstMortgageIdx;
 
   const { distribution: assetClassDistribution, evolution: assetClassEvolution } = buildAssetClassSeries(
     months,
-    housingEffective,
-    mortgageEffective,
+    housingWealth,
+    mortgageWealth,
     hasHousing,
     TRAVEL_PATRIMONY_SHARE,
   );
 
-  const latestHousingValue = housingEffective[lastIdx] || 0;
-  const latestMortgageDebtSigned = mortgageEffective[lastIdx] || 0;
+  const latestHousingValue = housingWealth[lastIdx] || 0;
+  const latestMortgageDebtSigned = mortgageWealth[lastIdx] || 0;
   const housingEquity = latestHousingValue + latestMortgageDebtSigned;
 
-  const firstMortIdx = mortgageEffective.findIndex((d) => d < 0);
-  const initialDebt = firstMortIdx >= 0 ? Math.abs(mortgageEffective[firstMortIdx]) : 0;
-  const currentDebt = Math.abs(mortgageEffective[lastIdx] || 0);
+  const firstMortIdx = firstMortgageIdx;
+  const initialDebt = firstMortIdx >= 0 ? Math.abs(mortgageWealth[firstMortIdx]) : 0;
+  const currentDebt = Math.abs(mortgageWealth[lastIdx] || 0);
   const totalPaid = initialDebt - currentDebt;
 
   const mortgageEvolution = months
     .map((m, i) => ({ m, i }))
-    .filter(({ i }) => mortgageEffective[i] < 0)
+    .filter(({ i }) => firstMortIdx >= 0 && mortgageWealth[i] < 0)
     .map(({ m, i }) => ({
       date: m.shortLabel,
       key: m.key,
-      debt: Math.abs(mortgageEffective[i]),
-      equity: (housingEffective[i] || 0) + mortgageEffective[i],
-      paid: initialDebt - Math.abs(mortgageEffective[i]),
+      debt: Math.abs(mortgageWealth[i]),
+      equity: (housingWealth[i] || 0) + mortgageWealth[i],
+      paid: initialDebt - Math.abs(mortgageWealth[i]),
     }));
 
   const mortgageEndYear = options.mortgageEndYear ?? MORTGAGE_END_YEAR;
@@ -425,11 +473,11 @@ export function computeStatistics(months, options = {}) {
   let mortgageMonthsRemaining = null;
   if (currentDebt > 0) {
     if (mortgageEndYear != null && mortgageEndMonth != null) {
-      const now = new Date();
+      const ref = months[lastIdx].date;
       const end = new Date(mortgageEndYear, mortgageEndMonth - 1, 1);
       mortgageMonthsRemaining = Math.max(
         0,
-        (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()),
+        (end.getFullYear() - ref.getFullYear()) * 12 + (end.getMonth() - ref.getMonth()),
       );
     } else if (mortgageMonthlyPaymentOpt != null && mortgageMonthlyPaymentOpt > 0) {
       mortgageMonthsRemaining = Math.ceil(currentDebt / mortgageMonthlyPaymentOpt);
@@ -449,20 +497,20 @@ export function computeStatistics(months, options = {}) {
   const fullDebt = currentDebt / share;
   const totalEquity = share > 0 && share < 1 ? housingEquity / share : housingEquity;
 
-  const calendarYear = new Date().getFullYear();
+  const calendarYear = months[lastIdx].date.getFullYear();
   let mortgagePrincipalPaidYtd = null;
   if (hasHousing && currentDebt > 0 && firstMortIdx >= 0) {
     let debtAtYearStart = null;
     for (let mi = 0; mi < months.length; mi++) {
       if (months[mi].date.getFullYear() === calendarYear) {
-        debtAtYearStart = Math.abs(mortgageEffective[mi]);
+        debtAtYearStart = Math.abs(mortgageWealth[mi]);
         break;
       }
     }
     if (debtAtYearStart == null) {
       for (let mi = months.length - 1; mi >= 0; mi--) {
         if (months[mi].date.getFullYear() === calendarYear - 1) {
-          debtAtYearStart = Math.abs(mortgageEffective[mi]);
+          debtAtYearStart = Math.abs(mortgageWealth[mi]);
           break;
         }
       }
@@ -484,7 +532,7 @@ export function computeStatistics(months, options = {}) {
     yearSummary[y].total += c.value;
     yearSummary[y].months++;
     if (c.value > 0) yearSummary[y].positive++;
-    else yearSummary[y].negative++;
+    else if (c.value < 0) yearSummary[y].negative++;
   }
   const yearComparison = buildYearComparison(yearSummary);
 
