@@ -43,6 +43,9 @@ export const t = {
   loadingStepSheet: 'Datos de la hoja',
   refreshingDataBanner: 'Actualizando datos de la hoja…',
   errorLoadingData: 'Error al cargar los datos',
+  googleReauthRequired:
+    'La sesión con Google ha caducado. Entra con Google una vez para volver a sincronizar la hoja (Face ID seguirá funcionando después).',
+  googleReauthButton: 'Reconectar Google',
   logoutAndRetry: 'Cerrar sesión y volver a intentarlo',
   pullToRefresh: 'Suelta para actualizar',
   settings: 'Ajustes',

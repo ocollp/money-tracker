@@ -38,6 +38,11 @@ export async function checkSheetAccessViaBackend(appJwt, spreadsheetId, apiUrl) 
   }
 }
 
+export const SHEET_AUTH_ERRORS = {
+  JWT_EXPIRED: 'jwt_expired',
+  GOOGLE_REAUTH: 'google_reauth_required',
+};
+
 export async function fetchSheetDataViaBackend(appJwt, spreadsheetId, apiUrl) {
   const res = await fetch(`${apiUrl}/sheets/${spreadsheetId}`, {
     headers: { Authorization: `Bearer ${appJwt}` },
@@ -45,7 +50,12 @@ export async function fetchSheetDataViaBackend(appJwt, spreadsheetId, apiUrl) {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    if (res.status === 401) throw new Error('jwt_expired');
+    if (res.status === 401) {
+      if (body.error === 'google_token_expired') {
+        throw new Error(SHEET_AUTH_ERRORS.GOOGLE_REAUTH);
+      }
+      throw new Error(SHEET_AUTH_ERRORS.JWT_EXPIRED);
+    }
     throw new Error(body.message || `Error ${res.status} reading the sheet`);
   }
 

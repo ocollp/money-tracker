@@ -5,6 +5,7 @@ import {
   checkSheetAccess,
   fetchSheetDataViaBackend,
   checkSheetAccessViaBackend,
+  SHEET_AUTH_ERRORS,
 } from '../services/sheetsApi';
 import { PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID, API_URL, HAS_BACKEND } from '../config';
 import { financeConfigToStatsOptions } from '../lib/mergeFinanceConfig.js';
@@ -209,8 +210,12 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
       })
       .catch((err) => {
         if (cancelled) return;
-        if (err.message === 'jwt_expired') {
+        if (err.message === SHEET_AUTH_ERRORS.JWT_EXPIRED) {
           onAuthExpired?.();
+          return;
+        }
+        if (err.message === SHEET_AUTH_ERRORS.GOOGLE_REAUTH) {
+          setError(err.message);
           return;
         }
         if (!hadCachedMonths) setError(err.message);

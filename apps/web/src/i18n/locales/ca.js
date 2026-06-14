@@ -40,6 +40,9 @@ export const t = {
   loadingStepSheet: 'Dades del full',
   refreshingDataBanner: 'Actualitzant dades del full…',
   errorLoadingData: 'Error al carregar les dades',
+  googleReauthRequired:
+    'La sessió amb Google ha caducat. Entra amb Google una vegada per tornar a sincronitzar el full (Face ID continuarà funcionant després).',
+  googleReauthButton: 'Reconnectar Google',
   logoutAndRetry: 'Tancar sessió i tornar-ho a provar',
   pullToRefresh: 'Deixa anar per actualitzar',
   settings: 'Configuració',

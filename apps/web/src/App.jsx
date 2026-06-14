@@ -20,6 +20,7 @@ import {
   API_URL,
   TRAVEL_PATRIMONY_SHARE,
 } from './config';
+import { SHEET_AUTH_ERRORS } from './services/sheetsApi';
 import LoginScreen from './components/LoginScreen';
 import NoSheetAccessScreen from './components/NoSheetAccessScreen';
 import { usePasskey } from './hooks/usePasskey.js';
@@ -315,21 +316,36 @@ export default function App() {
     );
   }
 
+  const needsGoogleReauth = error === SHEET_AUTH_ERRORS.GOOGLE_REAUTH;
+
   if (error && !stats && !loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="glass-card p-8 text-center max-w-md space-y-4">
           <p className="text-negative text-lg font-medium">{t.errorLoadingData}</p>
-          <p className="text-text-secondary text-sm">{error}</p>
-          <button
-            onClick={() => { googleLogout(); clearAppJwt(); }}
-            className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-brand transition-all duration-200 underline active:opacity-80"
-          >
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            {t.logoutAndRetry}
-          </button>
+          <p className="text-text-secondary text-sm">
+            {needsGoogleReauth ? t.googleReauthRequired : error}
+          </p>
+          {needsGoogleReauth ? (
+            <button
+              type="button"
+              onClick={() => login(PROFILE_EMAILS[profile])}
+              className="w-full flex items-center justify-center gap-2 bg-white/[0.08] text-text-primary border border-white/[0.1] hover:bg-white/[0.12] text-sm font-medium py-3 px-4 rounded-xl transition-all duration-200 active:scale-[0.97]"
+            >
+              {t.googleReauthButton}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { googleLogout(); clearAppJwt(); }}
+              className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-brand transition-all duration-200 underline active:opacity-80"
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              {t.logoutAndRetry}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -464,6 +480,21 @@ export default function App() {
           clearLabel={t.monthViewClear}
           onClear={() => setSelectedMonthKey(null)}
         />
+      ) : null}
+
+      {needsGoogleReauth ? (
+        <div className="mx-3 sm:mx-6 lg:mx-10 -mb-1 sm:-mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3">
+            <p className="text-sm text-text-secondary">{t.googleReauthRequired}</p>
+            <button
+              type="button"
+              onClick={() => login(PROFILE_EMAILS[profile])}
+              className="shrink-0 text-sm font-medium text-warning hover:text-warning/90 underline underline-offset-2 active:opacity-80"
+            >
+              {t.googleReauthButton}
+            </button>
+          </div>
+        </div>
       ) : null}
 
       <main
