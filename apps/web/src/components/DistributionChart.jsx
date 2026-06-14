@@ -398,11 +398,9 @@ export default function DistributionChart({
             return (
               <div
                 key={d.name}
-                className={`group space-y-1 rounded-2xl transition-all duration-200 ${
-                  isHousingRow
-                    ? 'ring-1 ring-inset ring-cyan-500/15 bg-gradient-to-r from-cyan-500/[0.06] to-transparent px-2 py-2.5 sm:px-2.5'
-                    : 'rounded-xl px-1 py-2 sm:px-2 sm:py-2.5'
-                } ${onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'}`}
+                className={`group space-y-1 rounded-xl px-1 py-2 sm:px-2 sm:py-2.5 transition-all duration-200 ${
+                  onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'
+                }`}
                 style={{ opacity: selectionAppliesToPie && !isSliceSelected(d.name) ? 0.3 : 1 }}
                 onClick={() => onSelectEntity?.(d.name)}
                 onDoubleClick={clearFilter}
@@ -410,7 +408,7 @@ export default function DistributionChart({
                 <div className="flex items-center justify-between gap-1.5 sm:gap-2">
                   <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: c }} />
-                    <span className={`text-xs sm:text-sm truncate ${isHousingRow ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
+                    <span className="text-xs sm:text-sm truncate text-text-secondary">
                       {displayName(d.name)}
                     </span>
                     {isHousingRow ? (
