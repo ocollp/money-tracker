@@ -67,6 +67,7 @@ export default function App() {
     accessToken,
     appJwt,
     login,
+    reconnectGoogle,
     loginWithPasskeyResult,
     logout: googleLogout,
     clearAuth,
@@ -329,7 +330,7 @@ export default function App() {
           {needsGoogleReauth ? (
             <button
               type="button"
-              onClick={() => login(PROFILE_EMAILS[profile])}
+              onClick={() => reconnectGoogle(PROFILE_EMAILS[profile])}
               className="w-full flex items-center justify-center gap-2 bg-white/[0.08] text-text-primary border border-white/[0.1] hover:bg-white/[0.12] text-sm font-medium py-3 px-4 rounded-xl transition-all duration-200 active:scale-[0.97]"
             >
               {t.googleReauthButton}
@@ -488,7 +489,7 @@ export default function App() {
             <p className="text-sm text-text-secondary">{t.googleReauthRequired}</p>
             <button
               type="button"
-              onClick={() => login(PROFILE_EMAILS[profile])}
+              onClick={() => reconnectGoogle(PROFILE_EMAILS[profile])}
               className="shrink-0 text-sm font-medium text-warning hover:text-warning/90 underline underline-offset-2 active:opacity-80"
             >
               {t.googleReauthButton}

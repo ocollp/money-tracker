@@ -48,8 +48,10 @@ async function fetchUserInfo(token) {
   }
 }
 
-function requestLogin(client, loginHint) {
-  const opts = loginHint ? { login_hint: loginHint } : {};
+function requestLogin(client, loginHint, { forceConsent = false } = {}) {
+  const opts = {};
+  if (loginHint) opts.login_hint = loginHint;
+  if (forceConsent) opts.prompt = 'consent';
   if (USE_BACKEND) client.requestCode(opts);
   else client.requestAccessToken(opts);
 }
@@ -219,13 +221,19 @@ export default function useGoogleAuth() {
     };
   }, [scheduleRefresh, trySilentRefresh, t]);
 
-  const login = useCallback((loginHint) => {
+  const login = useCallback((loginHint, options = {}) => {
     const cleanup = waitForGisClient(clientRef, {
-      onReady: (client) => requestLogin(client, loginHint),
+      onReady: (client) => requestLogin(client, loginHint, options),
       onTimeout: () => setAuthError(GIS_LOAD_ERROR),
     });
     return cleanup;
   }, []);
+
+  /** Force Google consent screen to obtain a fresh offline refresh token. */
+  const reconnectGoogle = useCallback(
+    (loginHint) => login(loginHint, { forceConsent: true }),
+    [login],
+  );
 
   const loginWithPasskeyResult = useCallback((data) => {
     if (!data?.token || !data?.user) return;
@@ -263,6 +271,7 @@ export default function useGoogleAuth() {
     appJwt: USE_BACKEND ? appJwt : null,
     authError,
     login,
+    reconnectGoogle,
     loginWithPasskeyResult,
     logout: clearAuth,
     clearAuth,
