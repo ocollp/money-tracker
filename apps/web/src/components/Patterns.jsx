@@ -25,7 +25,7 @@ export default function Patterns({ yearComparison, heatmap }) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className={DASHBOARD_SECTION_CARD}>
+    <div className={`h-full ${DASHBOARD_SECTION_CARD}`}>
       <h3 className={`${DASHBOARD_SECTION_TITLE} mb-3`}>{t.patternsTitle}</h3>
 
       {sortedYears.length > 0 ? (

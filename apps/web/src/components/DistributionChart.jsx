@@ -273,7 +273,7 @@ export default function DistributionChart({
 
   return (
     <div
-      className={DASHBOARD_SECTION_CARD}
+      className={`h-full ${DASHBOARD_SECTION_CARD}`}
       onDoubleClick={hasSelection ? clearFilter : undefined}
     >
       <div className={DISTRIBUTION_SECTION_HEADER}>

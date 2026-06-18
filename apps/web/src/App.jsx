@@ -529,49 +529,58 @@ export default function App() {
           )}
         </section>
 
-        {viewStats.assetClassDistribution?.length > 0 && (
-          <DistributionChart
-              distribution={viewStats.assetClassDistribution}
-              title={t.assetClassTitle}
-              privacyToggle
-              selectedEntities={selectedAssetClasses}
-              onSelectEntity={handleDistributionEntitySelect}
-              entityEvolution={viewStats.assetClassEvolution}
-              distributionSparklineExtras={{}}
-              hasHousing={viewStats.hasHousing}
-              onShowHousingChange={(show) => {
-                if (!show) {
-                  setSelectedAssetClasses((p) => p.filter((n) => n !== ASSET_CLASS_LABELS.immo));
-                }
-              }}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
+          {viewStats.assetClassDistribution?.length > 0 ? (
+            <div className="min-w-0 h-full">
+              <DistributionChart
+                distribution={viewStats.assetClassDistribution}
+                title={t.assetClassTitle}
+                privacyToggle
+                selectedEntities={selectedAssetClasses}
+                onSelectEntity={handleDistributionEntitySelect}
+                entityEvolution={viewStats.assetClassEvolution}
+                distributionSparklineExtras={{}}
+                hasHousing={viewStats.hasHousing}
+                onShowHousingChange={(show) => {
+                  if (!show) {
+                    setSelectedAssetClasses((p) => p.filter((n) => n !== ASSET_CLASS_LABELS.immo));
+                  }
+                }}
+              />
+            </div>
+          ) : null}
+          <div
+            className={`min-w-0 h-full ${
+              viewStats.assetClassDistribution?.length > 0 ? '' : 'lg:col-span-2'
+            }`}
+          >
+            <NetWorthChart
+              months={assetClassNetWorth?.months ?? viewStats.netWorthMonths}
+              totals={
+                assetClassNetWorth?.totals
+                ?? viewStats.netWorthTotals
+                ?? viewStats.netWorthTotalWealth
+              }
+              title={t.netWorthTitle}
+              subtitle={null}
+              tooltipLabel={
+                assetClassNetWorth?.labels?.length
+                  ? assetClassNetWorth.labels.join(' · ')
+                  : t.netWorthTooltip
+              }
+              selectedEntity={
+                assetClassNetWorth?.labels?.length
+                  ? assetClassNetWorth.labels.join(' · ')
+                  : null
+              }
+              onClearEntity={
+                assetClassNetWorth?.labels?.length
+                  ? () => setSelectedAssetClasses([])
+                  : undefined
+              }
             />
-        )}
-
-        <NetWorthChart
-            months={assetClassNetWorth?.months ?? viewStats.netWorthMonths}
-            totals={
-              assetClassNetWorth?.totals
-              ?? viewStats.netWorthTotals
-              ?? viewStats.netWorthTotalWealth
-            }
-            title={t.netWorthTitle}
-            subtitle={null}
-            tooltipLabel={
-              assetClassNetWorth?.labels?.length
-                ? assetClassNetWorth.labels.join(' · ')
-                : t.netWorthTooltip
-            }
-            selectedEntity={
-              assetClassNetWorth?.labels?.length
-                ? assetClassNetWorth.labels.join(' · ')
-                : null
-            }
-            onClearEntity={
-              assetClassNetWorth?.labels?.length
-                ? () => setSelectedAssetClasses([])
-                : undefined
-            }
-          />
+          </div>
+        </section>
 
         <Heatmap
           data={stats.heatmap}
@@ -583,14 +592,23 @@ export default function App() {
           <MortgageCard housing={viewStats.housing} />
         )}
 
-        {effectiveProfile === PROFILE_PRIMARY_ID ? (
-          <MilestonesCard
-            liquidCurrent={viewStats.current}
-            patrimonyCurrent={patrimonyForMilestones}
-          />
-        ) : null}
-
-        <Patterns yearComparison={viewStats.yearComparison} heatmap={viewStats.heatmap} />
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
+          {effectiveProfile === PROFILE_PRIMARY_ID ? (
+            <div className="min-w-0 h-full">
+              <MilestonesCard
+                liquidCurrent={viewStats.current}
+                patrimonyCurrent={patrimonyForMilestones}
+              />
+            </div>
+          ) : null}
+          <div
+            className={`min-w-0 h-full ${
+              effectiveProfile === PROFILE_PRIMARY_ID ? '' : 'lg:col-span-2'
+            }`}
+          >
+            <Patterns yearComparison={viewStats.yearComparison} heatmap={viewStats.heatmap} />
+          </div>
+        </section>
       </main>
 
       <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">

@@ -97,7 +97,7 @@ export default function MilestonesCard({ liquidCurrent, patrimonyCurrent }) {
   const patrimony = buildMilestoneProgress(patrimonyCurrent, MILESTONE_PATRIMONY_TARGET);
 
   return (
-    <div className={DASHBOARD_SECTION_CARD}>
+    <div className={`h-full ${DASHBOARD_SECTION_CARD}`}>
       <h3 className={`${DASHBOARD_SECTION_TITLE} text-base mb-2.5`}>{t.milestonesTitle}</h3>
       <div className="space-y-2">
         <MilestoneRow

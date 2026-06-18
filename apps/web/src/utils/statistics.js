@@ -361,30 +361,15 @@ export function computeStatistics(months, options = {}) {
     ? normalChangesTotal.reduce((s, c) => s + c.value, 0) / normalChangesTotal.length
     : 0;
 
-  const heatmap = (() => {
-    const rows = changesTotal.map((c) => ({
-      month: c.month.shortLabel,
-      fullMonth: c.month.label,
-      key: c.month.key,
-      value: c.value,
-      pct: c.pct,
-      year: c.month.date.getFullYear(),
-      monthIdx: c.month.date.getMonth(),
-    }));
-    if (months.length > 0 && !rows.some((r) => r.key === months[0].key)) {
-      const m0 = months[0];
-      rows.unshift({
-        month: m0.shortLabel,
-        fullMonth: m0.label,
-        key: m0.key,
-        value: 0,
-        pct: 0,
-        year: m0.date.getFullYear(),
-        monthIdx: m0.date.getMonth(),
-      });
-    }
-    return rows;
-  })();
+  const heatmap = changesTotal.map((c) => ({
+    month: c.month.shortLabel,
+    fullMonth: c.month.label,
+    key: c.month.key,
+    value: c.value,
+    pct: c.pct,
+    year: c.month.date.getFullYear(),
+    monthIdx: c.month.date.getMonth(),
+  }));
 
   const hasTravel = months.some(m => m.travelFund !== 0);
   const travelEvolution = months.map(m => ({
