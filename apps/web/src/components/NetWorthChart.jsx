@@ -198,7 +198,7 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
           )}
         </div>
         <div
-          className="flex flex-wrap gap-1 p-0.5 rounded-xl bg-white/[0.06] backdrop-blur-md border border-white/[0.1] self-start shrink-0"
+          className="glass-segmented self-start shrink-0"
           role="group"
           aria-label={t.netWorthRangeAria ?? 'Period'}
         >
@@ -207,10 +207,8 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
               key={k}
               type="button"
               onClick={() => setRange(k)}
-              className={`px-2.5 py-1.5 min-h-9 text-[11px] sm:text-xs font-semibold rounded-lg transition-colors ${
-                range === k
-                  ? 'bg-brand/25 text-text-primary border border-brand/40'
-                  : 'text-text-secondary hover:text-text-primary border border-transparent'
+              className={`glass-segmented-item px-2.5 py-1.5 min-h-9 text-[11px] sm:text-xs font-semibold ${
+                range === k ? 'glass-segmented-item-active' : ''
               }`}
             >
               {rangeLabel(k)}

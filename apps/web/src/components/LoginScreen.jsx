@@ -30,13 +30,13 @@ function FaceIdIcon() {
   );
 }
 
-const BTN_SECONDARY =
-  'w-full flex items-center justify-center gap-2 bg-white/[0.05] text-text-secondary text-sm font-medium py-3 px-4 rounded-xl hover:bg-white/[0.08] hover:text-text-primary transition-all duration-200 active:scale-[0.97] disabled:opacity-40';
+const BTN_GLASS =
+  'glass-btn w-full flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 rounded-xl text-text-secondary hover:text-text-primary active:scale-[0.97] disabled:opacity-40';
 
 function LoginLayout({ title, children }) {
   return (
-    <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex flex-col items-center justify-center px-6 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] bg-[#06080d] overflow-hidden overscroll-none">
-      <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden flex items-center justify-center bg-white/[0.08] backdrop-blur-xl border border-white/[0.1] mb-5">
+    <div className="fixed inset-0 h-[100svh] min-h-[100svh] flex flex-col items-center justify-center px-6 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] overflow-hidden overscroll-none">
+      <div className="glass-card w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden flex items-center justify-center mb-5 p-0">
         <img
           src={`${import.meta.env.BASE_URL}piggy.gif`}
           alt=""
@@ -103,7 +103,7 @@ export default function LoginScreen({
             type="button"
             onClick={passkey.authenticate}
             disabled={passkey.authenticating}
-            className={BTN_SECONDARY}
+            className={BTN_GLASS}
           >
             <FaceIdIcon />
             {passkey.authenticating ? t.loading : (t.loginFaceId ?? 'Entrar amb Face ID')}
@@ -113,11 +113,7 @@ export default function LoginScreen({
           type="button"
           onClick={onLogin}
           disabled={passkey?.authenticating}
-          className={`w-full flex items-center justify-center gap-2.5 text-sm font-medium py-3.5 px-4 rounded-xl transition-all duration-200 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${
-            showPasskey
-              ? BTN_SECONDARY
-              : 'bg-white/[0.08] text-text-primary border border-white/[0.1] hover:bg-white/[0.12]'
-          }`}
+          className={`${BTN_GLASS} gap-2.5 py-3.5 ${showPasskey ? '' : 'text-text-primary'}`}
         >
           <GoogleIcon />
           {t.loginButton}

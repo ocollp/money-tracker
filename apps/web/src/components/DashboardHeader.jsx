@@ -7,7 +7,7 @@ export default function DashboardHeader({
   const active = effectiveProfiles?.find((p) => p.id === effectiveProfile);
 
   return (
-    <header className="sticky top-0 z-20 bg-white/[0.04] backdrop-blur-2xl border-b border-white/[0.08] pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
+    <header className="sticky top-0 z-20 glass-header pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
       <div className="mx-auto px-3 sm:px-6 lg:px-10 pb-2 sm:pb-3 pt-1 sm:pt-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink min-w-0">

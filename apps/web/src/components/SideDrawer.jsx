@@ -178,7 +178,7 @@ export default function SideDrawer({
       <button
         type="button"
         onClick={onToggleCollapse}
-        className="absolute top-1/2 -translate-y-1/2 -right-3.5 z-40 w-7 h-7 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.12] shadow-lg flex items-center justify-center text-text-secondary/50 hover:text-text-primary hover:border-brand/35 hover:shadow-brand/10 transition-all duration-200"
+        className="absolute top-1/2 -translate-y-1/2 -right-3.5 z-40 w-7 h-7 rounded-full glass-fab flex items-center justify-center text-text-secondary/50 hover:text-text-primary hover:border-brand/35 transition-all duration-200"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +191,7 @@ export default function SideDrawer({
   const mobileDrawer = (
     <div className="sm:hidden">
       <div
-        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-40 glass-overlay transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
         aria-hidden
       />
