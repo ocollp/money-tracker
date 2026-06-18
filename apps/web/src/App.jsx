@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { formatMoney, formatChange, formatPct, formatUpdatedClock } from './utils/formatters';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import useGoogleAuth from './hooks/useGoogleAuth';
@@ -253,42 +253,6 @@ export default function App() {
     } catch {}
   };
 
-  const mainRef = useRef(null);
-  const swipeStart = useRef({ x: 0, y: 0 });
-  const swipeLock = useRef(false);
-  const handleTouchStart = (e) => {
-    if (effectiveProfiles.length !== 2) return;
-    const t = e.touches[0];
-    swipeStart.current = { x: t.clientX, y: t.clientY };
-    swipeLock.current = false;
-  };
-  const handleTouchMove = useCallback((e) => {
-    if (effectiveProfiles.length !== 2) return;
-    const t = e.touches[0];
-    const dx = t.clientX - swipeStart.current.x;
-    const dy = t.clientY - swipeStart.current.y;
-    if (!swipeLock.current && (Math.abs(dx) > 50 || Math.abs(dy) > 50)) {
-      swipeLock.current = Math.abs(dx) > Math.abs(dy);
-      if (swipeLock.current) e.preventDefault();
-    } else if (swipeLock.current) e.preventDefault();
-  }, [effectiveProfiles.length]);
-  const handleTouchEnd = (e) => {
-    if (effectiveProfiles.length !== 2) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - swipeStart.current.x;
-    if (swipeLock.current && Math.abs(dx) > 50) {
-      const idx = effectiveProfiles.findIndex(p => p.id === effectiveProfile);
-      const next = dx < 0 ? (idx + 1) % effectiveProfiles.length : (idx - 1 + effectiveProfiles.length) % effectiveProfiles.length;
-      switchProfile(effectiveProfiles[next].id);
-    }
-  };
-  useEffect(() => {
-    const el = mainRef.current;
-    if (!el) return;
-    el.addEventListener('touchmove', handleTouchMove, { passive: false });
-    return () => el.removeEventListener('touchmove', handleTouchMove);
-  }, [handleTouchMove]);
-
   if (!isLoggedIn || needsRefresh) {
     return (
       <LoginScreen
@@ -383,13 +347,7 @@ export default function App() {
           effectiveProfile={effectiveProfile}
         />
 
-        <DashboardLoadingShell
-          loadingLabel={t.loadingData}
-          mainRef={mainRef}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          touchAction={effectiveProfiles.length === 2 ? 'pan-y' : undefined}
-        />
+        <DashboardLoadingShell loadingLabel={t.loadingData} />
 
         <ProfileSettings
           open={settingsOpen}
@@ -499,13 +457,9 @@ export default function App() {
       ) : null}
 
       <main
-        ref={mainRef}
         className={`mx-auto px-3 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4 sm:space-y-6 touch-pan-y flex-1 pb-2 w-full transition-opacity duration-300 ${
           isRefreshing ? 'opacity-[0.92]' : 'opacity-100'
         }`}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        style={{ touchAction: effectiveProfiles.length === 2 ? 'pan-y' : undefined }}
         aria-busy={isRefreshing || undefined}
       >
         <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${kpiLgCols}`}>

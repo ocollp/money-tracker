@@ -1,22 +1,12 @@
 import { useI18n } from '../i18n/I18nContext.jsx';
 
-export default function DashboardLoadingShell({
-  loadingLabel,
-  mainRef,
-  onTouchStart,
-  onTouchEnd,
-  touchAction,
-}) {
+export default function DashboardLoadingShell({ loadingLabel }) {
   const { t } = useI18n();
   const label = loadingLabel ?? t.loadingData;
 
   return (
     <main
-      ref={mainRef}
       className="relative mx-auto w-full flex-1 space-y-4 px-3 py-4 touch-pan-y sm:space-y-6 sm:px-6 sm:py-6 lg:px-10 pb-2 overflow-x-hidden"
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      style={touchAction != null ? { touchAction } : undefined}
       aria-busy="true"
       aria-label="Dashboard"
     >
