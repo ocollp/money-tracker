@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { formatMoney, formatChange } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
@@ -14,7 +14,7 @@ function buildHeatmapGrid(heatmap) {
   return grid;
 }
 
-export default function Patterns({ yearComparison, heatmap }) {
+function Patterns({ yearComparison, heatmap }) {
   const { t } = useI18n();
   const { hideMoney } = usePrivacy();
   const rows = Array.isArray(heatmap) ? heatmap : [];
@@ -111,3 +111,5 @@ export default function Patterns({ yearComparison, heatmap }) {
     </div>
   );
 }
+
+export default memo(Patterns);

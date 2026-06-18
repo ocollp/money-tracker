@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { formatMoney, formatChange, formatPct, formatUpdatedClock } from './utils/formatters';
-import { usePullToRefresh } from './hooks/usePullToRefresh';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { useBackendProfile, clearAppJwt } from './hooks/useBackendProfile';
 import { useSheetFinanceData } from './hooks/useSheetFinanceData';
@@ -37,6 +36,7 @@ import MortgageCard from './components/MortgageCard';
 import AddMonthModal from './components/AddMonthModal';
 import DashboardLoadingShell from './components/DashboardLoadingShell';
 import DashboardHeader from './components/DashboardHeader';
+import MobilePullRefresh from './components/MobilePullRefresh';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { ASSET_CLASS_LABELS } from './utils/assetClassBuckets.js';
 
@@ -93,9 +93,18 @@ export default function App() {
   }, []);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
   const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
+  const onAuthExpiredRef = useRef(clearAuth);
+  onAuthExpiredRef.current = clearAuth;
+  const handleAuthExpired = useCallback(() => {
+    onAuthExpiredRef.current?.();
+  }, []);
 
   const passkey = usePasskey({ onLoginSuccess: loginWithPasskeyResult });
-  const { settings, backendReady, patchSettings, hasApi, apiUser } = useBackendProfile(accessToken, appJwt, clearAuth);
+  const { settings, backendReady, patchSettings, hasApi, apiUser } = useBackendProfile(
+    accessToken,
+    appJwt,
+    clearAuth,
+  );
   const hasPersistedProfile = settings != null;
   const financeConfig = useMemo(() => {
     const base = buildFinanceConfig(settings);
@@ -143,7 +152,7 @@ export default function App() {
     appJwt,
     profile,
     financeConfig,
-    onAuthExpired: clearAuth,
+    onAuthExpired: handleAuthExpired,
   });
 
   const statsOpts = useMemo(
@@ -176,13 +185,18 @@ export default function App() {
     }
   }, [stats, selectedMonthKey]);
 
+  const dataAsOfKey = stats?.dataAsOf?.key;
+
   const handleHeatmapSelectMonth = useCallback((cell) => {
     if (!cell?.key) return;
     setSelectedMonthKey((prev) => {
-      if (cell.key === stats?.dataAsOf?.key) return null;
+      if (cell.key === dataAsOfKey) return null;
       return prev === cell.key ? null : cell.key;
     });
-  }, [stats?.dataAsOf?.key]);
+  }, [dataAsOfKey]);
+
+  const clearSelectedMonth = useCallback(() => setSelectedMonthKey(null), []);
+  const clearAssetClassSelection = useCallback(() => setSelectedAssetClasses([]), []);
 
   const assetClassNetWorth = useMemo(() => {
     if (!selectedAssetClasses.length || !displayStats?.assetClassEvolution?.length) return null;
@@ -233,12 +247,6 @@ export default function App() {
     }
   }, [selectedAssetClasses, displayStats]);
 
-  const { pullPx, progress, isPulling } = usePullToRefresh({
-    onRefresh: refresh,
-    disabled: !displayStats,
-    loading: loading && !stats,
-  });
-
   const handleSaveLocalProfileDisplay = useCallback((patch) => {
     saveLocalProfileDisplay(patch);
     setLocalProfileUiTick((t) => t + 1);
@@ -246,12 +254,33 @@ export default function App() {
 
   const effectiveUser = apiUser || user;
 
-  const switchProfile = (id) => {
+  const switchProfile = useCallback((id) => {
     setProfile(id);
     try {
       localStorage.setItem(PROFILE_KEY, id);
     } catch {}
-  };
+  }, []);
+
+  const openDrawer = useCallback(() => setDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+  const openSettings = useCallback(() => setSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  const handleLogout = useCallback(() => {
+    googleLogout();
+    clearAppJwt();
+  }, [googleLogout]);
+  const openAddMonth = useCallback(() => {
+    setAddMonthOpen(true);
+    setDrawerOpen(false);
+  }, []);
+  const closeAddMonth = useCallback(() => setAddMonthOpen(false), []);
+  const handleShowHousingChange = useCallback((show) => {
+    if (!show) {
+      setSelectedAssetClasses((p) => p.filter((n) => n !== ASSET_CLASS_LABELS.immo));
+    }
+  }, []);
+  const pullRefreshDisabled = !displayStats;
+  const pullRefreshLoading = Boolean(loading && !stats);
 
   if (!isLoggedIn || needsRefresh) {
     return (
@@ -319,30 +348,15 @@ export default function App() {
   if (!stats) {
     return (
       <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
-        <div
-          className="fixed left-0 right-0 z-[25] flex justify-center pointer-events-none transition-opacity duration-150 sm:hidden"
-          style={{
-            top: 'max(4.5rem, calc(env(safe-area-inset-top, 0px) + 3.5rem))',
-            opacity: isPulling ? 1 : 0,
-            transform: `translateY(${Math.min(pullPx * 0.3, 24)}px)`,
-          }}
-          aria-hidden
-        >
-          <div
-            className="rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.12] px-3 py-1.5 text-xs text-text-secondary shadow-lg flex items-center gap-2"
-            style={{ opacity: 0.5 + progress * 0.5 }}
-          >
-            <span
-              className="inline-block w-4 h-4 border-2 border-brand border-t-transparent rounded-full"
-              style={{ transform: `rotate(${progress * 250}deg)` }}
-            />
-            {t.pullToRefresh}
-          </div>
-        </div>
+        <MobilePullRefresh
+          onRefresh={refresh}
+          disabled={pullRefreshDisabled}
+          loading={pullRefreshLoading}
+        />
 
         <DashboardHeader
           t={t}
-          onOpenDrawer={() => setDrawerOpen(true)}
+          onOpenDrawer={openDrawer}
           effectiveProfiles={effectiveProfiles}
           effectiveProfile={effectiveProfile}
         />
@@ -351,7 +365,7 @@ export default function App() {
 
         <ProfileSettings
           open={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
+          onClose={closeSettings}
           settings={settingsModalValues}
           settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
           onSave={hasPersistedProfile ? patchSettings : undefined}
@@ -362,18 +376,18 @@ export default function App() {
 
         <SideDrawer
           open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
+          onClose={closeDrawer}
           collapsed={sidebarCollapsed}
           onToggleCollapse={toggleSidebar}
           user={effectiveUser}
           effectiveProfiles={effectiveProfiles}
           effectiveProfile={effectiveProfile}
           onSwitchProfile={switchProfile}
-          onSettings={() => setSettingsOpen(true)}
-          onLogout={() => { googleLogout(); clearAppJwt(); }}
+          onSettings={openSettings}
+          onLogout={handleLogout}
           t={t}
           stats={null}
-          onAddMonth={() => { setAddMonthOpen(true); setDrawerOpen(false); }}
+          onAddMonth={openAddMonth}
           passkey={passkey}
         />
       </div>
@@ -405,30 +419,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen min-h-dvh flex flex-col sidebar-offset" style={{ '--sidebar-w': `${sidebarWidth}px` }}>
-      <div
-        className="fixed left-0 right-0 z-[25] flex justify-center pointer-events-none transition-opacity duration-150 sm:hidden"
-        style={{
-          top: 'max(4.5rem, calc(env(safe-area-inset-top, 0px) + 3.5rem))',
-          opacity: isPulling ? 1 : 0,
-          transform: `translateY(${Math.min(pullPx * 0.3, 24)}px)`,
-        }}
-        aria-hidden
-      >
-        <div
-          className="rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.12] px-3 py-1.5 text-xs text-text-secondary shadow-lg flex items-center gap-2"
-          style={{ opacity: 0.5 + progress * 0.5 }}
-        >
-          <span
-            className="inline-block w-4 h-4 border-2 border-brand border-t-transparent rounded-full"
-            style={{ transform: `rotate(${progress * 250}deg)` }}
-          />
-          {t.pullToRefresh}
-        </div>
-      </div>
+      <MobilePullRefresh
+        onRefresh={refresh}
+        disabled={pullRefreshDisabled}
+        loading={pullRefreshLoading}
+      />
 
       <DashboardHeader
         t={t}
-        onOpenDrawer={() => setDrawerOpen(true)}
+        onOpenDrawer={openDrawer}
         effectiveProfiles={effectiveProfiles}
         effectiveProfile={effectiveProfile}
       />
@@ -437,7 +436,7 @@ export default function App() {
         <MonthViewBanner
           label={t.monthViewActive(selectedMonthLabel)}
           clearLabel={t.monthViewClear}
-          onClear={() => setSelectedMonthKey(null)}
+          onClear={clearSelectedMonth}
         />
       ) : null}
 
@@ -541,11 +540,7 @@ export default function App() {
                 entityEvolution={viewStats.assetClassEvolution}
                 distributionSparklineExtras={{}}
                 hasHousing={viewStats.hasHousing}
-                onShowHousingChange={(show) => {
-                  if (!show) {
-                    setSelectedAssetClasses((p) => p.filter((n) => n !== ASSET_CLASS_LABELS.immo));
-                  }
-                }}
+                onShowHousingChange={handleShowHousingChange}
               />
             </div>
           ) : null}
@@ -575,7 +570,7 @@ export default function App() {
               }
               onClearEntity={
                 assetClassNetWorth?.labels?.length
-                  ? () => setSelectedAssetClasses([])
+                  ? clearAssetClassSelection
                   : undefined
               }
             />
@@ -637,14 +632,14 @@ export default function App() {
           apiUrl={API_URL}
           fixedHousingSheetValue={financeConfig.fixedHousingSheetValue}
           fixedHousingSheetEntity={financeConfig.fixedHousingSheetEntity}
-          onClose={() => setAddMonthOpen(false)}
+          onClose={closeAddMonth}
           onSaved={refresh}
         />
       )}
 
       <ProfileSettings
         open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={closeSettings}
         settings={settingsModalValues}
         settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
         onSave={hasPersistedProfile ? patchSettings : undefined}
@@ -655,18 +650,18 @@ export default function App() {
 
       <SideDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         collapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebar}
         user={effectiveUser}
         effectiveProfiles={effectiveProfiles}
         effectiveProfile={effectiveProfile}
         onSwitchProfile={switchProfile}
-        onSettings={() => setSettingsOpen(true)}
-        onLogout={() => { googleLogout(); clearAppJwt(); }}
+        onSettings={openSettings}
+        onLogout={handleLogout}
         t={t}
         stats={stats}
-        onAddMonth={() => { setAddMonthOpen(true); setDrawerOpen(false); }}
+        onAddMonth={openAddMonth}
         passkey={passkey}
       />
     </div>

@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { formatChange } from '../utils/formatters';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
 import { computeHeatmapScaleMax, heatmapCellBackground } from '../lib/heatmapCellStyle.js';
 
-export default function Heatmap({
+function Heatmap({
   data,
   selectedMonthKey = null,
   onSelectMonth,
@@ -121,3 +121,5 @@ export default function Heatmap({
     </div>
   );
 }
+
+export default memo(Heatmap);

@@ -1,8 +1,9 @@
+import { memo } from 'react';
 import { formatMoney, splitYearsAndMonths } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
 
-export default function MortgageCard({ housing }) {
+function MortgageCard({ housing }) {
   const { t } = useI18n();
   const { hideMoney } = usePrivacy();
 
@@ -62,3 +63,5 @@ export default function MortgageCard({ housing }) {
     </div>
   );
 }
+
+export default memo(MortgageCard);

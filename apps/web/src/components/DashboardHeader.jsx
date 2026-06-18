@@ -1,4 +1,6 @@
-export default function DashboardHeader({
+import { memo } from 'react';
+
+function DashboardHeader({
   t,
   onOpenDrawer,
   effectiveProfiles,
@@ -36,3 +38,5 @@ export default function DashboardHeader({
     </header>
   );
 }
+
+export default memo(DashboardHeader);

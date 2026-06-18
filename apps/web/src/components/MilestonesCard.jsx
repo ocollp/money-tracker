@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
@@ -91,7 +92,7 @@ function MilestoneRow({ name, target, progress, theme, t }) {
   );
 }
 
-export default function MilestonesCard({ liquidCurrent, patrimonyCurrent }) {
+function MilestonesCard({ liquidCurrent, patrimonyCurrent }) {
   const { t } = useI18n();
   const liquid = buildMilestoneProgress(liquidCurrent, MILESTONE_LIQUID_TARGET);
   const patrimony = buildMilestoneProgress(patrimonyCurrent, MILESTONE_PATRIMONY_TARGET);
@@ -118,3 +119,5 @@ export default function MilestonesCard({ liquidCurrent, patrimonyCurrent }) {
     </div>
   );
 }
+
+export default memo(MilestonesCard);

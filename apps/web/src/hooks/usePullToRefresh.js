@@ -12,11 +12,29 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
   const startY = useRef(null);
   const active = useRef(false);
   const pullPxRef = useRef(0);
+  const pendingPullRef = useRef(0);
+  const rafRef = useRef(null);
+  const onRefreshRef = useRef(onRefresh);
+  onRefreshRef.current = onRefresh;
+
+  const schedulePullUpdate = useCallback((next) => {
+    pendingPullRef.current = next;
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      setPullPx(pendingPullRef.current);
+    });
+  }, []);
 
   const endPull = useCallback(() => {
     startY.current = null;
     active.current = false;
     pullPxRef.current = 0;
+    pendingPullRef.current = 0;
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     setPullPx(0);
   }, []);
 
@@ -27,7 +45,7 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
       startY.current = e.touches[0].clientY;
       active.current = true;
     },
-    [disabled, loading]
+    [disabled, loading],
   );
 
   const onTouchMove = useCallback(
@@ -43,13 +61,13 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
         e.preventDefault();
         const next = Math.min(dy * 0.45, MAX_PULL);
         pullPxRef.current = next;
-        setPullPx(next);
+        schedulePullUpdate(next);
       } else {
         pullPxRef.current = 0;
-        setPullPx(0);
+        schedulePullUpdate(0);
       }
     },
-    [endPull]
+    [endPull, schedulePullUpdate],
   );
 
   const onTouchEnd = useCallback(() => {
@@ -58,11 +76,16 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
     active.current = false;
     startY.current = null;
     pullPxRef.current = 0;
+    pendingPullRef.current = 0;
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     setPullPx(0);
     if (px >= RELEASE_PULL_PX && !loading && !disabled) {
-      onRefresh();
+      onRefreshRef.current?.();
     }
-  }, [loading, disabled, onRefresh]);
+  }, [loading, disabled]);
 
   useEffect(() => {
     if (disabled) return;
@@ -75,6 +98,7 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
       document.removeEventListener('touchmove', onTouchMove);
       document.removeEventListener('touchend', onTouchEnd);
       document.removeEventListener('touchcancel', onTouchEnd);
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
   }, [disabled, onTouchStart, onTouchMove, onTouchEnd]);
 

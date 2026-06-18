@@ -27,6 +27,8 @@ function readInitialCache(sheetId, profile) {
 }
 
 export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfig, onAuthExpired }) {
+  const onAuthExpiredRef = useRef(onAuthExpired);
+  onAuthExpiredRef.current = onAuthExpired;
   const sid1 = financeConfig.spreadsheetId;
   const sid2 = financeConfig.spreadsheetId2;
   const labels = financeConfig.profileLabels;
@@ -211,7 +213,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
       .catch((err) => {
         if (cancelled) return;
         if (err.message === SHEET_AUTH_ERRORS.JWT_EXPIRED) {
-          onAuthExpired?.();
+          onAuthExpiredRef.current?.();
           return;
         }
         if (err.message === SHEET_AUTH_ERRORS.GOOGLE_REAUTH) {
@@ -240,7 +242,6 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     ingestCsv,
     persistMonths,
     updateSheetAccessAfterFetch,
-    onAuthExpired,
   ]);
 
   useEffect(() => {

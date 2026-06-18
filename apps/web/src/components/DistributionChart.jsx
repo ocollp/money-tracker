@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, memo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
@@ -193,7 +193,7 @@ const PIE_LAYOUT = {
   },
 };
 
-export default function DistributionChart({
+function DistributionChart({
   distribution,
   title,
   selectedEntities = [],
@@ -317,7 +317,7 @@ export default function DistributionChart({
                   if (name && onSelectEntity) onSelectEntity(name);
                 }}
                 isAnimationActive={true}
-                animationDuration={600}
+                animationDuration={400}
                 animationEasing="ease-out"
               >
                 {pieData.map((d, i) => (
@@ -461,3 +461,5 @@ export default function DistributionChart({
     </div>
   );
 }
+
+export default memo(DistributionChart);

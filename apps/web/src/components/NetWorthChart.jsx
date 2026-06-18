@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
 import { formatMoney, formatChange, formatPct } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
@@ -58,17 +58,35 @@ function formatNetWorthAxisTick(v) {
 
 const RANGE_KEYS = ['3', '6', '12', 'all'];
 
-export default function NetWorthChart({ months, totals, title = 'Patrimoni', subtitle = 'Diners i inversions', tooltipLabel = 'Patrimoni', selectedEntity, onClearEntity }) {
+function NetWorthChart({
+  months,
+  totals,
+  title = 'Patrimoni',
+  subtitle = 'Diners i inversions',
+  tooltipLabel = 'Patrimoni',
+  selectedEntity,
+  onClearEntity,
+}) {
   const { t } = useI18n();
   const { hideMoney } = usePrivacy();
   const [range, setRange] = useState('6');
   const [narrow, setNarrow] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
+  const [reduceMotion, setReduceMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   const [animKey, setAnimKey] = useState(0);
   const prevTitleRef = useRef(title);
 
   useEffect(() => {
     const mql = window.matchMedia('(max-width: 640px)');
     const onChange = (e) => setNarrow(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = (e) => setReduceMotion(e.matches);
     mql.addEventListener('change', onChange);
     return () => mql.removeEventListener('change', onChange);
   }, []);
@@ -276,8 +294,8 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
               type="monotone" dataKey="total" stroke="#38bdf8" strokeWidth={2.5}
               fill="url(#netWorthGrad)" dot={false}
               activeDot={{ r: 5, fill: '#38bdf8', stroke: '#38bdf840', strokeWidth: 6 }}
-              isAnimationActive={true}
-              animationDuration={800}
+              isAnimationActive={!reduceMotion}
+              animationDuration={reduceMotion ? 0 : narrow ? 350 : 500}
               animationEasing="ease-out"
             />
             {lastPoint && (
@@ -313,3 +331,5 @@ export default function NetWorthChart({ months, totals, title = 'Patrimoni', sub
     </div>
   );
 }
+
+export default memo(NetWorthChart);

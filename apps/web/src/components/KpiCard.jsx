@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
 import { formatPct } from '../utils/formatters';
 
-export default function KpiCard({
+function KpiCard({
   title,
   value,
   subtitle,
@@ -61,3 +61,5 @@ export default function KpiCard({
     </div>
   );
 }
+
+export default memo(KpiCard);
