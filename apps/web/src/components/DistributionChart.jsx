@@ -1,8 +1,9 @@
-import { useMemo, useState, memo } from 'react';
+import { useMemo, useState, memo, useCallback } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
+import { shouldSuppressPointerClick } from '../lib/touchGestureGuard.js';
 import {
   DASHBOARD_SECTION_CARD,
   DASHBOARD_SECTION_TITLE,
@@ -258,7 +259,24 @@ function DistributionChart({
   const housingEntry = recalculated.find((d) => d.isHousing);
   const selectionAppliesToPie = selectedEntities.some((n) => pieData.some((p) => p.name === n));
 
-  const clearFilter = () => onSelectEntity?.(null);
+  const clearFilter = useCallback(() => onSelectEntity?.(null), [onSelectEntity]);
+
+  const handlePieClick = useCallback(
+    (_, i) => {
+      if (shouldSuppressPointerClick()) return;
+      const name = pieData[i]?.name;
+      if (name && onSelectEntity) onSelectEntity(name);
+    },
+    [pieData, onSelectEntity],
+  );
+
+  const handleLegendClick = useCallback(
+    (name) => {
+      if (shouldSuppressPointerClick()) return;
+      onSelectEntity?.(name);
+    },
+    [onSelectEntity],
+  );
 
   const setHousingVisible = (next) => {
     setShowHousing(next);
@@ -292,13 +310,16 @@ function DistributionChart({
         )}
       </div>
       {hasSelection && (
-        <p className="mb-3 -mt-1 text-[11px] leading-snug text-text-secondary sm:hidden">{t.distributionDoubleTapHint ?? ''}</p>
+        <p className="mb-3 -mt-1 text-[11px] leading-snug text-text-secondary sm:hidden">
+          {t.distributionClearHint ?? t.distributionDoubleTapHint ?? ''}
+        </p>
       )}
       <div className="flex min-h-0 w-full flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-5 lg:gap-6">
         <div
-          className="relative mx-auto aspect-square w-full max-w-[min(100%,17rem)] shrink-0 leading-none sm:mx-0 sm:h-64 sm:w-64 sm:max-w-none lg:h-72 lg:w-72"
+          className="relative mx-auto aspect-square w-full max-w-[min(100%,17rem)] shrink-0 leading-none touch-pan-y sm:mx-0 sm:h-64 sm:w-64 sm:max-w-none sm:touch-auto lg:h-72 lg:w-72"
           onDoubleClick={hasSelection ? clearFilter : undefined}
         >
+          <div className="h-full w-full max-sm:pointer-events-none">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
               <Pie
@@ -312,10 +333,7 @@ function DistributionChart({
                 stroke={pieShape.stroke}
                 strokeWidth={pieShape.strokeWidth ?? 0}
                 style={{ cursor: onSelectEntity ? 'pointer' : 'default' }}
-                onClick={(_, i) => {
-                  const name = pieData[i]?.name;
-                  if (name && onSelectEntity) onSelectEntity(name);
-                }}
+                onClick={onSelectEntity ? handlePieClick : undefined}
                 isAnimationActive={true}
                 animationDuration={400}
                 animationEasing="ease-out"
@@ -324,8 +342,8 @@ function DistributionChart({
                   <Cell
                     key={i}
                     fill={getColor(d.name, i)}
-                    opacity={selectionAppliesToPie && !isSliceSelected(d.name) ? 0.25 : 1}
-                    style={{ transition: 'opacity 0.3s ease' }}
+                    opacity={selectionAppliesToPie && !isSliceSelected(d.name) ? 0.5 : 1}
+                    style={{ transition: 'opacity 0.2s ease' }}
                   />
                 ))}
               </Pie>
@@ -343,27 +361,47 @@ function DistributionChart({
                 />
               </PieChart>
             </ResponsiveContainer>
+          </div>
             <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center gap-0.5 px-2 text-center sm:px-2">
             {hasDonutHole ? (
-              <div className="flex flex-col gap-0.5">
-                {hideMoney ? (
-                  <>
-                    <span className="text-[10px] leading-tight text-text-secondary sm:text-xs">
-                      {t.distributionPctOnlyLabel ?? '%'}
+              <>
+                {hasSelection && onSelectEntity ? (
+                  <button
+                    type="button"
+                    onClick={clearFilter}
+                    className="pointer-events-auto flex min-h-[5.5rem] min-w-[5.5rem] flex-col items-center justify-center gap-1 rounded-full border border-white/[0.14] bg-black/40 px-3 backdrop-blur-sm transition-all active:scale-95 sm:hidden"
+                    aria-label={t.distributionAllEntities ?? 'Totes'}
+                  >
+                    <svg className="h-5 w-5 text-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span className="text-[10px] font-semibold text-text-secondary">
+                      {t.distributionClearFilter ?? 'Treure'}
                     </span>
-                    <span className="text-base font-bold tabular-nums tracking-tight text-text-primary sm:text-lg">
-                      100%
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-[10px] text-text-secondary sm:text-xs">{t.distributionTotal}</span>
-                    <span className="text-sm font-semibold tabular-nums text-text-primary sm:text-base">
-                      {formatMoney(visibleTotal)}
-                    </span>
-                  </>
-                )}
-              </div>
+                  </button>
+                ) : null}
+                <div
+                  className={`flex flex-col gap-0.5 ${hasSelection && onSelectEntity ? 'hidden sm:flex' : ''}`}
+                >
+                  {hideMoney ? (
+                    <>
+                      <span className="text-[10px] leading-tight text-text-secondary sm:text-xs">
+                        {t.distributionPctOnlyLabel ?? '%'}
+                      </span>
+                      <span className="text-base font-bold tabular-nums tracking-tight text-text-primary sm:text-lg">
+                        100%
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-[10px] text-text-secondary sm:text-xs">{t.distributionTotal}</span>
+                      <span className="text-sm font-semibold tabular-nums text-text-primary sm:text-base">
+                        {formatMoney(visibleTotal)}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </>
             ) : (
               <div className="max-w-[min(92%,18rem)] rounded-full border border-white/[0.14] bg-black/50 px-3 py-2 shadow-lg backdrop-blur-md sm:max-w-[80%] sm:px-4 sm:py-2.5">
                 {hideMoney ? (
@@ -401,8 +439,8 @@ function DistributionChart({
                 className={`group space-y-1 rounded-xl px-1 py-2 sm:px-2 sm:py-2.5 transition-all duration-200 ${
                   onSelectEntity ? 'cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06]' : 'cursor-default'
                 }`}
-                style={{ opacity: selectionAppliesToPie && !isSliceSelected(d.name) ? 0.3 : 1 }}
-                onClick={() => onSelectEntity?.(d.name)}
+                style={{ opacity: selectionAppliesToPie && !isSliceSelected(d.name) ? 0.5 : 1 }}
+                onClick={() => handleLegendClick(d.name)}
                 onDoubleClick={clearFilter}
               >
                 <div className="flex items-center justify-between gap-1.5 sm:gap-2">

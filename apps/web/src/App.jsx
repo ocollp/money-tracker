@@ -411,6 +411,9 @@ export default function App() {
   const liquidDelta = entityChange ? entityChange.change : viewStats.changeVsPrev;
   const liquidPct = entityChange ? entityChange.pct : viewStats.changeVsPrevPct;
 
+  const travelPct = viewStats.travel?.changeVsPrevPct;
+  const travelDelta = viewStats.travel?.changeVsPrev;
+
   const patrimonyForMilestones =
     viewStats.currentTotalWealth -
     (viewStats.hasTravel && viewStats.travel
@@ -491,15 +494,13 @@ export default function App() {
               className={viewStats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
               title={t.travelTitle}
               value={formatMoney(viewStats.travel.current ?? 0)}
+              privacyPct={travelPct}
               subtitle={
-                (viewStats.travel.spentLastMonth ?? 0) > 0
-                  ? typeof t.travelSpentLastMonth === 'function'
-                    ? t.travelSpentLastMonth(formatMoney(viewStats.travel.spentLastMonth ?? 0))
-                    : `${t.travelSpentLastMonth}: ${formatMoney(viewStats.travel.spentLastMonth ?? 0)}`
+                travelPct != null && !Number.isNaN(travelPct)
+                  ? t.kpiVsPrevMonth(formatPct(travelPct))
                   : null
               }
-              trend={0}
-              subtitleColor={(viewStats.travel.spentLastMonth ?? 0) > 0 ? 'text-text-secondary' : undefined}
+              trend={travelDelta != null ? travelDelta : 0}
               icon="✈️"
             />
           )}

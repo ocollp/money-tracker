@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
+import { suppressPointerClicksFor } from '../lib/touchGestureGuard.js';
 
 const RELEASE_PULL_PX = 38;
 const MAX_PULL = 100;
@@ -11,6 +12,7 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
   const [pullPx, setPullPx] = useState(0);
   const startY = useRef(null);
   const active = useRef(false);
+  const movedRef = useRef(false);
   const pullPxRef = useRef(0);
   const pendingPullRef = useRef(0);
   const rafRef = useRef(null);
@@ -29,6 +31,7 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
   const endPull = useCallback(() => {
     startY.current = null;
     active.current = false;
+    movedRef.current = false;
     pullPxRef.current = 0;
     pendingPullRef.current = 0;
     if (rafRef.current != null) {
@@ -44,6 +47,7 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
       if (scrollTop() > 8) return;
       startY.current = e.touches[0].clientY;
       active.current = true;
+      movedRef.current = false;
     },
     [disabled, loading],
   );
@@ -57,6 +61,10 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
       }
       const y = e.touches[0].clientY;
       const dy = y - startY.current;
+      if (Math.abs(dy) > 8) {
+        movedRef.current = true;
+        suppressPointerClicksFor(450);
+      }
       if (dy > 0) {
         e.preventDefault();
         const next = Math.min(dy * 0.45, MAX_PULL);
@@ -82,6 +90,9 @@ export function usePullToRefresh({ onRefresh, disabled, loading }) {
       rafRef.current = null;
     }
     setPullPx(0);
+    if (movedRef.current || px >= 4) {
+      suppressPointerClicksFor(450);
+    }
     if (px >= RELEASE_PULL_PX && !loading && !disabled) {
       onRefreshRef.current?.();
     }

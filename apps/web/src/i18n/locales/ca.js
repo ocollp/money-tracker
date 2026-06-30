@@ -110,6 +110,8 @@ export const t = {
   addMonthTotal: 'Total',
   distributionTooltipPct: (pct) => `${pct}% del total`,
   distributionDoubleTapHint: 'Doble clic al gràfic o a una fila per mostrar tot.',
+  distributionClearHint: 'Toca el centre del gràfic o una fila per treure el filtre.',
+  distributionClearFilter: 'Treure',
   distributionBbvaGroup: 'BBVA',
   distributionBbvaChecking: 'Compte corrent',
   distributionBbvaMortgage: 'Hipoteca',

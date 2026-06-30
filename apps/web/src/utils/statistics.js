@@ -392,6 +392,10 @@ export function computeStatistics(months, options = {}) {
   }
   distribution.sort((a, b) => b.value - a.value);
   const prevTravelFund = months.length > 1 ? (months[months.length - 2].travelFund || 0) : 0;
+  const travelChangeVsPrev = months.length > 1 ? latestTravelFund - prevTravelFund : null;
+  const travelChangeVsPrevPct = prevTravelFund
+    ? ((latestTravelFund - prevTravelFund) / prevTravelFund) * 100
+    : null;
 
   const travelAdjPatrimonyKpi = (fund) =>
     hasTravel && fund ? fund * (1 - TRAVEL_PATRIMONY_SHARE) : 0;
@@ -611,6 +615,8 @@ export function computeStatistics(months, options = {}) {
     },
     travel: {
       current: latestTravelFund,
+      changeVsPrev: travelChangeVsPrev,
+      changeVsPrevPct: travelChangeVsPrevPct,
       spentLastMonth: travelSpentLastMonth,
       evolution: travelEvolution,
       pace: travelPace,

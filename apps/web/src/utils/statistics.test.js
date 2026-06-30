@@ -113,6 +113,8 @@ describe('computeStatistics', () => {
     expect(stats.changeVsPrevTotal).toBe(-17_000);
     const agosto = stats.heatmap.find((h) => h.key === '2025-08');
     expect(agosto.value).toBe(-17_000);
+    expect(stats.travel.changeVsPrev).toBe(-15_000);
+    expect(stats.travel.changeVsPrevPct).toBe(-50);
   });
 
   it('heatmap uses carried housing value so first Vivienda row does not fake +150k total change', () => {
