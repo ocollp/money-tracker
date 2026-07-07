@@ -3,11 +3,28 @@ import {
   PROFILE_SECONDARY_ID,
   PROFILE_TERTIARY_ID,
 } from '../config.js';
+import { ASSET_CLASS_LABELS } from '../utils/assetClassBuckets.js';
+import {
+  COLOR_PENSION,
+  COLOR_REMUNERAT,
+  COLOR_TERTIARY_CORRENTS,
+  COLOR_TERTIARY_INVERSIONS,
+} from './distributionPalette.js';
 
 export const TERTIARY_CATEGORY_BUCKETS = {
   'cuenta corriente': 'Comptes corrents',
   acciones: 'Inversions',
   'cuenta flexible': 'Comptes remunerats',
+  'plan de pensiones': ASSET_CLASS_LABELS.pension,
+  'plan de pensions': ASSET_CLASS_LABELS.pension,
+  'pla de pensions': ASSET_CLASS_LABELS.pension,
+};
+
+export const TERTIARY_DISTRIBUTION_COLORS = {
+  'Comptes corrents': COLOR_TERTIARY_CORRENTS,
+  Inversions: COLOR_TERTIARY_INVERSIONS,
+  'Comptes remunerats': COLOR_REMUNERAT,
+  [ASSET_CLASS_LABELS.pension]: COLOR_PENSION,
 };
 
 const DEFAULT_FEATURES = {

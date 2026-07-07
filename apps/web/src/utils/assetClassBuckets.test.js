@@ -273,7 +273,7 @@ describe('buildAssetClassSeries', () => {
     expect(names.has(ASSET_CLASS_LABELS.equities)).toBe(true);
   });
 
-  it('groups Diego & Montse categories into three buckets', () => {
+  it('groups Diego & Montse categories into buckets aligned with Olga labels', () => {
     const months = [
       {
         shortLabel: 'Jul 26',
@@ -284,6 +284,7 @@ describe('buildAssetClassSeries', () => {
           { category: 'Acciones', entity: 'Santander', type: 'Invertido', amount: 41253, isHousing: false, isTravel: false },
           { category: 'Cuenta flexible', entity: 'Revolut', type: 'Invertido', amount: 10001, isHousing: false, isTravel: false },
           { category: 'Cuenta flexible', entity: 'Trade Republic', type: 'Invertido', amount: 10534, isHousing: false, isTravel: false },
+          { category: 'Plan de pensiones', entity: 'Santander', type: 'Invertido', amount: 8500, isHousing: false, isTravel: false },
         ],
         travelFund: 0,
       },
@@ -293,6 +294,7 @@ describe('buildAssetClassSeries', () => {
     expect(byName['Comptes corrents']).toBe(32171);
     expect(byName.Inversions).toBe(41253);
     expect(byName['Comptes remunerats']).toBe(20535);
-    expect(distribution).toHaveLength(3);
+    expect(byName['Pla de pensions']).toBe(8500);
+    expect(distribution).toHaveLength(4);
   });
 });

@@ -4,6 +4,12 @@ import { formatMoney } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
 import { shouldSuppressPointerClick } from '../lib/touchGestureGuard.js';
+import { TERTIARY_DISTRIBUTION_COLORS } from '../lib/profileConfig.js';
+import {
+  COLOR_PENSION,
+  COLOR_REMUNERAT,
+  COLOR_ACCIONS,
+} from '../lib/distributionPalette.js';
 import {
   DASHBOARD_SECTION_CARD,
   DASHBOARD_SECTION_TITLE,
@@ -37,14 +43,12 @@ const ENTITY_COLORS = {
   Crowdfunding: '#f97316',
   ETFs: '#a855f7',
   'Fons indexat': '#7c3aed',
-  'Pla de pensions': '#1d4ed8',
-  Accions: '#22c55e',
+  'Pla de pensions': COLOR_PENSION,
+  Accions: COLOR_ACCIONS,
   Cripto: '#ec4899',
-  'Compte remunerat': '#ef4444',
+  'Compte remunerat': COLOR_REMUNERAT,
   'Estalvi líquid': '#ca8a04',
-  Inversions: '#ef4444',
-  'Comptes remunerats': '#2e8b57',
-  'Comptes corrents': '#2563eb',
+  ...TERTIARY_DISTRIBUTION_COLORS,
 };
 
 const REPARTIMENT_DISPLAY_LABELS = {

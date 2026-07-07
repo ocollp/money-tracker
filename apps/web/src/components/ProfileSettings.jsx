@@ -27,10 +27,6 @@ const MORTGAGE_FIELDS = [
   { key: 'ownershipShare', labelKey: 'ownershipShare', type: 'text' },
 ];
 
-const OTHER_FIELDS = [
-  { key: 'assumedUnemployment', labelKey: 'assumedUnemployment', type: 'number' },
-];
-
 const ALL_FIELDS = [
   ...SHEET_FIELDS,
   ...PROFILE_FIELDS,
@@ -38,7 +34,6 @@ const ALL_FIELDS = [
   { key: EMOJI_KEYS.secondary },
   { key: EMOJI_KEYS.tertiary },
   ...MORTGAGE_FIELDS,
-  ...OTHER_FIELDS,
 ];
 
 const LOCAL_EDIT_KEYS = new Set([
@@ -55,7 +50,7 @@ function buildPatchFromForm(form) {
   for (const { key } of ALL_FIELDS) {
     const raw = form[key]?.trim?.() ?? '';
     if (raw === '') patch[key] = null;
-    else if (['mortgageEndYear', 'mortgageEndMonth', 'mortgageMonthlyPayment', 'assumedUnemployment'].includes(key)) {
+    else if (['mortgageEndYear', 'mortgageEndMonth', 'mortgageMonthlyPayment'].includes(key)) {
       const n = Number(raw);
       patch[key] = Number.isNaN(n) ? null : n;
     } else if (key === 'ownershipShare') {
@@ -207,7 +202,7 @@ export default function ProfileSettings({
   readOnlySubtitle = null,
   settingsVariant = 'api',
 }) {
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
@@ -413,49 +408,6 @@ export default function ProfileSettings({
                   ))}
                 </div>
               </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <SectionHeader icon="⚙️" title={t.sectionOther} />
-            <div className="rounded-xl bg-surface/50 border border-white/[0.06] p-3 space-y-3">
-              <div className="space-y-2 pb-3 border-b border-white/[0.06]">
-                <p className="text-xs font-medium text-text-secondary">{t.languageTitle}</p>
-                <div className="flex gap-1 rounded-lg border border-white/[0.08] p-1 bg-black/25">
-                  <button
-                    type="button"
-                    onClick={() => setLocale('ca')}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      locale === 'ca'
-                        ? 'bg-brand/25 text-text-primary border border-brand/40 shadow-sm'
-                        : 'text-text-secondary hover:bg-white/[0.06] border border-transparent'
-                    }`}
-                  >
-                    {t.languageCaLabel}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLocale('es')}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      locale === 'es'
-                        ? 'bg-brand/25 text-text-primary border border-brand/40 shadow-sm'
-                        : 'text-text-secondary hover:bg-white/[0.06] border border-transparent'
-                    }`}
-                  >
-                    {t.languageEsLabel}
-                  </button>
-                </div>
-              </div>
-              {OTHER_FIELDS.map(({ key, labelKey, type }) => (
-                <FieldInput
-                  key={key}
-                  label={t[labelKey]}
-                  type={type}
-                  value={form[key] ?? ''}
-                  onChange={(v) => handleChange(key, v)}
-                  locked={fieldLocked(key)}
-                />
-              ))}
             </div>
           </section>
 

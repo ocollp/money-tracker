@@ -114,7 +114,11 @@ export function buildCategoryGroupedAssetClassSeries(months, categoryBuckets) {
     const point = { date: m.shortLabel, key: m.key };
     for (const row of m.entries || []) {
       if (row.isTravel || row.isHousing) continue;
-      const cat = (row.category || '').trim().toLowerCase();
+      const cat = (row.category || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/\p{M}/gu, '');
       const label = categoryBuckets[cat];
       if (!label) continue;
       point[label] = (point[label] || 0) + row.amount;

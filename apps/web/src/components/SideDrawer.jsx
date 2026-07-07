@@ -46,7 +46,6 @@ export default function SideDrawer({
   onLogout,
   t,
   stats,
-  onAddMonth,
   passkey,
 }) {
   const touchStart = useRef({ x: 0, y: 0 });
@@ -151,14 +150,6 @@ export default function SideDrawer({
 
       <div className={`border-t border-white/[0.06] space-y-1.5 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
         <PrivacyMenuItem collapsed={collapsed} />
-        <DrawerItem
-          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v16m8-8H4" /></svg>}
-          label={t.addMonth ?? 'Afegir mes'}
-          onClick={onAddMonth}
-          collapsed={collapsed}
-          iconColor="text-emerald-400/70"
-          disabled={!stats}
-        />
         <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={onSettings} collapsed={collapsed} iconColor="text-sky-400/70" />
         {user && passkey?.supported && !passkey.hasRegistered && (
           <DrawerItem
@@ -211,13 +202,6 @@ export default function SideDrawer({
 
         <div className="px-3 py-3 border-t border-white/[0.06] space-y-1.5" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
           <PrivacyMenuItem collapsed={false} onAfterToggle={onClose} />
-          <DrawerItem
-            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v16m8-8H4" /></svg>}
-            label={t.addMonth ?? 'Afegir mes'}
-            onClick={menuAction(onAddMonth)}
-            iconColor="text-emerald-400/70"
-            disabled={!stats}
-          />
           <DrawerItem icon={<SettingsIcon />} label={t.settings} onClick={menuAction(onSettings)} iconColor="text-sky-400/70" />
           {user && passkey?.supported && !passkey.hasRegistered && (
             <DrawerItem
