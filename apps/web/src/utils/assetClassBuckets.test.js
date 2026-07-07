@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { classifyLiquidEntry, buildAssetClassSeries, ASSET_CLASS_LABELS } from './assetClassBuckets.js';
+import {
+  classifyLiquidEntry,
+  buildAssetClassSeries,
+  buildCategoryGroupedAssetClassSeries,
+  ASSET_CLASS_LABELS,
+} from './assetClassBuckets.js';
+import { TERTIARY_CATEGORY_BUCKETS } from '../lib/profileConfig.js';
 
 describe('classifyLiquidEntry', () => {
   it('classifies pension keywords', () => {
@@ -265,5 +271,28 @@ describe('buildAssetClassSeries', () => {
     expect(names.has(ASSET_CLASS_LABELS.indexed)).toBe(true);
     expect(names.has(ASSET_CLASS_LABELS.etfs)).toBe(true);
     expect(names.has(ASSET_CLASS_LABELS.equities)).toBe(true);
+  });
+
+  it('groups Diego & Montse categories into three buckets', () => {
+    const months = [
+      {
+        shortLabel: 'Jul 26',
+        key: '2026-07',
+        entries: [
+          { category: 'Cuenta corriente', entity: 'CaixaBank', type: 'Cash', amount: 20598, isHousing: false, isTravel: false },
+          { category: 'Cuenta corriente', entity: 'Santander', type: 'Cash', amount: 11573, isHousing: false, isTravel: false },
+          { category: 'Acciones', entity: 'Santander', type: 'Invertido', amount: 41253, isHousing: false, isTravel: false },
+          { category: 'Cuenta flexible', entity: 'Revolut', type: 'Invertido', amount: 10001, isHousing: false, isTravel: false },
+          { category: 'Cuenta flexible', entity: 'Trade Republic', type: 'Invertido', amount: 10534, isHousing: false, isTravel: false },
+        ],
+        travelFund: 0,
+      },
+    ];
+    const { distribution } = buildCategoryGroupedAssetClassSeries(months, TERTIARY_CATEGORY_BUCKETS);
+    const byName = Object.fromEntries(distribution.map((d) => [d.name, d.value]));
+    expect(byName['Comptes corrents']).toBe(32171);
+    expect(byName.Inversions).toBe(41253);
+    expect(byName['Comptes remunerats']).toBe(20535);
+    expect(distribution).toHaveLength(3);
   });
 });

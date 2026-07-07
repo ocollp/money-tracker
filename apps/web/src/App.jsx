@@ -7,15 +7,19 @@ import {
   buildFinanceConfig,
   financeConfigToSettingsFormShape,
   financeConfigToStatsOptions,
+  financeConfigSheetIdForProfile,
   applyLocalProfileDisplay,
 } from './lib/mergeFinanceConfig.js';
+import { getProfileFeatures } from './lib/profileConfig.js';
 import { computeStatisticsAsOf } from './lib/statsForMonth.js';
 import { loadLocalProfileDisplay, saveLocalProfileDisplay } from './lib/localProfileDisplay.js';
 import {
   PROFILE_EMAILS,
   PROFILE_PRIMARY_ID,
   PROFILE_SECONDARY_ID,
+  PROFILE_TERTIARY_ID,
   SPREADSHEET_ID_2,
+  SPREADSHEET_ID_3,
   API_URL,
   TRAVEL_PATRIMONY_SHARE,
 } from './config';
@@ -46,6 +50,7 @@ function normalizeStoredProfileId(saved) {
   if (!saved) return null;
   if (saved === PROFILE_PRIMARY_ID || saved === 'olga') return PROFILE_PRIMARY_ID;
   if (saved === PROFILE_SECONDARY_ID || saved === 'andrea') return PROFILE_SECONDARY_ID;
+  if (saved === PROFILE_TERTIARY_ID) return PROFILE_TERTIARY_ID;
   return null;
 }
 
@@ -53,6 +58,7 @@ function getInitialProfile() {
   try {
     const saved = localStorage.getItem(PROFILE_KEY);
     const id = normalizeStoredProfileId(saved);
+    if (id === PROFILE_TERTIARY_ID && SPREADSHEET_ID_3) return PROFILE_TERTIARY_ID;
     if (id === PROFILE_SECONDARY_ID && SPREADSHEET_ID_2) return PROFILE_SECONDARY_ID;
     return PROFILE_PRIMARY_ID;
   } catch {
@@ -134,7 +140,13 @@ export default function App() {
         localStorage.setItem(PROFILE_KEY, PROFILE_PRIMARY_ID);
       } catch {}
     }
-  }, [financeConfig.spreadsheetId2, profile]);
+    if (profile === PROFILE_TERTIARY_ID && !financeConfig.spreadsheetId3) {
+      setProfile(PROFILE_PRIMARY_ID);
+      try {
+        localStorage.setItem(PROFILE_KEY, PROFILE_PRIMARY_ID);
+      } catch {}
+    }
+  }, [financeConfig.spreadsheetId2, financeConfig.spreadsheetId3, profile]);
 
   const {
     sheetAccess,
@@ -293,7 +305,7 @@ export default function App() {
     );
   }
 
-  if (user && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2) {
+  if (user && sheetAccess && !sheetAccess.id1 && !sheetAccess.id2 && !sheetAccess.id3) {
     const primarySid = String(financeConfig.spreadsheetId || '').trim();
     const hasPrimarySheetId = Boolean(primarySid);
     const hasSecondarySheetConfigured = Boolean(String(financeConfig.spreadsheetId2 || '').trim());
@@ -396,8 +408,12 @@ export default function App() {
 
   const updatedLabel = formatUpdatedClock(lastUpdatedAt);
   const viewStats = displayStats;
+  const profileFeatures = getProfileFeatures(effectiveProfile);
 
-  const kpiCount = 2 + (viewStats.hasTravel ? 1 : 0) + (viewStats.hasHousing ? 1 : 0);
+  const kpiCount =
+    2 +
+    (viewStats.hasTravel && profileFeatures.showTravelKpi ? 1 : 0) +
+    (viewStats.hasHousing && profileFeatures.showPatrimonyKpi ? 1 : 0);
   const kpiLgCols =
     kpiCount >= 4 ? 'lg:grid-cols-4' : kpiCount === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2';
 
@@ -489,7 +505,7 @@ export default function App() {
             trend={liquidDelta != null ? liquidDelta : 0}
             icon="💰"
           />
-          {viewStats.hasTravel && viewStats.travel && (
+          {viewStats.hasTravel && viewStats.travel && profileFeatures.showTravelKpi && (
             <KpiCard
               className={viewStats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
               title={t.travelTitle}
@@ -504,7 +520,7 @@ export default function App() {
               icon="✈️"
             />
           )}
-          {viewStats.hasHousing && (
+          {viewStats.hasHousing && profileFeatures.showPatrimonyKpi && (
             <KpiCard
               className={kpiCount === 3 ? 'col-span-2 lg:col-span-1' : ''}
               title={t.kpiTotalWealth}
@@ -540,7 +556,7 @@ export default function App() {
                 onSelectEntity={handleDistributionEntitySelect}
                 entityEvolution={viewStats.assetClassEvolution}
                 distributionSparklineExtras={{}}
-                hasHousing={viewStats.hasHousing}
+                hasHousing={viewStats.hasHousing && profileFeatures.showHousingSection}
                 onShowHousingChange={handleShowHousingChange}
               />
             </div>
@@ -584,12 +600,13 @@ export default function App() {
           onSelectMonth={handleHeatmapSelectMonth}
         />
 
-        {viewStats.hasHousing && (
+        {viewStats.hasHousing && profileFeatures.showHousingSection && (
           <MortgageCard housing={viewStats.housing} />
         )}
 
+        {profileFeatures.showPatterns ? (
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
-          {effectiveProfile === PROFILE_PRIMARY_ID ? (
+          {effectiveProfile === PROFILE_PRIMARY_ID && profileFeatures.showMilestones ? (
             <div className="min-w-0 h-full">
               <MilestonesCard
                 liquidCurrent={viewStats.current}
@@ -599,12 +616,15 @@ export default function App() {
           ) : null}
           <div
             className={`min-w-0 h-full ${
-              effectiveProfile === PROFILE_PRIMARY_ID ? '' : 'lg:col-span-2'
+              effectiveProfile === PROFILE_PRIMARY_ID && profileFeatures.showMilestones
+                ? ''
+                : 'lg:col-span-2'
             }`}
           >
             <Patterns yearComparison={viewStats.yearComparison} heatmap={viewStats.heatmap} />
           </div>
         </section>
+        ) : null}
       </main>
 
       <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
@@ -628,7 +648,7 @@ export default function App() {
       {addMonthOpen && stats && (
         <AddMonthModal
           months={stats.months}
-          spreadsheetId={effectiveProfile === PROFILE_SECONDARY_ID ? financeConfig.spreadsheetId2 : financeConfig.spreadsheetId}
+          spreadsheetId={financeConfigSheetIdForProfile(financeConfig, effectiveProfile)}
           appJwt={appJwt}
           apiUrl={API_URL}
           fixedHousingSheetValue={financeConfig.fixedHousingSheetValue}

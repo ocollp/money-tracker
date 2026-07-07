@@ -105,6 +105,39 @@ function zeroBucketRecord() {
   return o;
 }
 
+export function buildCategoryGroupedAssetClassSeries(months, categoryBuckets) {
+  if (!months?.length) {
+    return { distribution: [], evolution: [] };
+  }
+
+  const evolution = months.map((m) => {
+    const point = { date: m.shortLabel, key: m.key };
+    for (const row of m.entries || []) {
+      if (row.isTravel || row.isHousing) continue;
+      const cat = (row.category || '').trim().toLowerCase();
+      const label = categoryBuckets[cat];
+      if (!label) continue;
+      point[label] = (point[label] || 0) + row.amount;
+    }
+    return point;
+  });
+
+  const last = evolution[evolution.length - 1];
+  const distribution = Object.keys(categoryBuckets)
+    .map((cat) => categoryBuckets[cat])
+    .filter((name, idx, arr) => arr.indexOf(name) === idx)
+    .map((name) => ({ name, value: last[name] || 0 }))
+    .filter((d) => d.value !== 0)
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+
+  const total = distribution.reduce((s, d) => s + d.value, 0);
+  for (const d of distribution) {
+    d.pct = total !== 0 ? (d.value / total) * 100 : 0;
+  }
+
+  return { distribution, evolution };
+}
+
 export function buildAssetClassSeries(months, housingEffective, mortgageEffective, hasHousing, travelPatrimonyShare) {
   if (!months?.length) {
     return { distribution: [], evolution: [] };

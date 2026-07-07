@@ -7,7 +7,8 @@ import {
   TRAVEL_MONTHLY_SAVING,
   TRAVEL_PATRIMONY_SHARE,
 } from '../config.js';
-import { buildAssetClassSeries } from './assetClassBuckets.js';
+import { buildAssetClassSeries, buildCategoryGroupedAssetClassSeries } from './assetClassBuckets.js';
+import { getProfileFeatures, TERTIARY_CATEGORY_BUCKETS } from '../lib/profileConfig.js';
 
 export function buildCarriedForwardSeries(values) {
   const n = values.length;
@@ -425,13 +426,18 @@ export function computeStatistics(months, options = {}) {
 
   const hasHousing = firstMortgageIdx >= 0 && lastIdx >= firstMortgageIdx;
 
-  const { distribution: assetClassDistribution, evolution: assetClassEvolution } = buildAssetClassSeries(
-    months,
-    housingWealth,
-    mortgageWealth,
-    hasHousing,
-    TRAVEL_PATRIMONY_SHARE,
-  );
+  const profileFeatures = getProfileFeatures(options.profileId);
+  const assetClassResult =
+    profileFeatures.assetClassMode === 'categoryGrouped'
+      ? buildCategoryGroupedAssetClassSeries(months, TERTIARY_CATEGORY_BUCKETS)
+      : buildAssetClassSeries(
+          months,
+          housingWealth,
+          mortgageWealth,
+          hasHousing,
+          TRAVEL_PATRIMONY_SHARE,
+        );
+  const { distribution: assetClassDistribution, evolution: assetClassEvolution } = assetClassResult;
 
   const latestHousingValue = housingWealth[lastIdx] || 0;
   const latestMortgageDebtSigned = mortgageWealth[lastIdx] || 0;

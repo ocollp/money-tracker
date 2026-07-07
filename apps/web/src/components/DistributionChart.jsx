@@ -42,6 +42,9 @@ const ENTITY_COLORS = {
   Cripto: '#ec4899',
   'Compte remunerat': '#ef4444',
   'Estalvi líquid': '#ca8a04',
+  Inversions: '#ef4444',
+  'Comptes remunerats': '#2e8b57',
+  'Comptes corrents': '#2563eb',
 };
 
 const REPARTIMENT_DISPLAY_LABELS = {

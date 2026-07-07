@@ -1,8 +1,10 @@
 import {
   SPREADSHEET_ID,
   SPREADSHEET_ID_2,
+  SPREADSHEET_ID_3,
   PROFILE_PRIMARY_ID,
   PROFILE_SECONDARY_ID,
+  PROFILE_TERTIARY_ID,
   PROFILE_LABELS,
   PROFILE_EMOJIS,
   MORTGAGE_END_YEAR,
@@ -19,6 +21,7 @@ export function buildFinanceConfig(apiSettings) {
   return {
     spreadsheetId: (s.spreadsheetId && String(s.spreadsheetId).trim()) || SPREADSHEET_ID,
     spreadsheetId2: (s.spreadsheetId2 && String(s.spreadsheetId2).trim()) || SPREADSHEET_ID_2,
+    spreadsheetId3: (s.spreadsheetId3 && String(s.spreadsheetId3).trim()) || SPREADSHEET_ID_3,
     profileLabels: {
       [PROFILE_PRIMARY_ID]:
         (s.profilePrimaryLabel && String(s.profilePrimaryLabel).trim()) ||
@@ -26,6 +29,9 @@ export function buildFinanceConfig(apiSettings) {
       [PROFILE_SECONDARY_ID]:
         (s.profileSecondaryLabel && String(s.profileSecondaryLabel).trim()) ||
         PROFILE_LABELS[PROFILE_SECONDARY_ID],
+      [PROFILE_TERTIARY_ID]:
+        (s.profileTertiaryLabel && String(s.profileTertiaryLabel).trim()) ||
+        PROFILE_LABELS[PROFILE_TERTIARY_ID],
     },
     profileEmojis: {
       [PROFILE_PRIMARY_ID]:
@@ -34,6 +40,9 @@ export function buildFinanceConfig(apiSettings) {
       [PROFILE_SECONDARY_ID]:
         (s.profileSecondaryEmoji && String(s.profileSecondaryEmoji).trim()) ||
         PROFILE_EMOJIS[PROFILE_SECONDARY_ID],
+      [PROFILE_TERTIARY_ID]:
+        (s.profileTertiaryEmoji && String(s.profileTertiaryEmoji).trim()) ||
+        PROFILE_EMOJIS[PROFILE_TERTIARY_ID],
     },
     mortgageEndYear:
       s.mortgageEndYear != null && !Number.isNaN(Number(s.mortgageEndYear))
@@ -76,6 +85,7 @@ export function applyLocalProfileDisplay(financeConfig, local) {
   };
   apply(PROFILE_PRIMARY_ID, 'profilePrimaryLabel', 'profilePrimaryEmoji');
   apply(PROFILE_SECONDARY_ID, 'profileSecondaryLabel', 'profileSecondaryEmoji');
+  apply(PROFILE_TERTIARY_ID, 'profileTertiaryLabel', 'profileTertiaryEmoji');
   return { ...financeConfig, profileLabels: L, profileEmojis: E };
 }
 
@@ -91,14 +101,23 @@ export function financeConfigToStatsOptions(finance) {
   };
 }
 
+export function financeConfigSheetIdForProfile(finance, profileId) {
+  if (profileId === PROFILE_SECONDARY_ID) return finance.spreadsheetId2;
+  if (profileId === PROFILE_TERTIARY_ID) return finance.spreadsheetId3;
+  return finance.spreadsheetId;
+}
+
 export function financeConfigToSettingsFormShape(finance) {
   return {
     spreadsheetId: finance.spreadsheetId ?? null,
     spreadsheetId2: finance.spreadsheetId2 || null,
+    spreadsheetId3: finance.spreadsheetId3 || null,
     profilePrimaryLabel: finance.profileLabels[PROFILE_PRIMARY_ID] ?? null,
     profileSecondaryLabel: finance.profileLabels[PROFILE_SECONDARY_ID] ?? null,
+    profileTertiaryLabel: finance.profileLabels[PROFILE_TERTIARY_ID] ?? null,
     profilePrimaryEmoji: finance.profileEmojis[PROFILE_PRIMARY_ID] ?? null,
     profileSecondaryEmoji: finance.profileEmojis[PROFILE_SECONDARY_ID] ?? null,
+    profileTertiaryEmoji: finance.profileEmojis[PROFILE_TERTIARY_ID] ?? null,
     mortgageEndYear: finance.mortgageEndYear,
     mortgageEndMonth: finance.mortgageEndMonth,
     mortgageMonthlyPayment: finance.mortgageMonthlyPayment,

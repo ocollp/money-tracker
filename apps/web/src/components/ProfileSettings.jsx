@@ -5,16 +5,19 @@ import { useI18n } from '../i18n/I18nContext.jsx';
 const SHEET_FIELDS = [
   { key: 'spreadsheetId', labelKey: 'sheetIdPrimary', type: 'text' },
   { key: 'spreadsheetId2', labelKey: 'sheetIdSecondary', type: 'text' },
+  { key: 'spreadsheetId3', labelKey: 'sheetIdTertiary', type: 'text' },
 ];
 
 const PROFILE_FIELDS = [
   { key: 'profilePrimaryLabel', labelKey: 'profileName', type: 'text' },
   { key: 'profileSecondaryLabel', labelKey: 'profileName', type: 'text' },
+  { key: 'profileTertiaryLabel', labelKey: 'profileName', type: 'text' },
 ];
 
 const EMOJI_KEYS = {
   primary: 'profilePrimaryEmoji',
   secondary: 'profileSecondaryEmoji',
+  tertiary: 'profileTertiaryEmoji',
 };
 
 const MORTGAGE_FIELDS = [
@@ -33,6 +36,7 @@ const ALL_FIELDS = [
   ...PROFILE_FIELDS,
   { key: EMOJI_KEYS.primary },
   { key: EMOJI_KEYS.secondary },
+  { key: EMOJI_KEYS.tertiary },
   ...MORTGAGE_FIELDS,
   ...OTHER_FIELDS,
 ];
@@ -40,8 +44,10 @@ const ALL_FIELDS = [
 const LOCAL_EDIT_KEYS = new Set([
   'profilePrimaryLabel',
   'profileSecondaryLabel',
+  'profileTertiaryLabel',
   'profilePrimaryEmoji',
   'profileSecondaryEmoji',
+  'profileTertiaryEmoji',
 ]);
 
 function buildPatchFromForm(form) {
@@ -322,10 +328,11 @@ export default function ProfileSettings({
 
           <section className="space-y-3">
             <SectionHeader icon="👤" title={t.sectionProfiles} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 { label: t.profilePrimary, nameField: PROFILE_FIELDS[0], emojiKey: EMOJI_KEYS.primary },
                 { label: t.profileSecondary, nameField: PROFILE_FIELDS[1], emojiKey: EMOJI_KEYS.secondary },
+                { label: t.profileTertiary, nameField: PROFILE_FIELDS[2], emojiKey: EMOJI_KEYS.tertiary },
               ].map(({ label, nameField, emojiKey }) => (
                 <div key={emojiKey} className="rounded-xl bg-surface/50 border border-white/[0.06] p-3 space-y-3">
                   <p className="text-[11px] font-medium text-text-secondary/70 uppercase tracking-wider">{label}</p>

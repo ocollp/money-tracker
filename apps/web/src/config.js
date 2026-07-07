@@ -9,26 +9,50 @@ export const API_URL = useDevProxy ? '' : rawApiUrl;
 export const HAS_BACKEND = Boolean(rawApiUrl) || useDevProxy;
 export const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 export const SPREADSHEET_ID_2 = import.meta.env.VITE_SPREADSHEET_ID_2 || '';
+export const SPREADSHEET_ID_3 = import.meta.env.VITE_SPREADSHEET_ID_3 || '';
 export const SHEET_RANGE = 'A:I';
 export const SCOPES =
   'https://www.googleapis.com/auth/spreadsheets openid email profile https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 export const PROFILE_PRIMARY_ID = 'primary';
 export const PROFILE_SECONDARY_ID = 'secondary';
+export const PROFILE_TERTIARY_ID = 'tertiary';
+
+function parseLoginEmailList(raw) {
+  if (raw == null || raw === '') return [];
+  return String(raw)
+    .split(/[,;]/)
+    .map((e) => e.trim())
+    .filter(Boolean);
+}
+
+function loginHintFromEnv(raw) {
+  const list = parseLoginEmailList(raw);
+  return list.length === 1 ? list[0] : '';
+}
+
+export const PROFILE_LOGIN_EMAIL_LISTS = {
+  [PROFILE_PRIMARY_ID]: parseLoginEmailList(import.meta.env.VITE_LOGIN_EMAIL_01),
+  [PROFILE_SECONDARY_ID]: parseLoginEmailList(import.meta.env.VITE_LOGIN_EMAIL_02),
+  [PROFILE_TERTIARY_ID]: parseLoginEmailList(import.meta.env.VITE_LOGIN_EMAIL_03),
+};
 
 export const PROFILE_EMAILS = {
-  [PROFILE_PRIMARY_ID]: import.meta.env.VITE_LOGIN_EMAIL_01 || '',
-  [PROFILE_SECONDARY_ID]: import.meta.env.VITE_LOGIN_EMAIL_02 || '',
+  [PROFILE_PRIMARY_ID]: loginHintFromEnv(import.meta.env.VITE_LOGIN_EMAIL_01),
+  [PROFILE_SECONDARY_ID]: loginHintFromEnv(import.meta.env.VITE_LOGIN_EMAIL_02),
+  [PROFILE_TERTIARY_ID]: loginHintFromEnv(import.meta.env.VITE_LOGIN_EMAIL_03),
 };
 
 export const PROFILE_LABELS = {
   [PROFILE_PRIMARY_ID]: import.meta.env.VITE_PROFILE_PRIMARY_LABEL || 'Olga',
   [PROFILE_SECONDARY_ID]: import.meta.env.VITE_PROFILE_SECONDARY_LABEL || 'Andrea',
+  [PROFILE_TERTIARY_ID]: import.meta.env.VITE_PROFILE_TERTIARY_LABEL || 'Diego i Montse',
 };
 
 export const PROFILE_EMOJIS = {
   [PROFILE_PRIMARY_ID]: import.meta.env.VITE_PROFILE_PRIMARY_EMOJI || '👩🏼',
   [PROFILE_SECONDARY_ID]: import.meta.env.VITE_PROFILE_SECONDARY_EMOJI || '👩🏻',
+  [PROFILE_TERTIARY_ID]: import.meta.env.VITE_PROFILE_TERTIARY_EMOJI || '👨🏻‍🏭 👩🏼',
 };
 
 const n = (v) => {

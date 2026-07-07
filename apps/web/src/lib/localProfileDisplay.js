@@ -3,8 +3,10 @@ const STORAGE_KEY = 'mt_local_profile_display';
 const KEYS = [
   'profilePrimaryLabel',
   'profileSecondaryLabel',
+  'profileTertiaryLabel',
   'profilePrimaryEmoji',
   'profileSecondaryEmoji',
+  'profileTertiaryEmoji',
 ];
 
 export function loadLocalProfileDisplay() {

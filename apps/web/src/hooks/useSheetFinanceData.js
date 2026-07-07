@@ -7,7 +7,13 @@ import {
   checkSheetAccessViaBackend,
   SHEET_AUTH_ERRORS,
 } from '../services/sheetsApi';
-import { PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID, API_URL, HAS_BACKEND } from '../config';
+import {
+  PROFILE_PRIMARY_ID,
+  PROFILE_SECONDARY_ID,
+  PROFILE_TERTIARY_ID,
+  API_URL,
+  HAS_BACKEND,
+} from '../config';
 import { financeConfigToStatsOptions } from '../lib/mergeFinanceConfig.js';
 import { readCachedMonths, writeCachedMonths } from '../lib/financeStatsCache.js';
 import { csvTextToMonths } from '../lib/sheetMonths.js';
@@ -31,6 +37,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
   onAuthExpiredRef.current = onAuthExpired;
   const sid1 = financeConfig.spreadsheetId;
   const sid2 = financeConfig.spreadsheetId2;
+  const sid3 = financeConfig.spreadsheetId3;
   const labels = financeConfig.profileLabels;
   const emojis = financeConfig.profileEmojis;
   const statsOpts = useMemo(
@@ -86,10 +93,20 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     [labels, emojis, sid2],
   );
 
+  const PROFILE_TERTIARY = useMemo(
+    () => ({
+      id: PROFILE_TERTIARY_ID,
+      name: labels[PROFILE_TERTIARY_ID],
+      emoji: emojis[PROFILE_TERTIARY_ID],
+      sheetId: sid3,
+    }),
+    [labels, emojis, sid3],
+  );
+
   const initialCache = readInitialCache(financeConfig.spreadsheetId, profile);
 
   const [sheetAccess, setSheetAccess] = useState(() =>
-    sid1 ? { id1: true, id2: false } : null,
+    sid1 ? { id1: true, id2: false, id3: false } : null,
   );
   const [stats, setStats] = useState(() =>
     initialCache.months
@@ -102,6 +119,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
   const statsCacheKeyRef = useRef(null);
   const pendingSecondaryAccessRef = useRef(undefined);
+  const pendingTertiaryAccessRef = useRef(undefined);
   const sheetAccessRef = useRef(sheetAccess);
   sheetAccessRef.current = sheetAccess;
   const monthsCacheRef = useRef(initialCache.months);
@@ -111,6 +129,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     : [
         ...(sheetAccess.id1 ? [PROFILE_PRIMARY] : []),
         ...(sheetAccess.id2 && sid2 ? [PROFILE_SECONDARY] : []),
+        ...(sheetAccess.id3 && sid3 ? [PROFILE_TERTIARY] : []),
       ];
 
   const effectiveProfile =
@@ -158,9 +177,15 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
           : pendingSecondaryAccessRef.current !== undefined
             ? pendingSecondaryAccessRef.current
             : (prev?.id2 ?? false);
-      return { id1: nextId1, id2: nextId2 };
+      const nextId3 =
+        currentSheetId === sid3
+          ? true
+          : pendingTertiaryAccessRef.current !== undefined
+            ? pendingTertiaryAccessRef.current
+            : (prev?.id3 ?? false);
+      return { id1: nextId1, id2: nextId2, id3: nextId3 };
     });
-  }, [currentSheetId, sid1, sid2]);
+  }, [currentSheetId, sid1, sid2, sid3]);
 
   useEffect(() => {
     if (!checkAccess || !sid2) return;
@@ -172,6 +197,17 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     });
     return () => { cancelled = true; };
   }, [checkAccess, sid2]);
+
+  useEffect(() => {
+    if (!checkAccess || !sid3) return;
+    let cancelled = false;
+    checkAccess(sid3).then((ok) => {
+      if (cancelled) return;
+      pendingTertiaryAccessRef.current = !!ok;
+      setSheetAccess((prev) => (prev ? { ...prev, id3: !!ok } : null));
+    });
+    return () => { cancelled = true; };
+  }, [checkAccess, sid3]);
 
   useEffect(() => {
     if (!statsKey) return;
@@ -195,7 +231,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
   useEffect(() => {
     if (!fetchData || !currentSheetId) return;
     const access = sheetAccessRef.current;
-    if (access !== null && !access.id1 && !access.id2) return;
+    if (access !== null && !access.id1 && !access.id2 && !access.id3) return;
 
     const hadCachedMonths = Boolean(monthsCacheRef.current?.length);
     if (!hadCachedMonths) setLoading(true);
@@ -222,9 +258,10 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
         }
         if (!hadCachedMonths) setError(err.message);
         setSheetAccess((prev) => {
-          if (currentSheetId === sid1) return { id1: false, id2: false };
+          if (currentSheetId === sid1) return { id1: false, id2: false, id3: false };
           if (currentSheetId === sid2 && prev) return { ...prev, id2: false };
-          return prev ?? { id1: false, id2: false };
+          if (currentSheetId === sid3 && prev) return { ...prev, id3: false };
+          return prev ?? { id1: false, id2: false, id3: false };
         });
       })
       .finally(() => {
@@ -239,6 +276,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     effectiveProfile,
     sid1,
     sid2,
+    sid3,
     ingestCsv,
     persistMonths,
     updateSheetAccessAfterFetch,
