@@ -291,9 +291,9 @@ describe('buildAssetClassSeries', () => {
     ];
     const { distribution } = buildCategoryGroupedAssetClassSeries(months, TERTIARY_CATEGORY_BUCKETS);
     const byName = Object.fromEntries(distribution.map((d) => [d.name, d.value]));
-    expect(byName['Comptes corrents']).toBe(32171);
+    expect(byName['Compte corrent']).toBe(32171);
     expect(byName.Inversions).toBe(41253);
-    expect(byName['Comptes remunerats']).toBe(20535);
+    expect(byName['Compte remunerat']).toBe(20535);
     expect(byName['Pla de pensions']).toBe(8500);
     expect(distribution).toHaveLength(4);
   });

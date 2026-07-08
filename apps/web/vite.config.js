@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
     base: process.env.VITE_BASE_PATH || '/',
     server: {
       port: 5174,
+      strictPort: true,
       // Mateix origen que el navegador: evita CORS en local quan no hi ha VITE_API_URL (veure config.js).
       proxy: {
         '/auth': { target: 'http://127.0.0.1:3001', changeOrigin: true },

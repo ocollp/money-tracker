@@ -410,10 +410,15 @@ export default function App() {
   const viewStats = displayStats;
   const profileFeatures = getProfileFeatures(effectiveProfile);
 
-  const kpiCount =
-    2 +
-    (viewStats.hasTravel && profileFeatures.showTravelKpi ? 1 : 0) +
-    (viewStats.hasHousing && profileFeatures.showPatrimonyKpi ? 1 : 0);
+  const isCategoryGroupedProfile = profileFeatures.assetClassMode === 'categoryGrouped';
+  const netWorthChartTitle = isCategoryGroupedProfile
+    ? (t.kpiTotalWealth ?? 'Patrimoni total')
+    : t.netWorthTitle;
+  const kpiCount = isCategoryGroupedProfile
+    ? 4
+    : 2 +
+      (viewStats.hasTravel && profileFeatures.showTravelKpi ? 1 : 0) +
+      (viewStats.hasHousing && profileFeatures.showPatrimonyKpi ? 1 : 0);
   const kpiLgCols =
     kpiCount >= 4 ? 'lg:grid-cols-4' : kpiCount === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2';
 
@@ -429,6 +434,33 @@ export default function App() {
 
   const travelPct = viewStats.travel?.changeVsPrevPct;
   const travelDelta = viewStats.travel?.changeVsPrev;
+
+  const groupedKpis = (() => {
+    if (!isCategoryGroupedProfile) return null;
+    const series = viewStats.assetClassEvolution;
+    if (!series?.length) return null;
+    const last = series[series.length - 1];
+    const prev = series.length >= 2 ? series[series.length - 2] : null;
+
+    const get = (name) => {
+      const current = Number(last?.[name] ?? 0) || 0;
+      const previous = prev ? (Number(prev?.[name] ?? 0) || 0) : null;
+      const change = previous != null ? current - previous : null;
+      const pct = previous ? (change / previous) * 100 : null;
+      return { current, change, pct };
+    };
+
+    return {
+      corrents: get('Compte corrent'),
+      remunerats: get('Compte remunerat'),
+      inversions: get('Inversions'),
+      total: {
+        current: Number(viewStats.current ?? 0) || 0,
+        change: viewStats.changeVsPrev,
+        pct: viewStats.changeVsPrevPct,
+      },
+    };
+  })();
 
   const patrimonyForMilestones =
     viewStats.currentTotalWealth -
@@ -481,67 +513,141 @@ export default function App() {
         aria-busy={isRefreshing || undefined}
       >
         <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${kpiLgCols}`}>
-          <KpiCard
-            title={t.kpiCurrentMonth}
-            value={formatChange(monthDelta)}
-            privacyPct={monthDeltaPct}
-            subtitle={
-              monthDeltaPct != null && !Number.isNaN(monthDeltaPct)
-                ? t.kpiVsPrevMonth(formatPct(monthDeltaPct))
-                : null
-            }
-            trend={monthDelta != null ? monthDelta : 0}
-            icon="🗓️"
-          />
-          <KpiCard
-            title={t.kpiMoneyAndInvestments}
-            value={formatMoney(entityChange ? entityChange.current : viewStats.current)}
-            privacyPct={liquidPct}
-            subtitle={
-              liquidPct != null && !Number.isNaN(liquidPct)
-                ? t.kpiVsPrevMonth(formatPct(liquidPct))
-                : null
-            }
-            trend={liquidDelta != null ? liquidDelta : 0}
-            icon="💰"
-          />
-          {viewStats.hasTravel && viewStats.travel && profileFeatures.showTravelKpi && (
-            <KpiCard
-              className={viewStats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
-              title={t.travelTitle}
-              value={formatMoney(viewStats.travel.current ?? 0)}
-              privacyPct={travelPct}
-              subtitle={
-                travelPct != null && !Number.isNaN(travelPct)
-                  ? t.kpiVsPrevMonth(formatPct(travelPct))
-                  : null
-              }
-              trend={travelDelta != null ? travelDelta : 0}
-              icon="✈️"
-            />
-          )}
-          {viewStats.hasHousing && profileFeatures.showPatrimonyKpi && (
-            <KpiCard
-              className={kpiCount === 3 ? 'col-span-2 lg:col-span-1' : ''}
-              title={t.kpiTotalWealth}
-              value={formatMoney(
-                viewStats.currentTotalWealth -
-                  (viewStats.hasTravel && viewStats.travel
-                    ? (viewStats.travel.current ?? 0) * (1 - TRAVEL_PATRIMONY_SHARE)
-                    : 0),
+          {isCategoryGroupedProfile && groupedKpis ? (
+            <>
+              <KpiCard
+                title="Compte corrent"
+                value={formatMoney(groupedKpis.corrents.current)}
+                privacyPct={groupedKpis.corrents.pct}
+                headerRight={
+                  groupedKpis.corrents.change != null ? formatChange(groupedKpis.corrents.change) : null
+                }
+                subtitle={
+                  groupedKpis.corrents.pct != null && !Number.isNaN(groupedKpis.corrents.pct)
+                    ? t.kpiVsPrevMonth(formatPct(groupedKpis.corrents.pct))
+                    : null
+                }
+                trend={groupedKpis.corrents.change != null ? groupedKpis.corrents.change : 0}
+                icon="🏦"
+              />
+              <KpiCard
+                title="Compte remunerat"
+                value={formatMoney(groupedKpis.remunerats.current)}
+                privacyPct={groupedKpis.remunerats.pct}
+                headerRight={
+                  groupedKpis.remunerats.change != null ? formatChange(groupedKpis.remunerats.change) : null
+                }
+                subtitle={
+                  groupedKpis.remunerats.pct != null && !Number.isNaN(groupedKpis.remunerats.pct)
+                    ? t.kpiVsPrevMonth(formatPct(groupedKpis.remunerats.pct))
+                    : null
+                }
+                trend={groupedKpis.remunerats.change != null ? groupedKpis.remunerats.change : 0}
+                icon="💵"
+              />
+              <KpiCard
+                title="Inversions"
+                value={formatMoney(groupedKpis.inversions.current)}
+                privacyPct={groupedKpis.inversions.pct}
+                headerRight={
+                  groupedKpis.inversions.change != null ? formatChange(groupedKpis.inversions.change) : null
+                }
+                subtitle={
+                  groupedKpis.inversions.pct != null && !Number.isNaN(groupedKpis.inversions.pct)
+                    ? t.kpiVsPrevMonth(formatPct(groupedKpis.inversions.pct))
+                    : null
+                }
+                trend={groupedKpis.inversions.change != null ? groupedKpis.inversions.change : 0}
+                icon="📈"
+              />
+              <KpiCard
+                title={t.kpiTotalWealth ?? 'Patrimoni total'}
+                value={formatMoney(groupedKpis.total.current)}
+                privacyPct={groupedKpis.total.pct}
+                headerRight={
+                  groupedKpis.total.change != null ? formatChange(groupedKpis.total.change) : null
+                }
+                subtitle={
+                  groupedKpis.total.pct != null && !Number.isNaN(groupedKpis.total.pct)
+                    ? t.kpiVsPrevMonth(formatPct(groupedKpis.total.pct))
+                    : null
+                }
+                trend={groupedKpis.total.change != null ? groupedKpis.total.change : 0}
+                icon="💰"
+              />
+            </>
+          ) : (
+            <>
+              <KpiCard
+                title={t.kpiCurrentMonth}
+                value={formatChange(monthDelta)}
+                privacyPct={monthDeltaPct}
+                subtitle={
+                  monthDeltaPct != null && !Number.isNaN(monthDeltaPct)
+                    ? t.kpiVsPrevMonth(formatPct(monthDeltaPct))
+                    : null
+                }
+                trend={monthDelta != null ? monthDelta : 0}
+                icon="🗓️"
+              />
+              <KpiCard
+                title={t.kpiMoneyAndInvestments}
+                value={formatMoney(entityChange ? entityChange.current : viewStats.current)}
+                privacyPct={liquidPct}
+                headerRight={liquidDelta != null ? formatChange(liquidDelta) : null}
+                subtitle={
+                  liquidPct != null && !Number.isNaN(liquidPct)
+                    ? t.kpiVsPrevMonth(formatPct(liquidPct))
+                    : null
+                }
+                trend={liquidDelta != null ? liquidDelta : 0}
+                icon="💰"
+              />
+              {viewStats.hasTravel && viewStats.travel && profileFeatures.showTravelKpi && (
+                <KpiCard
+                  className={viewStats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
+                  title={t.travelTitle}
+                  value={formatMoney(viewStats.travel.current ?? 0)}
+                  privacyPct={travelPct}
+                  headerRight={travelDelta != null ? formatChange(travelDelta) : null}
+                  subtitle={
+                    travelPct != null && !Number.isNaN(travelPct)
+                      ? t.kpiVsPrevMonth(formatPct(travelPct))
+                      : null
+                  }
+                  trend={travelDelta != null ? travelDelta : 0}
+                  icon="✈️"
+                />
               )}
-              subtitle={
-                viewStats.patrimonyKpiChangeVsPrevPct != null &&
-                !Number.isNaN(viewStats.patrimonyKpiChangeVsPrevPct)
-                  ? t.kpiVsPrevMonth(formatPct(viewStats.patrimonyKpiChangeVsPrevPct))
-                  : null
-              }
-              privacyPct={viewStats.patrimonyKpiChangeVsPrevPct}
-              trend={
-                viewStats.patrimonyKpiChangeVsPrev != null ? viewStats.patrimonyKpiChangeVsPrev : 0
-              }
-              icon="💸"
-            />
+              {viewStats.hasHousing && profileFeatures.showPatrimonyKpi && (
+                <KpiCard
+                  className={kpiCount === 3 ? 'col-span-2 lg:col-span-1' : ''}
+                  title={t.kpiTotalWealth}
+                  value={formatMoney(
+                    viewStats.currentTotalWealth -
+                      (viewStats.hasTravel && viewStats.travel
+                        ? (viewStats.travel.current ?? 0) * (1 - TRAVEL_PATRIMONY_SHARE)
+                        : 0),
+                  )}
+                  headerRight={
+                    viewStats.patrimonyKpiChangeVsPrev != null
+                      ? formatChange(viewStats.patrimonyKpiChangeVsPrev)
+                      : null
+                  }
+                  subtitle={
+                    viewStats.patrimonyKpiChangeVsPrevPct != null &&
+                    !Number.isNaN(viewStats.patrimonyKpiChangeVsPrevPct)
+                      ? t.kpiVsPrevMonth(formatPct(viewStats.patrimonyKpiChangeVsPrevPct))
+                      : null
+                  }
+                  privacyPct={viewStats.patrimonyKpiChangeVsPrevPct}
+                  trend={
+                    viewStats.patrimonyKpiChangeVsPrev != null ? viewStats.patrimonyKpiChangeVsPrev : 0
+                  }
+                  icon="💸"
+                />
+              )}
+            </>
           )}
         </section>
 
@@ -573,7 +679,7 @@ export default function App() {
                 ?? viewStats.netWorthTotals
                 ?? viewStats.netWorthTotalWealth
               }
-              title={t.netWorthTitle}
+              title={netWorthChartTitle}
               subtitle={null}
               tooltipLabel={
                 assetClassNetWorth?.labels?.length
@@ -598,6 +704,7 @@ export default function App() {
           data={stats.heatmap}
           selectedMonthKey={selectedMonthKey}
           onSelectMonth={handleHeatmapSelectMonth}
+          trimEmptyMonths={profileFeatures.trimEmptyHeatmapMonths}
         />
 
         {viewStats.hasHousing && profileFeatures.showHousingSection && (

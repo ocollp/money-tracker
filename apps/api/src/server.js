@@ -3,7 +3,8 @@ import { assertJwtConfigured } from './lib/jwt.js';
 import { buildApp } from './app.js';
 
 const port = Number(process.env.PORT) || 3001;
-const host = process.env.HOST || '0.0.0.0';
+// Default to loopback in local dev to avoid OS/network interface edge cases.
+const host = process.env.HOST || '127.0.0.1';
 
 try {
   await connectDb();
@@ -25,6 +26,12 @@ if (process.env.RENDER && !getDb()) {
   process.exit(1);
 }
 
-const fastify = await buildApp();
-await fastify.listen({ port, host });
-console.log(`API listening on http://${host}:${port}`);
+const fastify = await buildApp({
+  logger: Boolean(process.env.RENDER || process.env.NODE_ENV === 'production'),
+});
+await fastify.listen({
+  port,
+  host,
+  // Avoid Fastify's default listen text that may enumerate network interfaces.
+  listenTextResolver: (address) => `[api] Server listening at ${address}`,
+});

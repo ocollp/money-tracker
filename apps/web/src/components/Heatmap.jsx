@@ -8,6 +8,7 @@ function Heatmap({
   data,
   selectedMonthKey = null,
   onSelectMonth,
+  trimEmptyMonths = false,
 }) {
   const { t } = useI18n();
   const { hideMoney } = usePrivacy();
@@ -20,6 +21,18 @@ function Heatmap({
     if (!grid[d.year]) grid[d.year] = {};
     grid[d.year][d.monthIdx] = d;
   }
+
+  const visibleMonthIdxs = useMemo(() => {
+    const all = Array.from({ length: 12 }, (_, i) => i);
+    if (!trimEmptyMonths || rows.length === 0) return all;
+    const hasData = new Set(rows.map((d) => d.monthIdx));
+    let first = 0;
+    while (first < 12 && !hasData.has(first)) first += 1;
+    let last = 11;
+    while (last >= 0 && !hasData.has(last)) last -= 1;
+    if (first > last) return all;
+    return all.slice(first, last + 1);
+  }, [rows, trimEmptyMonths]);
 
   const scaleMax = useMemo(() => computeHeatmapScaleMax(rows), [rows]);
   const getCellStyle = (value) => heatmapCellBackground(value, scaleMax, { withGlow: true });
@@ -48,12 +61,12 @@ function Heatmap({
           <thead>
             <tr>
               <th className="text-left text-text-secondary text-[10px] sm:text-[11px] font-semibold p-0 w-7 sm:w-10" />
-              {monthNames.map((m) => (
+              {visibleMonthIdxs.map((i) => (
                 <th
-                  key={m}
+                  key={monthNames[i]}
                   className="text-center text-text-secondary/70 text-[9px] sm:text-[11px] font-semibold pb-1 px-0 min-w-[3.5rem] sm:min-w-0"
                 >
-                  {m}
+                  {monthNames[i]}
                 </th>
               ))}
             </tr>
@@ -64,7 +77,7 @@ function Heatmap({
                 <td className="text-text-secondary text-[10px] sm:text-[12px] font-bold pr-0.5 align-middle w-8 sm:w-auto">
                   {year}
                 </td>
-                {Array.from({ length: 12 }, (_, i) => {
+                {visibleMonthIdxs.map((i) => {
                   const cell = grid[year]?.[i];
                   const isSelected = cell?.key != null && cell.key === selectedMonthKey;
                   const cellStyle = getCellStyle(cell?.value);

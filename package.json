@@ -8,7 +8,7 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -k -n web,api -c cyan,magenta \"npm run dev -w money-tracker-web\" \"npm run dev -w money-tracker-api\"",
+    "dev": "node scripts/kill-dev-ports.js && concurrently -k -n web,api -c cyan,magenta \"npm run dev -w money-tracker-web\" \"npm run dev -w money-tracker-api\"",
     "dev:web": "npm run dev -w money-tracker-web",
     "dev:api": "npm run dev -w money-tracker-api",
     "start:api": "node apps/api/src/server.js",

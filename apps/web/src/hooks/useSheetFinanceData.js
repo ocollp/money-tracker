@@ -105,9 +105,11 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
 
   const initialCache = readInitialCache(financeConfig.spreadsheetId, profile);
 
-  const [sheetAccess, setSheetAccess] = useState(() =>
-    sid1 ? { id1: true, id2: false, id3: false } : null,
-  );
+  const [sheetAccess, setSheetAccess] = useState(() => ({
+    id1: Boolean(sid1),
+    id2: Boolean(sid2),
+    id3: Boolean(sid3),
+  }));
   const [stats, setStats] = useState(() =>
     initialCache.months
       ? buildStatsFromMonths(initialCache.months, statsOpts, profile)

@@ -8,6 +8,7 @@ function KpiCard({
   subtitle,
   trend,
   icon,
+  headerRight,
   tooltip,
   className = '',
   highlight = false,
@@ -24,6 +25,7 @@ function KpiCard({
     ? (hasPrivacyPct ? formatPct(privacyPct) : '—')
     : value;
   const displaySubtitle = hideMoney && hasPrivacyPct ? null : subtitle;
+  const displayHeaderRight = hideMoney ? null : headerRight;
 
   return (
     <div className={`glass-card p-3 sm:p-5 relative ${highlight ? 'ring-1 ring-brand/35' : ''} ${className}`.trim()}>
@@ -43,7 +45,16 @@ function KpiCard({
             </button>
           )}
         </div>
-        {icon && <span className="text-lg sm:text-2xl">{icon}</span>}
+        {(displayHeaderRight || icon) && (
+          <div className="flex items-center gap-2 shrink-0">
+            {displayHeaderRight ? (
+              <span className={`text-xs sm:text-sm font-semibold tabular-nums ${trendColor}`}>
+                {displayHeaderRight}
+              </span>
+            ) : null}
+            {icon ? <span className="text-lg sm:text-2xl">{icon}</span> : null}
+          </div>
+        )}
       </div>
       <div className={`text-lg sm:text-2xl font-bold tracking-tight ${hasPrivacyPct ? trendColor : 'text-text-primary'}`}>
         {displayValue}
