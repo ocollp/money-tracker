@@ -45,13 +45,8 @@ function KpiCard({
             </button>
           )}
         </div>
-        {(displayHeaderRight || icon) && (
+        {icon && (
           <div className="flex items-center gap-2 shrink-0">
-            {displayHeaderRight ? (
-              <span className={`hidden sm:inline text-xs sm:text-sm font-semibold tabular-nums ${trendColor}`}>
-                {displayHeaderRight}
-              </span>
-            ) : null}
             {icon ? <span className="text-lg sm:text-2xl">{icon}</span> : null}
           </div>
         )}
@@ -61,7 +56,7 @@ function KpiCard({
           {displayValue}
         </div>
         {displayHeaderRight ? (
-          <span className={`sm:hidden text-xs font-semibold tabular-nums ${trendColor}`}>
+          <span className={`text-xs sm:text-sm font-semibold tabular-nums ${trendColor}`}>
             {displayHeaderRight}
           </span>
         ) : null}
