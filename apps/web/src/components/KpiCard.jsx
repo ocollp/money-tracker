@@ -51,8 +51,12 @@ function KpiCard({
           </div>
         )}
       </div>
-      <div className="flex items-end justify-between gap-2">
-        <div className={`text-lg sm:text-2xl font-bold tracking-tight ${hasPrivacyPct ? trendColor : 'text-text-primary'}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div
+          className={`text-lg sm:text-2xl font-bold tracking-tight ${
+            hasPrivacyPct ? trendColor : 'text-text-primary'
+          }`}
+        >
           {displayValue}
         </div>
         {displayHeaderRight ? (
