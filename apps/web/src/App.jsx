@@ -422,18 +422,28 @@ export default function App() {
   const kpiLgCols =
     kpiCount >= 4 ? 'lg:grid-cols-4' : kpiCount === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2';
 
-  const monthDelta = entityChange
-    ? entityChange.change
-    : (viewStats.changeVsPrevTotal ?? viewStats.changeVsPrev);
-  const monthDeltaPct = entityChange
-    ? entityChange.pct
-    : (viewStats.changeVsPrevPctTotal ?? viewStats.changeVsPrevPct);
-
   const liquidDelta = entityChange ? entityChange.change : viewStats.changeVsPrev;
   const liquidPct = entityChange ? entityChange.pct : viewStats.changeVsPrevPct;
 
   const travelPct = viewStats.travel?.changeVsPrevPct;
   const travelDelta = viewStats.travel?.changeVsPrev;
+  const includeTravelInMonthKpi = Boolean(!entityChange && viewStats.hasTravel && viewStats.travel);
+  const monthDelta = entityChange
+    ? entityChange.change
+    : (liquidDelta ?? 0) + (includeTravelInMonthKpi ? (travelDelta ?? 0) : 0);
+  const monthDeltaPct = (() => {
+    if (entityChange) return entityChange.pct;
+    const liquidCurrent = Number(viewStats.current ?? 0) || 0;
+    const travelCurrent = includeTravelInMonthKpi ? (Number(viewStats.travel?.current ?? 0) || 0) : 0;
+    const combinedCurrent = liquidCurrent + travelCurrent;
+    const liquidPrev = liquidDelta != null ? liquidCurrent - liquidDelta : null;
+    const travelPrev =
+      includeTravelInMonthKpi && travelDelta != null ? travelCurrent - travelDelta : (includeTravelInMonthKpi ? null : 0);
+    if (liquidPrev == null || travelPrev == null) return null;
+    const combinedPrev = liquidPrev + travelPrev;
+    if (!combinedPrev) return null;
+    return ((combinedCurrent - combinedPrev) / Math.abs(combinedPrev)) * 100;
+  })();
 
   const groupedKpis = (() => {
     if (!isCategoryGroupedProfile) return null;
