@@ -48,7 +48,7 @@ function KpiCard({
         {(displayHeaderRight || icon) && (
           <div className="flex items-center gap-2 shrink-0">
             {displayHeaderRight ? (
-              <span className={`text-xs sm:text-sm font-semibold tabular-nums ${trendColor}`}>
+              <span className={`hidden sm:inline text-xs sm:text-sm font-semibold tabular-nums ${trendColor}`}>
                 {displayHeaderRight}
               </span>
             ) : null}
@@ -56,8 +56,15 @@ function KpiCard({
           </div>
         )}
       </div>
-      <div className={`text-lg sm:text-2xl font-bold tracking-tight ${hasPrivacyPct ? trendColor : 'text-text-primary'}`}>
-        {displayValue}
+      <div className="flex items-end justify-between gap-2">
+        <div className={`text-lg sm:text-2xl font-bold tracking-tight ${hasPrivacyPct ? trendColor : 'text-text-primary'}`}>
+          {displayValue}
+        </div>
+        {displayHeaderRight ? (
+          <span className={`sm:hidden text-xs font-semibold tabular-nums ${trendColor}`}>
+            {displayHeaderRight}
+          </span>
+        ) : null}
       </div>
       {displaySubtitle && (
         <div className={`text-xs sm:text-sm mt-0.5 sm:mt-1.5 ${trendColor} font-medium`}>
