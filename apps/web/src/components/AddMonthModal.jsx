@@ -88,8 +88,6 @@ export default function AddMonthModal({
     const date = formatDate(target.month, target.year, dateFormat);
     const payload = rows.map(r => ({
       date,
-      month: target.month,
-      year: target.year,
       type: r.type,
       category: r.category,
       entity: r.entity,
@@ -99,9 +97,11 @@ export default function AddMonthModal({
     const housingEntry = lastMonth?.entries?.find(e => e.category === 'Vivienda personal');
     if (!fixedHousing && housingEntry) {
       payload.push({
-        date, month: target.month, year: target.year,
-        type: housingEntry.type, category: housingEntry.category,
-        entity: housingEntry.entity, amount: housingEntry.amount,
+        date,
+        type: housingEntry.type,
+        category: housingEntry.category,
+        entity: housingEntry.entity,
+        amount: housingEntry.amount,
       });
     }
 

@@ -101,12 +101,13 @@ export async function sheetsRoutes(fastify) {
         return reply.code(401).send({ error: 'google_token_expired', message: 'Re-login required' });
       }
 
-      const values = rows.map(r => [
-        r.date, r.month, r.year, r.type, r.category, r.entity, r.amount,
+      // Compact sheet layout: Fecha, Cash/Inversión, Categoria, Entidad, Cantidad
+      const values = rows.map((r) => [
+        r.date, r.type, r.category, r.entity, r.amount,
       ]);
 
       const { spreadsheetId } = request.params;
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A:G:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A:E:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
       const res = await fetch(url, {
         method: 'POST',
         headers: {

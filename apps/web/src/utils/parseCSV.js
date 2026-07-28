@@ -46,6 +46,47 @@ export function mergeFixedHousingSheetRows(rows, opts) {
   return [...filtered, ...extra];
 }
 
+/** Parse sheet dates like 1/03/2024, 01-03-24, 1.3.2024. Returns null if invalid. */
+export function parseSheetDate(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  let year = Number(m[3]);
+  if (year < 100) year += 2000;
+  if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > 2100) {
+    return null;
+  }
+  return { day, month, year };
+}
+
+function looksLikeMonthCol(v) {
+  const n = parseInt(String(v ?? '').trim(), 10);
+  return Number.isFinite(n) && n >= 1 && n <= 12;
+}
+
+function looksLikeYearCol(v) {
+  const raw = String(v ?? '').trim();
+  if (!/^\d{2,4}$/.test(raw)) return false;
+  let n = parseInt(raw, 10);
+  if (n < 100) n += 2000;
+  return n >= 1900 && n <= 2100;
+}
+
+function parseAmount(amountStr) {
+  if (amountStr == null || amountStr === '') return null;
+  const amount = parseFloat(String(amountStr).replace('.', '').replace(',', '.'));
+  return Number.isNaN(amount) ? null : amount;
+}
+
+/**
+ * Supports both layouts:
+ * - Legacy: Fecha, Mes, Año, Cash/Inversión, Categoria, Entidad, Cantidad
+ * - Compact: Fecha, Cash/Inversión, Categoria, Entidad, Cantidad
+ * Month/year always come from Fecha.
+ */
 export function parseCSV(text) {
   const lines = text.trim().split('\n');
   const rows = [];
@@ -53,19 +94,20 @@ export function parseCSV(text) {
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',');
     const date = cols[0]?.trim();
-    const month = parseInt(cols[1]?.trim(), 10);
-    const year = parseInt(cols[2]?.trim(), 10);
-    const type = cols[3]?.trim();
-    const category = cols[4]?.trim();
-    const entity = cols[5]?.trim().replace(/\s+/g, ' ');
-    const amountStr = cols[6]?.trim();
+    if (!date) continue;
 
-    if (!date || !year || isNaN(month)) continue;
+    const parsedDate = parseSheetDate(date);
+    if (!parsedDate) continue;
 
-    const amount = amountStr ? parseFloat(amountStr.replace('.', '').replace(',', '.')) : null;
+    const legacy = cols.length >= 7 && looksLikeMonthCol(cols[1]) && looksLikeYearCol(cols[2]);
+    const type = (legacy ? cols[3] : cols[1])?.trim();
+    const category = (legacy ? cols[4] : cols[2])?.trim();
+    const entity = (legacy ? cols[5] : cols[3])?.trim().replace(/\s+/g, ' ');
+    const amount = parseAmount((legacy ? cols[6] : cols[4])?.trim());
 
-    if (amount === null || isNaN(amount)) continue;
+    if (!type || !category || amount === null) continue;
 
+    const { month, year } = parsedDate;
     const isHousing = category === VIVIENDA_PERSONAL || category === 'Hipoteca';
     const isTravel = category === 'Cuenta compartida flexible';
 

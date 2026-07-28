@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { parseCSV, groupByMonth, mergeFixedHousingSheetRows } from './parseCSV.js';
+import { parseCSV, groupByMonth, mergeFixedHousingSheetRows, parseSheetDate } from './parseCSV.js';
 
 const HEADER = 'date,month,year,type,category,entity,amount\n';
+const HEADER_COMPACT = 'date,type,category,entity,amount\n';
+
+describe('parseSheetDate', () => {
+  it('parses day-first European dates', () => {
+    expect(parseSheetDate('1/03/2024')).toEqual({ day: 1, month: 3, year: 2024 });
+    expect(parseSheetDate('01-03-24')).toEqual({ day: 1, month: 3, year: 2024 });
+  });
+});
 
 describe('parseCSV', () => {
   it('parses valid rows and skips header', () => {
@@ -22,6 +30,24 @@ describe('parseCSV', () => {
       isTravel: false,
     });
     expect(rows[1].amount).toBe(1100);
+  });
+
+  it('parses compact layout without Mes/Año columns using Fecha', () => {
+    const csv =
+      HEADER_COMPACT +
+      '1/03/2024,Cash,Cuenta corriente,CaixaBank,17258\n' +
+      '1/04/2024,Invertido,Fondo indexado,Indexa Capital,8957';
+    const rows = parseCSV(csv);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      month: 3,
+      year: 2024,
+      type: 'Cash',
+      category: 'Cuenta corriente',
+      entity: 'CaixaBank',
+      amount: 17258,
+    });
+    expect(rows[1]).toMatchObject({ month: 4, year: 2024, amount: 8957 });
   });
 
   it('marks housing rows', () => {
