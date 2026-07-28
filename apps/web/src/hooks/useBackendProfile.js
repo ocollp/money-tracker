@@ -4,6 +4,7 @@ import {
   getAppJwt,
   clearAppJwt,
   JWT_STORAGE_KEY,
+  saveBackendSession,
 } from '../lib/authStorage.js';
 
 export { getAppJwt, clearAppJwt } from '../lib/authStorage.js';
@@ -56,6 +57,7 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
         if (res.status === 503) return;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        saveBackendSession(data.user, appJwt);
         setApiUser(data.user);
         setSettings(data.settings);
       });
@@ -106,6 +108,7 @@ export function useBackendProfile(accessToken, appJwt, onJwtExpired) {
     }
     if (!res.ok) return;
     const data = await res.json();
+    saveBackendSession(data.user, jwt);
     setApiUser(data.user);
     setSettings(data.settings);
   }, [onJwtExpired]);

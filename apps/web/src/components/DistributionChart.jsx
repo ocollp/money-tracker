@@ -48,6 +48,7 @@ const ENTITY_COLORS = {
   Cripto: '#ec4899',
   'Compte remunerat': COLOR_REMUNERAT,
   'Estalvi líquid': '#ca8a04',
+  'Fons monetari': '#f472b6',
   ...TERTIARY_DISTRIBUTION_COLORS,
 };
 

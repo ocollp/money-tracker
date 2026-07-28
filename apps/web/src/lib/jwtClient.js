@@ -18,3 +18,10 @@ export function isAppJwtExpired(token, skewMs = 60_000) {
   if (!payload?.exp) return !token;
   return Date.now() >= payload.exp * 1000 - skewMs;
 }
+
+/** Milliseconds until JWT expiry, or null if unknown. */
+export function msUntilJwtExpiry(token) {
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return null;
+  return payload.exp * 1000 - Date.now();
+}

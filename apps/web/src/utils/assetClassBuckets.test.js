@@ -20,10 +20,10 @@ describe('classifyLiquidEntry', () => {
     ).toBe('pension');
   });
 
-  it('classifies indexed providers', () => {
+  it('classifies only Fondo indexado from Indexa Capital as indexed', () => {
     expect(
       classifyLiquidEntry({
-        category: 'Invertido',
+        category: 'Fondo indexado',
         entity: 'Indexa Capital',
         type: 'Invertido',
         isHousing: false,
@@ -83,7 +83,7 @@ describe('classifyLiquidEntry', () => {
     ).toBe('etfs');
   });
 
-  it('classifies Revolut ETFs as indexed', () => {
+  it('classifies Revolut ETFs as etfs', () => {
     expect(
       classifyLiquidEntry({
         category: 'ETF',
@@ -92,7 +92,7 @@ describe('classifyLiquidEntry', () => {
         isHousing: false,
         isTravel: false,
       }),
-    ).toBe('indexed');
+    ).toBe('etfs');
   });
 
   it('classifies crowdfunding platforms', () => {
@@ -172,6 +172,18 @@ describe('classifyLiquidEntry', () => {
       }),
     ).toBe('other');
   });
+
+  it('classifies money market funds as monetary', () => {
+    expect(
+      classifyLiquidEntry({
+        category: 'Fondo monetario',
+        entity: 'Indexa Capital',
+        type: 'Invertido',
+        isHousing: false,
+        isTravel: false,
+      }),
+    ).toBe('monetary');
+  });
 });
 
 describe('buildAssetClassSeries', () => {
@@ -213,8 +225,8 @@ describe('buildAssetClassSeries', () => {
             isTravel: false,
           },
           {
-            category: 'Invertido',
-            entity: 'Indexa',
+            category: 'Fondo indexado',
+            entity: 'Indexa Capital',
             type: 'Invertido',
             amount: 5000,
             isHousing: false,

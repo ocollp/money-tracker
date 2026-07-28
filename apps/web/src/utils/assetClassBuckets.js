@@ -3,6 +3,7 @@ export const ASSET_CLASS_LABELS = {
   crowdfunding: 'Crowdfunding',
   etfs: 'ETFs',
   indexed: 'Fons indexat',
+  monetary: 'Fons monetari',
   pension: 'Pla de pensions',
   equities: 'Accions',
   crypto: 'Cripto',
@@ -36,9 +37,18 @@ function isTradeRepublicCuentaFlexible(row, s) {
   return /(?:cuenta|compte)\s+flexible|(?:cuenta|compte)\s+flex\b|flexkonto|flex-konto/i.test(s);
 }
 
-function isIndexedProvider(row) {
-  const s = rowText(row);
-  return /indexa|finizens|myinvestor|simple\s*fund|justetf/i.test(s);
+function normalizeText(v) {
+  return String(v || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+function isStrictIndexedFund(row) {
+  const category = normalizeText(row.category);
+  const entity = normalizeText(row.entity);
+  return category === 'fondo indexado' && entity === 'indexa capital';
 }
 
 function looksLikeEtf(row) {
@@ -76,17 +86,24 @@ export function classifyLiquidEntry(row) {
   if (/plan\s*de\s*pensi|pensi[oó]n|jubili|plans?vap|ter\s*pensi|frei[iy]nstieg|pka\b|pere\b/i.test(s)) {
     return 'pension';
   }
+  // Monetary funds have their own bucket.
+  if (/fondo\s*monetario|fons\s*monetari|money\s*market/i.test(s)) {
+    return 'monetary';
+  }
   if (/\bfundeen\b|\burbanitae\b/i.test(entity)) {
     return 'crowdfunding';
   }
   if (isTradeRepublicCuentaFlexible(row, s)) {
     return 'cash';
   }
+  if (isStrictIndexedFund(row)) {
+    return 'indexed';
+  }
   if (isTradeRepublicBrokerEntity(row) && looksLikeEtf(row)) {
     return 'etfs';
   }
-  if (looksLikeEtf(row) || isIndexedProvider(row)) {
-    return 'indexed';
+  if (looksLikeEtf(row)) {
+    return 'etfs';
   }
   if (looksLikeCrypto(row, s)) {
     return 'crypto';

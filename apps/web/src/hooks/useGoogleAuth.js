@@ -10,7 +10,7 @@ import {
   getAppJwt,
   getValidAppJwt,
 } from '../lib/authStorage.js';
-import { isAppJwtExpired } from '../lib/jwtClient.js';
+import { isAppJwtExpired, msUntilJwtExpiry } from '../lib/jwtClient.js';
 import {
   GIS_LOAD_ERROR,
   isGisAvailable,
@@ -22,6 +22,7 @@ const USE_BACKEND = HAS_BACKEND;
 const REFRESH_BEFORE_MS = 20 * 60 * 1000;
 const EXPIRING_SOON_MS = 25 * 60 * 1000;
 const SILENT_CHECK_MS = 1200;
+const JWT_REFRESH_WHEN_MS = 7 * 24 * 60 * 60 * 1000;
 
 function mapAuthApiError(body, t) {
   if (body?.error === 'database_not_configured') {
@@ -72,11 +73,13 @@ export default function useGoogleAuth() {
     !USE_BACKEND && implicitHasValidToken ? (implicitSaved?.accessToken ?? null) : null,
   );
   const [authError, setAuthError] = useState(null);
+  const [sessionChecked, setSessionChecked] = useState(() => !USE_BACKEND || !getAppJwt());
   const [silentCheckDone, setSilentCheckDone] = useState(() =>
-    USE_BACKEND ? true : !implicitSaved?.user || implicitHasValidToken,
+    USE_BACKEND ? false : !implicitSaved?.user || implicitHasValidToken,
   );
 
   const refreshTimer = useRef(null);
+  const jwtRefreshTimer = useRef(null);
   const silentCheckTimer = useRef(null);
   const expiresAtRef = useRef(!USE_BACKEND ? (implicitSaved?.expiresAt ?? null) : null);
   const clientRef = useRef(null);
@@ -96,11 +99,98 @@ export default function useGoogleAuth() {
     client.requestAccessToken({ prompt: promptNone ? 'none' : '' });
   }, []);
 
+  const refreshAppJwt = useCallback(async () => {
+    const jwt = getValidAppJwt();
+    if (!jwt || !USE_BACKEND) return;
+    try {
+      const res = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${jwt}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      saveBackendSession(data.user, data.token);
+      setUser(data.user);
+      setAppJwt(data.token);
+      return data.token;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const scheduleJwtRefresh = useCallback(
+    (token) => {
+      if (!USE_BACKEND || !token) return;
+      if (jwtRefreshTimer.current) clearTimeout(jwtRefreshTimer.current);
+      const msLeft = msUntilJwtExpiry(token);
+      if (msLeft == null) return;
+      const delay = Math.max(msLeft - JWT_REFRESH_WHEN_MS, 60_000);
+      jwtRefreshTimer.current = setTimeout(() => {
+        refreshAppJwt().then((next) => {
+          if (next) scheduleJwtRefresh(next);
+        });
+      }, delay);
+    },
+    [refreshAppJwt],
+  );
+
   useEffect(() => {
     if (!USE_BACKEND) return;
+
+    let cancelled = false;
+
+    const finishSessionCheck = () => {
+      if (!cancelled) {
+        setSessionChecked(true);
+        setSilentCheckDone(true);
+      }
+    };
+
     const jwt = getAppJwt();
-    if (jwt && isAppJwtExpired(jwt)) clearAuthStorage();
-  }, []);
+    if (!jwt) {
+      finishSessionCheck();
+      return;
+    }
+
+    if (isAppJwtExpired(jwt)) {
+      clearAuthStorage();
+      setUser(null);
+      setAppJwt(null);
+      finishSessionCheck();
+      return;
+    }
+
+    setAppJwt(jwt);
+    scheduleJwtRefresh(jwt);
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/me`, {
+          headers: { Authorization: `Bearer ${jwt}` },
+        });
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json();
+          saveBackendSession(data.user, jwt);
+          setUser(data.user);
+          setAppJwt(jwt);
+        } else if (res.status === 401) {
+          clearAuthStorage();
+          setUser(null);
+          setAppJwt(null);
+        }
+      } catch {
+        const storedUser = loadStoredUser();
+        if (storedUser) setUser(storedUser);
+      } finally {
+        finishSessionCheck();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scheduleJwtRefresh]);
 
   useEffect(() => {
     if (!String(GOOGLE_CLIENT_ID || '').trim()) {
@@ -150,6 +240,7 @@ export default function useGoogleAuth() {
                 setUser(data.user);
                 setAppJwt(data.token);
                 setAuthError(null);
+                scheduleJwtRefresh(data.token);
               } catch (e) {
                 const net =
                   e instanceof TypeError || /failed to fetch/i.test(String(e?.message || ''));
@@ -217,9 +308,10 @@ export default function useGoogleAuth() {
       stopPolling();
       document.removeEventListener('visibilitychange', onVisibility);
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
+      if (jwtRefreshTimer.current) clearTimeout(jwtRefreshTimer.current);
       if (silentCheckTimer.current) clearTimeout(silentCheckTimer.current);
     };
-  }, [scheduleRefresh, trySilentRefresh, t]);
+  }, [scheduleRefresh, scheduleJwtRefresh, trySilentRefresh, t]);
 
   const login = useCallback((loginHint, options = {}) => {
     const cleanup = waitForGisClient(clientRef, {
@@ -241,13 +333,19 @@ export default function useGoogleAuth() {
     setUser(data.user);
     setAppJwt(data.token);
     setAuthError(null);
-  }, []);
+    setSessionChecked(true);
+    setSilentCheckDone(true);
+    scheduleJwtRefresh(data.token);
+  }, [scheduleJwtRefresh]);
 
   const clearAuth = useCallback(() => {
     if (USE_BACKEND) {
       clearAuthStorage();
+      if (jwtRefreshTimer.current) clearTimeout(jwtRefreshTimer.current);
       setUser(null);
       setAppJwt(null);
+      setSessionChecked(true);
+      setSilentCheckDone(true);
     } else {
       if (accessToken) {
         try {
@@ -263,7 +361,9 @@ export default function useGoogleAuth() {
   }, [accessToken]);
 
   const needsRefresh = USE_BACKEND ? false : Boolean(user && !accessToken && silentCheckDone);
-  const checkingSession = USE_BACKEND ? false : Boolean(user && !accessToken && !silentCheckDone);
+  const checkingSession = USE_BACKEND
+    ? Boolean(appJwt && !sessionChecked)
+    : Boolean(user && !accessToken && !silentCheckDone);
 
   return {
     user,
@@ -275,7 +375,7 @@ export default function useGoogleAuth() {
     loginWithPasskeyResult,
     logout: clearAuth,
     clearAuth,
-    isLoggedIn: USE_BACKEND ? Boolean(user && appJwt) : Boolean(user),
+    isLoggedIn: USE_BACKEND ? Boolean(appJwt) : Boolean(user),
     needsRefresh,
     checkingSession,
   };

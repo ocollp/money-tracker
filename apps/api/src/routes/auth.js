@@ -102,4 +102,28 @@ export async function authRoutes(fastify) {
       settings: user.settings || defaultSettings(),
     };
   });
+
+  /** Extend app session without Google/Face ID when the current JWT is still valid. */
+  fastify.post(
+    '/refresh',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const db = getDb();
+      if (!db) return reply.code(503).send({ error: 'database_not_configured' });
+
+      const user = await db.collection('users').findOne({ googleSub: request.googleSub });
+      if (!user) return reply.code(404).send({ error: 'user_not_found' });
+
+      const token = signAppJwt(request.googleSub);
+      return {
+        token,
+        user: {
+          email: user.email,
+          name: user.name,
+          picture: user.picture,
+        },
+        settings: user.settings || defaultSettings(),
+      };
+    },
+  );
 }
