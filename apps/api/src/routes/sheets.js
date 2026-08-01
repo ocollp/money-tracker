@@ -102,32 +102,87 @@ export async function sheetsRoutes(fastify) {
       }
 
       // Compact sheet layout: Fecha, Cash/Inversión, Categoria, Entidad, Cantidad
+      // Sheets are newest-first: insert new month rows just below the header (row 2).
       const values = rows.map((r) => [
         r.date, r.type, r.category, r.entity, r.amount,
       ]);
 
       const { spreadsheetId } = request.params;
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A:E:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ values }),
-      });
+      const authHeaders = {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      };
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        request.log.warn(err, 'sheets append error');
+      const metaRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties(sheetId,index)`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      if (!metaRes.ok) {
+        const err = await metaRes.json().catch(() => ({}));
+        request.log.warn(err, 'sheets metadata error');
         return reply.code(502).send({
-          error: 'sheets_append_error',
-          message: err.error?.message || `Google Sheets returned ${res.status}`,
+          error: 'sheets_metadata_error',
+          message: err.error?.message || `Google Sheets returned ${metaRes.status}`,
+        });
+      }
+      const meta = await metaRes.json();
+      const sheetId = meta.sheets?.find((s) => s.properties?.index === 0)?.properties?.sheetId
+        ?? meta.sheets?.[0]?.properties?.sheetId;
+      if (sheetId == null) {
+        return reply.code(502).send({ error: 'sheets_metadata_error', message: 'No sheet found' });
+      }
+
+      const insertRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+        {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            requests: [
+              {
+                insertDimension: {
+                  range: {
+                    sheetId,
+                    dimension: 'ROWS',
+                    startIndex: 1,
+                    endIndex: 1 + values.length,
+                  },
+                  inheritFromBefore: false,
+                },
+              },
+            ],
+          }),
+        },
+      );
+      if (!insertRes.ok) {
+        const err = await insertRes.json().catch(() => ({}));
+        request.log.warn(err, 'sheets insert rows error');
+        return reply.code(502).send({
+          error: 'sheets_insert_error',
+          message: err.error?.message || `Google Sheets returned ${insertRes.status}`,
         });
       }
 
-      const data = await res.json();
-      return { ok: true, rowsAdded: data.updates?.updatedRows || rows.length };
+      const endRow = 1 + values.length;
+      const updateRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A2:E${endRow}?valueInputOption=USER_ENTERED`,
+        {
+          method: 'PUT',
+          headers: authHeaders,
+          body: JSON.stringify({ values }),
+        },
+      );
+      if (!updateRes.ok) {
+        const err = await updateRes.json().catch(() => ({}));
+        request.log.warn(err, 'sheets write values error');
+        return reply.code(502).send({
+          error: 'sheets_append_error',
+          message: err.error?.message || `Google Sheets returned ${updateRes.status}`,
+        });
+      }
+
+      const data = await updateRes.json();
+      return { ok: true, rowsAdded: data.updatedRows || rows.length };
     },
   );
 }

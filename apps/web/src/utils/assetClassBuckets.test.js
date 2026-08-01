@@ -293,6 +293,7 @@ describe('buildAssetClassSeries', () => {
         entries: [
           { category: 'Cuenta corriente', entity: 'CaixaBank', type: 'Cash', amount: 20598, isHousing: false, isTravel: false },
           { category: 'Cuenta corriente', entity: 'Santander', type: 'Cash', amount: 11573, isHousing: false, isTravel: false },
+          { category: 'Cash', entity: 'Efectivo', type: 'Cash', amount: 500, isHousing: false, isTravel: false },
           { category: 'Acciones', entity: 'Santander', type: 'Invertido', amount: 41253, isHousing: false, isTravel: false },
           { category: 'Cuenta flexible', entity: 'Revolut', type: 'Invertido', amount: 10001, isHousing: false, isTravel: false },
           { category: 'Cuenta flexible', entity: 'Trade Republic', type: 'Invertido', amount: 10534, isHousing: false, isTravel: false },
@@ -304,9 +305,10 @@ describe('buildAssetClassSeries', () => {
     const { distribution } = buildCategoryGroupedAssetClassSeries(months, TERTIARY_CATEGORY_BUCKETS);
     const byName = Object.fromEntries(distribution.map((d) => [d.name, d.value]));
     expect(byName['Compte corrent']).toBe(32171);
+    expect(byName.Efectivo).toBe(500);
     expect(byName.Inversions).toBe(41253);
     expect(byName['Compte remunerat']).toBe(20535);
     expect(byName['Pla de pensions']).toBe(8500);
-    expect(distribution).toHaveLength(4);
+    expect(distribution).toHaveLength(5);
   });
 });

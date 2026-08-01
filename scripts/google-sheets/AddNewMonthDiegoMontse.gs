@@ -1,0 +1,145 @@
+/**
+ * Money Tracker — Diego i Montse
+ * Menú: Dades → Afegir mes següent amb plantilla
+ * (Google Sheets always needs Menu → item; the top label alone cannot run a script.)
+ *
+ * Sheet layout (newest-first):
+ *   Fecha | Cash/Inversion | Categoria | Entidad | Cantidad
+ *
+ * Creates day 1 of the month AFTER the newest month already in the sheet.
+ * If the sheet has no data, uses day 1 of the current calendar month.
+ *
+ * Install:
+ * 1. Open Diego & Montse spreadsheet
+ * 2. Extensions → Apps Script
+ * 3. Delete any old .gs files (e.g. leftover "Finances" menu). Keep ONE file only.
+ * 4. Paste this file, Save
+ * 5. Reload the sheet → only menu "Dades" → "Afegir mes següent amb plantilla"
+ *
+ * If you still see "Finances" + "Dades": Apps Script still has an old onOpen.
+ * Remove every createMenu('Finances') and reload.
+ * To remove an old floating button (drawing) in the middle of the sheet:
+ * click it once → Delete / Backspace (or right-click → Delete).
+ */
+
+var HEADER_ROWS = 1;
+var NUM_COLS = 5;
+
+/** Google Sheets palette: Azul aciano 3 / Verde claro 3 */
+var COLOR_MONTH_EVEN = '#c9daf8'; // par → azul aciano 3
+var COLOR_MONTH_ODD = '#d9ead3'; // impar → verde claro 3
+
+/** Fixed rows for Diego & Montse. Amount null = leave blank. */
+var TEMPLATE = [
+  { type: 'Cash', category: 'Cuenta corriente', entity: 'CaixaBank', amount: null },
+  { type: 'Cash', category: 'Cuenta corriente', entity: 'Santander', amount: null },
+  { type: 'Cash', category: 'Cash', entity: 'Efectivo', amount: null },
+  { type: 'Invertido', category: 'Acciones', entity: 'Santander', amount: null },
+  { type: 'Invertido', category: 'Plan de pensiones', entity: 'Santander', amount: 5200 },
+  { type: 'Invertido', category: 'Cuenta flexible', entity: 'Revolut', amount: null },
+  { type: 'Invertido', category: 'Cuenta flexible', entity: 'Trade Republic', amount: null },
+];
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Dades')
+    .addItem('Afegir mes següent amb plantilla', 'addNewMonthDiegoMontse')
+    .addToUi();
+}
+
+function addNewMonthDiegoMontse() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var lastRow = sheet.getLastRow();
+
+  var targetDate;
+  if (lastRow > HEADER_ROWS) {
+    var cell = sheet.getRange(HEADER_ROWS + 1, 1);
+    var newest = toDate_(cell.getValue()) || toDate_(cell.getDisplayValue());
+    if (!newest) {
+      SpreadsheetApp.getUi().alert(
+        'No s\'ha pogut llegir la data de la primera fila.\n' +
+          'Valor: "' + cell.getDisplayValue() + '"',
+      );
+      return;
+    }
+    // Always create the next month after whatever is currently on top.
+    targetDate = addMonths_(newest, 1);
+  } else {
+    targetDate = firstDayOfCurrentMonth_();
+  }
+
+  var newRows = TEMPLATE.map(function (row) {
+    return [
+      targetDate,
+      row.type,
+      row.category,
+      row.entity,
+      row.amount === null || row.amount === undefined ? '' : row.amount,
+    ];
+  });
+
+  sheet.insertRowsAfter(HEADER_ROWS, newRows.length);
+  var range = sheet.getRange(HEADER_ROWS + 1, 1, newRows.length, NUM_COLS);
+  range.setValues(newRows);
+  range.setFontWeight('normal');
+  range.setBackground(monthBackground_(targetDate));
+  // Fecha as real date: 1/08/2026 style
+  sheet.getRange(HEADER_ROWS + 1, 1, newRows.length, 1).setNumberFormat('d/mm/yyyy');
+  // Fecha + Cantidad → right; Cash/Inversión, Categoria, Entidad → left
+  sheet.getRange(HEADER_ROWS + 1, 1, newRows.length, 1).setHorizontalAlignment('right');
+  sheet.getRange(HEADER_ROWS + 1, 2, newRows.length, 3).setHorizontalAlignment('left');
+  sheet.getRange(HEADER_ROWS + 1, 5, newRows.length, 1).setHorizontalAlignment('right');
+}
+
+/** Day 1 of the calendar month we are currently in. */
+function firstDayOfCurrentMonth_() {
+  var now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+function addMonths_(date, months) {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1);
+}
+
+function monthBackground_(date) {
+  var month = date.getMonth() + 1; // 1–12
+  return month % 2 === 0 ? COLOR_MONTH_EVEN : COLOR_MONTH_ODD;
+}
+
+function toDate_(value) {
+  if (value === null || value === undefined || value === '') return null;
+
+  // Real Date from Sheets (avoid fragile instanceof)
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+
+  // Sheets / Excel serial number
+  if (typeof value === 'number' && isFinite(value)) {
+    var serial = new Date(Date.UTC(1899, 11, 30) + Math.round(value * 86400000));
+    return new Date(serial.getUTCFullYear(), serial.getUTCMonth(), serial.getUTCDate());
+  }
+
+  var s = String(value).trim();
+  if (!s) return null;
+
+  // 1/08/2026 | 1-8-26 | 01.08.2026
+  var m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m) {
+    var day = Number(m[1]);
+    var month = Number(m[2]);
+    var year = Number(m[3]);
+    if (year < 100) year += 2000;
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return new Date(year, month - 1, day);
+    }
+  }
+
+  // Fallback: native parse (e.g. "Aug 01, 2026")
+  var parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  }
+
+  return null;
+}
