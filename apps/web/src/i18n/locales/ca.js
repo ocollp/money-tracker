@@ -53,6 +53,15 @@ export const t = {
   kpiMoneyAndInvestments: 'Diners i inversions',
   kpiTotalWealth: 'Patrimoni total',
   kpiVsPrevMonth: (pct) => `${pct} respecte al mes anterior`,
+  kpiPatrimonyBreakdown: ({ liquid, travel, housing }) => {
+    const parts = [
+      `${liquid} diners`,
+      travel != null ? `${travel} fons compartit` : null,
+      housing != null ? `${housing} hipoteca` : null,
+    ].filter(Boolean);
+    return parts.join(', ');
+  },
+  kpiMortgagePaidLabel: (amount) => `${amount} amortitzats aquest mes`,
   streakPositive: (n) => `${n} ${n === 1 ? 'mes' : 'mesos'} positius seguits`,
   streakNegative: (n) => `${n} ${n === 1 ? 'mes' : 'mesos'} a la baixa`,
   projection1yLabel: (change) => `En 12 mesos: ~${change}`,
@@ -67,6 +76,7 @@ export const t = {
   investedLabel: 'Invertit',
   cashLabel: 'Cash',
   heatmapTitle: 'Rendiment mensual',
+  heatmapTitleWithHousing: 'Rendiment mensual',
   heatmapMonthSelect: (label) => `Veure dades de ${label}`,
   heatmapMonthSelected: (label) => `Mes seleccionat: ${label}`,
   monthViewActive: (label) => `Vista de ${label}`,
@@ -82,7 +92,7 @@ export const t = {
   milestonesPatrimonyName: 'Patrimoni total',
   milestonesRemaining: (amount) => `Queden ${amount}`,
   milestonesAchieved: 'Assolit!',
-  travelTitle: 'Fons de viatges',
+  travelTitle: 'Fons compartit',
   travelCurrentFund: 'Saldo actual',
   travelSpentLastMonth: (amount) => `${amount} gastats l'últim mes`,
   sectionExpand: 'Mostra',
@@ -95,7 +105,7 @@ export const t = {
   netWorthTooltipPctOfMax: (pct) => `${pct}% del màxim del període`,
   netWorthTooltipVsPrev: (change) => `Respecte al mes anterior: ${change}`,
   distributionAllEntities: 'Totes les entitats',
-  travelFundLabel: 'Fons de viatges',
+  travelFundLabel: 'Fons compartit',
   toggleHousing: 'Habitatge',
   toggleHousingHide: 'Amagar habitatge del gràfic',
   toggleHousingShow: 'Mostrar habitatge al gràfic',

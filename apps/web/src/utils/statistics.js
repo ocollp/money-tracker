@@ -335,7 +335,7 @@ export function computeStatistics(months, options = {}) {
             : h?.value || 0;
       return v + (mortgageWealth[i] || 0);
     }),
-    'Fons de viatges': months.map(m => (m.travelFund || 0) * TRAVEL_PATRIMONY_SHARE),
+    'Fons compartit': months.map(m => (m.travelFund || 0) * TRAVEL_PATRIMONY_SHARE),
   };
 
   const cashVsInvested = months.map(m => ({
@@ -381,7 +381,7 @@ export function computeStatistics(months, options = {}) {
   const latestTravelFund = latestMonth.travelFund || 0;
   if (latestTravelFund !== 0) {
     distribution.push({
-      name: 'Fons de viatges',
+      name: 'Fons compartit',
       value: latestTravelFund * TRAVEL_PATRIMONY_SHARE,
       isTravel: true,
       pct: 0,
@@ -413,6 +413,23 @@ export function computeStatistics(months, options = {}) {
     patrimonyKpiPrevious
       ? ((patrimonyKpiCurrent - patrimonyKpiPrevious) / patrimonyKpiPrevious) * 100
       : null;
+
+  const housingEquityChangeVsPrev =
+    lastIdx >= 1
+      ? ((housingEffective[lastIdx] || 0) + (mortgageEffective[lastIdx] || 0)) -
+        ((housingEffective[lastIdx - 1] || 0) + (mortgageEffective[lastIdx - 1] || 0))
+      : null;
+  const travelInPatrimonyChangeVsPrev =
+    travelChangeVsPrev != null ? travelChangeVsPrev * TRAVEL_PATRIMONY_SHARE : null;
+  const patrimonyBreakdown =
+    patrimonyKpiChangeVsPrev == null
+      ? null
+      : {
+          liquid: changeVsPrev ?? 0,
+          travel: travelInPatrimonyChangeVsPrev ?? 0,
+          housing: housingEquityChangeVsPrev ?? 0,
+          total: patrimonyKpiChangeVsPrev,
+        };
 
   const travelMonthlySaving = options.travelMonthlySaving ?? TRAVEL_MONTHLY_SAVING ?? 0;
   const myHalfSaving = travelMonthlySaving / 2;
@@ -563,6 +580,7 @@ export function computeStatistics(months, options = {}) {
     currentTotalWealth,
     patrimonyKpiChangeVsPrev,
     patrimonyKpiChangeVsPrevPct,
+    patrimonyBreakdown,
     changeVsPrev,
     changeVsPrevPct,
     changeVsPrevTotal,

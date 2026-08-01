@@ -117,6 +117,47 @@ describe('computeStatistics', () => {
     expect(stats.travel.changeVsPrevPct).toBe(-50);
   });
 
+  it('exposes patrimony breakdown as liquid + travel + housing', () => {
+    const base = {
+      shortLabel: 'x',
+      label: 'x',
+      byEntity: {},
+      byEntityLiquid: {},
+      byEntityHousing: {},
+      cash: 0,
+      cashLiquid: 0,
+      invested: 0,
+      investedLiquid: 0,
+      total: 0,
+    };
+    const jul = {
+      ...base,
+      key: '2025-07',
+      date: new Date(2025, 6, 1),
+      liquidTotal: 54_141,
+      travelFund: 400,
+      housingValue: 150_000,
+      mortgageDebt: -111_355,
+    };
+    const ago = {
+      ...base,
+      key: '2025-08',
+      date: new Date(2025, 7, 1),
+      liquidTotal: 54_192,
+      travelFund: 750,
+      housingValue: 150_000,
+      mortgageDebt: -111_109,
+    };
+    const stats = computeStatistics([jul, ago]);
+    expect(stats.patrimonyBreakdown).toEqual({
+      liquid: 51,
+      travel: 350,
+      housing: 246,
+      total: 647,
+    });
+    expect(stats.patrimonyKpiChangeVsPrev).toBe(647);
+  });
+
   it('heatmap uses carried housing value so first Vivienda row does not fake +150k total change', () => {
     const base = {
       shortLabel: 'x',

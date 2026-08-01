@@ -1,9 +1,9 @@
 import { memo } from 'react';
-import { formatMoney, splitYearsAndMonths } from '../utils/formatters';
+import { formatMoney, formatChange, splitYearsAndMonths } from '../utils/formatters';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
 
-function MortgageCard({ housing }) {
+function MortgageCard({ housing, amortization = null }) {
   const { t } = useI18n();
   const { hideMoney } = usePrivacy();
 
@@ -23,7 +23,14 @@ function MortgageCard({ housing }) {
 
   return (
     <div className="h-full min-h-0 flex flex-col glass-card px-5 pt-5 pb-5 gap-4">
-      <h3 className="text-lg font-semibold">{t.housingTitle}</h3>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-lg font-semibold">{t.housingTitle}</h3>
+        {!hideMoney && amortization != null ? (
+          <span className="text-[11px] text-text-secondary tabular-nums shrink-0 pt-1">
+            {t.kpiMortgagePaidLabel(formatChange(amortization))}
+          </span>
+        ) : null}
+      </div>
 
       {!hideMoney ? (
         <div className="grid grid-cols-2 gap-3 flex-1">

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
-import { formatMoney, formatChange, formatPct, formatUpdatedClock } from './utils/formatters';
+import { formatMoney, formatChange, formatUpdatedClock } from './utils/formatters';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { useBackendProfile, clearAppJwt } from './hooks/useBackendProfile';
 import { useSheetFinanceData } from './hooks/useSheetFinanceData';
@@ -442,8 +442,8 @@ export default function App() {
     };
 
     return {
-      corrents: get('Compte corrent'),
-      remunerats: get('Compte remunerat'),
+      corrents: get('Comptes corrents'),
+      remunerats: get('Comptes remunerats'),
       inversions: get('Inversions'),
       total: {
         current: Number(viewStats.current ?? 0) || 0,
@@ -507,30 +507,24 @@ export default function App() {
           {isCategoryGroupedProfile && groupedKpis ? (
             <>
               <KpiCard
-                title="Compte corrent"
+                title="Comptes corrents"
                 value={formatMoney(groupedKpis.corrents.current)}
                 privacyPct={groupedKpis.corrents.pct}
-                headerRight={
-                  groupedKpis.corrents.change != null ? formatChange(groupedKpis.corrents.change) : null
-                }
                 subtitle={
-                  groupedKpis.corrents.pct != null && !Number.isNaN(groupedKpis.corrents.pct)
-                    ? t.kpiVsPrevMonth(formatPct(groupedKpis.corrents.pct))
+                  groupedKpis.corrents.change != null
+                    ? t.kpiVsPrevMonth(formatChange(groupedKpis.corrents.change))
                     : null
                 }
                 trend={groupedKpis.corrents.change != null ? groupedKpis.corrents.change : 0}
                 icon="🏦"
               />
               <KpiCard
-                title="Compte remunerat"
+                title="Comptes remunerats"
                 value={formatMoney(groupedKpis.remunerats.current)}
                 privacyPct={groupedKpis.remunerats.pct}
-                headerRight={
-                  groupedKpis.remunerats.change != null ? formatChange(groupedKpis.remunerats.change) : null
-                }
                 subtitle={
-                  groupedKpis.remunerats.pct != null && !Number.isNaN(groupedKpis.remunerats.pct)
-                    ? t.kpiVsPrevMonth(formatPct(groupedKpis.remunerats.pct))
+                  groupedKpis.remunerats.change != null
+                    ? t.kpiVsPrevMonth(formatChange(groupedKpis.remunerats.change))
                     : null
                 }
                 trend={groupedKpis.remunerats.change != null ? groupedKpis.remunerats.change : 0}
@@ -540,12 +534,9 @@ export default function App() {
                 title="Inversions"
                 value={formatMoney(groupedKpis.inversions.current)}
                 privacyPct={groupedKpis.inversions.pct}
-                headerRight={
-                  groupedKpis.inversions.change != null ? formatChange(groupedKpis.inversions.change) : null
-                }
                 subtitle={
-                  groupedKpis.inversions.pct != null && !Number.isNaN(groupedKpis.inversions.pct)
-                    ? t.kpiVsPrevMonth(formatPct(groupedKpis.inversions.pct))
+                  groupedKpis.inversions.change != null
+                    ? t.kpiVsPrevMonth(formatChange(groupedKpis.inversions.change))
                     : null
                 }
                 trend={groupedKpis.inversions.change != null ? groupedKpis.inversions.change : 0}
@@ -555,12 +546,9 @@ export default function App() {
                 title={t.kpiTotalWealth ?? 'Patrimoni total'}
                 value={formatMoney(groupedKpis.total.current)}
                 privacyPct={groupedKpis.total.pct}
-                headerRight={
-                  groupedKpis.total.change != null ? formatChange(groupedKpis.total.change) : null
-                }
                 subtitle={
-                  groupedKpis.total.pct != null && !Number.isNaN(groupedKpis.total.pct)
-                    ? t.kpiVsPrevMonth(formatPct(groupedKpis.total.pct))
+                  groupedKpis.total.change != null
+                    ? t.kpiVsPrevMonth(formatChange(groupedKpis.total.change))
                     : null
                 }
                 trend={groupedKpis.total.change != null ? groupedKpis.total.change : 0}
@@ -574,11 +562,6 @@ export default function App() {
                   title={t.kpiCurrentMonth}
                   value={formatChange(monthDelta)}
                   privacyPct={monthDeltaPct}
-                  subtitle={
-                    monthDeltaPct != null && !Number.isNaN(monthDeltaPct)
-                      ? t.kpiVsPrevMonth(formatPct(monthDeltaPct))
-                      : null
-                  }
                   trend={monthDelta != null ? monthDelta : 0}
                   icon="🗓️"
                 />
@@ -587,10 +570,9 @@ export default function App() {
                 title={t.kpiMoneyAndInvestments}
                 value={formatMoney(entityChange ? entityChange.current : viewStats.current)}
                 privacyPct={liquidPct}
-                headerRight={liquidDelta != null ? formatChange(liquidDelta) : null}
                 subtitle={
-                  liquidPct != null && !Number.isNaN(liquidPct)
-                    ? t.kpiVsPrevMonth(formatPct(liquidPct))
+                  liquidDelta != null
+                    ? t.kpiVsPrevMonth(formatChange(liquidDelta))
                     : null
                 }
                 trend={liquidDelta != null ? liquidDelta : 0}
@@ -602,14 +584,13 @@ export default function App() {
                   title={t.travelTitle}
                   value={formatMoney(viewStats.travel.current ?? 0)}
                   privacyPct={travelPct}
-                  headerRight={travelDelta != null ? formatChange(travelDelta) : null}
                   subtitle={
-                    travelPct != null && !Number.isNaN(travelPct)
-                      ? t.kpiVsPrevMonth(formatPct(travelPct))
+                    travelDelta != null
+                      ? t.kpiVsPrevMonth(formatChange(travelDelta))
                       : null
                   }
                   trend={travelDelta != null ? travelDelta : 0}
-                  icon="✈️"
+                  icon="👩🏻‍❤️‍👩🏼"
                 />
               )}
               {viewStats.hasHousing && profileFeatures.showPatrimonyKpi && (
@@ -622,15 +603,9 @@ export default function App() {
                         ? (viewStats.travel.current ?? 0) * (1 - TRAVEL_PATRIMONY_SHARE)
                         : 0),
                   )}
-                  headerRight={
-                    viewStats.patrimonyKpiChangeVsPrev != null
-                      ? formatChange(viewStats.patrimonyKpiChangeVsPrev)
-                      : null
-                  }
                   subtitle={
-                    viewStats.patrimonyKpiChangeVsPrevPct != null &&
-                    !Number.isNaN(viewStats.patrimonyKpiChangeVsPrevPct)
-                      ? t.kpiVsPrevMonth(formatPct(viewStats.patrimonyKpiChangeVsPrevPct))
+                    viewStats.patrimonyKpiChangeVsPrev != null
+                      ? t.kpiVsPrevMonth(formatChange(viewStats.patrimonyKpiChangeVsPrev))
                       : null
                   }
                   privacyPct={viewStats.patrimonyKpiChangeVsPrevPct}
@@ -698,10 +673,22 @@ export default function App() {
           selectedMonthKey={selectedMonthKey}
           onSelectMonth={handleHeatmapSelectMonth}
           trimEmptyMonths={profileFeatures.trimEmptyHeatmapMonths}
+          title={
+            viewStats.hasHousing
+              ? (t.heatmapTitleWithHousing ?? t.heatmapTitle)
+              : t.heatmapTitle
+          }
         />
 
         {viewStats.hasHousing && profileFeatures.showHousingSection && (
-          <MortgageCard housing={viewStats.housing} />
+          <MortgageCard
+            housing={viewStats.housing}
+            amortization={
+              viewStats.patrimonyBreakdown?.housing > 0
+                ? viewStats.patrimonyBreakdown.housing
+                : null
+            }
+          />
         )}
 
         {profileFeatures.showPatterns ? (

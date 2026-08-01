@@ -38,7 +38,7 @@ const ENTITY_COLORS = {
   Indexa: '#7c3aed',
   'Indexa Capital': '#8b5cf6',
   Fundeen: '#ea580c',
-  'Fons de viatges': '#9333ea',
+  'Fons compartit': '#9333ea',
   Habitatge: '#0891b2',
   Crowdfunding: '#f97316',
   ETFs: '#a855f7',
@@ -224,7 +224,7 @@ function DistributionChart({
   const displayName = (name) => {
     if (name in REPARTIMENT_DISPLAY_LABELS) return REPARTIMENT_DISPLAY_LABELS[name];
     if (name === 'Efectivo') return t.entityEffective;
-    if (name === 'Fons de viatges') return t.travelFundLabel ?? 'Fons de viatges';
+    if (name === 'Fons compartit') return t.travelFundLabel ?? 'Fons compartit';
     return name;
   };
 

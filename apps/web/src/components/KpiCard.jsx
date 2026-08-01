@@ -6,8 +6,10 @@ function KpiCard({
   title,
   value,
   subtitle,
+  detail,
   trend,
   icon,
+  iconLabel,
   headerRight,
   tooltip,
   className = '',
@@ -25,19 +27,23 @@ function KpiCard({
     ? (hasPrivacyPct ? formatPct(privacyPct) : '—')
     : value;
   const displaySubtitle = hideMoney && hasPrivacyPct ? null : subtitle;
+  const displayDetail = hideMoney ? null : detail;
   const displayHeaderRight = hideMoney ? null : headerRight;
+  const displayIconLabel = hideMoney ? null : iconLabel;
 
   return (
     <div className={`glass-card p-3 sm:p-5 relative ${highlight ? 'ring-1 ring-brand/35' : ''} ${className}`.trim()}>
-      <div className="flex items-center justify-between mb-1.5 sm:mb-3">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between mb-1.5 sm:mb-3 gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-text-secondary text-xs sm:text-sm font-medium">{title}</span>
           {tooltip && (
             <button
+              type="button"
               className="text-text-secondary/50 hover:text-brand transition-colors duration-150 active:scale-95"
               onMouseEnter={() => setShowTip(true)}
               onMouseLeave={() => setShowTip(false)}
               onClick={() => setShowTip(p => !p)}
+              aria-label="Info"
             >
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
@@ -45,31 +51,40 @@ function KpiCard({
             </button>
           )}
         </div>
-        {icon && (
-          <div className="flex items-center gap-2 shrink-0">
-            {icon ? <span className="text-lg sm:text-2xl">{icon}</span> : null}
-          </div>
-        )}
+        {icon ? <span className="text-lg sm:text-2xl shrink-0">{icon}</span> : null}
       </div>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div
-          className={`text-lg sm:text-2xl font-bold tracking-tight ${
+          className={`min-w-0 text-lg sm:text-2xl font-bold tracking-tight ${
             hasPrivacyPct ? trendColor : 'text-text-primary'
           }`}
         >
           {displayValue}
         </div>
-        {displayHeaderRight ? (
-          <span className={`text-xs sm:text-sm font-semibold tabular-nums ${trendColor}`}>
+        {displayIconLabel ? (
+          <div className="max-w-[55%] shrink-0 text-right text-[10px] sm:text-xs font-medium text-text-secondary leading-snug tabular-nums whitespace-pre-line">
+            {displayIconLabel}
+          </div>
+        ) : displayHeaderRight ? (
+          <span className="min-w-0 max-w-[55%] text-right text-[10px] sm:text-xs font-medium text-text-secondary leading-snug tabular-nums">
             {displayHeaderRight}
           </span>
         ) : null}
       </div>
-      {displaySubtitle && (
-        <div className={`text-xs sm:text-sm mt-0.5 sm:mt-1.5 ${trendColor} font-medium`}>
-          {arrow} {displaySubtitle}
+      {displaySubtitle || displayDetail ? (
+        <div className="mt-0.5 sm:mt-1.5 flex flex-row flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+          {displaySubtitle ? (
+            <div className={`text-xs sm:text-sm ${trendColor} font-medium shrink-0`}>
+              {arrow} {displaySubtitle}
+            </div>
+          ) : null}
+          {displayDetail ? (
+            <div className="text-[10px] sm:text-xs text-text-secondary leading-snug tabular-nums text-right min-w-0">
+              {displayDetail}
+            </div>
+          ) : null}
         </div>
-      )}
+      ) : null}
       {tooltip && showTip && (
         <div className="absolute z-20 left-3 right-3 top-full mt-1 glass-card p-3 text-xs text-text-secondary leading-relaxed shadow-xl">
           {tooltip}

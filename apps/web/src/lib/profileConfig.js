@@ -13,9 +13,9 @@ import {
 } from './distributionPalette.js';
 
 export const TERTIARY_CATEGORY_BUCKETS = {
-  'cuenta corriente': 'Compte corrent',
+  'cuenta corriente': 'Comptes corrents',
   acciones: 'Inversions',
-  'cuenta flexible': 'Compte remunerat',
+  'cuenta flexible': 'Comptes remunerats',
   'plan de pensiones': ASSET_CLASS_LABELS.pension,
   'plan de pensions': ASSET_CLASS_LABELS.pension,
   'pla de pensions': ASSET_CLASS_LABELS.pension,
@@ -25,9 +25,9 @@ export const TERTIARY_CATEGORY_BUCKETS = {
 };
 
 export const TERTIARY_DISTRIBUTION_COLORS = {
-  'Compte corrent': COLOR_TERTIARY_CORRENTS,
+  'Comptes corrents': COLOR_TERTIARY_CORRENTS,
   Inversions: COLOR_TERTIARY_INVERSIONS,
-  'Compte remunerat': COLOR_REMUNERAT,
+  'Comptes remunerats': COLOR_REMUNERAT,
   [ASSET_CLASS_LABELS.pension]: COLOR_PENSION,
   Efectivo: COLOR_ESTALVI_LIQUID,
 };

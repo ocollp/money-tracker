@@ -9,12 +9,14 @@ function Heatmap({
   selectedMonthKey = null,
   onSelectMonth,
   trimEmptyMonths = false,
+  title,
 }) {
   const { t } = useI18n();
   const { hideMoney } = usePrivacy();
   const rows = Array.isArray(data) ? data : [];
   const years = [...new Set(rows.map((d) => d.year))].sort((a, b) => b - a);
   const monthNames = t.monthsShort;
+  const heading = title ?? t.heatmapTitle;
 
   const grid = {};
   for (const d of rows) {
@@ -43,7 +45,7 @@ function Heatmap({
   return (
     <div className="glass-card overflow-hidden">
       <div className="px-3 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-3 flex items-center justify-between gap-2">
-        <h3 className="text-lg font-semibold">{t.heatmapTitle}</h3>
+        <h3 className="text-lg font-semibold">{heading}</h3>
         <div className="flex items-center gap-3 text-xs shrink-0">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-positive inline-block" />
