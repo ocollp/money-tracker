@@ -107,21 +107,3 @@ export function financeConfigSheetIdForProfile(finance, profileId) {
   return finance.spreadsheetId;
 }
 
-export function financeConfigToSettingsFormShape(finance) {
-  return {
-    spreadsheetId: finance.spreadsheetId ?? null,
-    spreadsheetId2: finance.spreadsheetId2 || null,
-    spreadsheetId3: finance.spreadsheetId3 || null,
-    profilePrimaryLabel: finance.profileLabels[PROFILE_PRIMARY_ID] ?? null,
-    profileSecondaryLabel: finance.profileLabels[PROFILE_SECONDARY_ID] ?? null,
-    profileTertiaryLabel: finance.profileLabels[PROFILE_TERTIARY_ID] ?? null,
-    profilePrimaryEmoji: finance.profileEmojis[PROFILE_PRIMARY_ID] ?? null,
-    profileSecondaryEmoji: finance.profileEmojis[PROFILE_SECONDARY_ID] ?? null,
-    profileTertiaryEmoji: finance.profileEmojis[PROFILE_TERTIARY_ID] ?? null,
-    mortgageEndYear: finance.mortgageEndYear,
-    mortgageEndMonth: finance.mortgageEndMonth,
-    mortgageMonthlyPayment: finance.mortgageMonthlyPayment,
-    ownershipShare: finance.ownershipShare,
-    assumedUnemployment: finance.assumedUnemployment,
-  };
-}

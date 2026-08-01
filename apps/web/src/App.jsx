@@ -5,14 +5,13 @@ import { useBackendProfile, clearAppJwt } from './hooks/useBackendProfile';
 import { useSheetFinanceData } from './hooks/useSheetFinanceData';
 import {
   buildFinanceConfig,
-  financeConfigToSettingsFormShape,
   financeConfigToStatsOptions,
   financeConfigSheetIdForProfile,
   applyLocalProfileDisplay,
 } from './lib/mergeFinanceConfig.js';
 import { getProfileFeatures } from './lib/profileConfig.js';
 import { computeStatisticsAsOf } from './lib/statsForMonth.js';
-import { loadLocalProfileDisplay, saveLocalProfileDisplay } from './lib/localProfileDisplay.js';
+import { loadLocalProfileDisplay } from './lib/localProfileDisplay.js';
 import {
   PROFILE_EMAILS,
   PROFILE_PRIMARY_ID,
@@ -42,7 +41,6 @@ import { ASSET_CLASS_LABELS } from './utils/assetClassBuckets.js';
 
 const LoginScreen = lazy(() => import('./components/LoginScreen'));
 const NoSheetAccessScreen = lazy(() => import('./components/NoSheetAccessScreen'));
-const ProfileSettings = lazy(() => import('./components/ProfileSettings'));
 const AddMonthModal = lazy(() => import('./components/AddMonthModal'));
 
 const PROFILE_KEY = 'mt_profile';
@@ -84,7 +82,6 @@ export default function App() {
     authError,
   } = useGoogleAuth();
   const [profile, setProfile] = useState(getInitialProfile);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [addMonthOpen, setAddMonthOpen] = useState(false);
   const [selectedAssetClasses, setSelectedAssetClasses] = useState([]);
@@ -99,7 +96,6 @@ export default function App() {
     );
   }, []);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar, width: sidebarWidth } = useSidebarLayout();
-  const [localProfileUiTick, setLocalProfileUiTick] = useState(0);
   const onAuthExpiredRef = useRef(clearAuth);
   onAuthExpiredRef.current = clearAuth;
   const handleAuthExpired = useCallback(() => {
@@ -117,14 +113,7 @@ export default function App() {
     const base = buildFinanceConfig(settings);
     if (hasPersistedProfile) return base;
     return applyLocalProfileDisplay(base, loadLocalProfileDisplay());
-  }, [settings, hasPersistedProfile, localProfileUiTick]);
-  const settingsModalValues = useMemo(
-    () => (hasPersistedProfile ? settings : financeConfigToSettingsFormShape(financeConfig)),
-    [hasPersistedProfile, settings, financeConfig]
-  );
-  const settingsReadOnlySubtitle = hasPersistedProfile ? null : hasApi
-      ? t.settingsApiNoProfile
-      : t.settingsNoApi;
+  }, [settings, hasPersistedProfile]);
 
   useEffect(() => {
     try {
@@ -260,11 +249,6 @@ export default function App() {
     }
   }, [selectedAssetClasses, displayStats]);
 
-  const handleSaveLocalProfileDisplay = useCallback((patch) => {
-    saveLocalProfileDisplay(patch);
-    setLocalProfileUiTick((t) => t + 1);
-  }, []);
-
   const effectiveUser = apiUser || user;
 
   const switchProfile = useCallback((id) => {
@@ -276,8 +260,6 @@ export default function App() {
 
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
-  const openSettings = useCallback(() => setSettingsOpen(true), []);
-  const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const handleLogout = useCallback(() => {
     googleLogout();
     clearAppJwt();
@@ -380,19 +362,6 @@ export default function App() {
 
         <DashboardLoadingShell loadingLabel={t.loadingData} />
 
-        <Suspense fallback={null}>
-          <ProfileSettings
-            open={settingsOpen}
-            onClose={closeSettings}
-            settings={settingsModalValues}
-            settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
-            onSave={hasPersistedProfile ? patchSettings : undefined}
-            onSaveLocalDisplay={!hasPersistedProfile ? handleSaveLocalProfileDisplay : undefined}
-            readOnly={false}
-            readOnlySubtitle={!hasPersistedProfile ? settingsReadOnlySubtitle : null}
-          />
-        </Suspense>
-
         <SideDrawer
           open={drawerOpen}
           onClose={closeDrawer}
@@ -402,7 +371,6 @@ export default function App() {
           effectiveProfiles={effectiveProfiles}
           effectiveProfile={effectiveProfile}
           onSwitchProfile={switchProfile}
-          onSettings={openSettings}
           onLogout={handleLogout}
           t={t}
           stats={null}
@@ -784,19 +752,6 @@ export default function App() {
         </Suspense>
       )}
 
-      <Suspense fallback={null}>
-        <ProfileSettings
-          open={settingsOpen}
-          onClose={closeSettings}
-          settings={settingsModalValues}
-          settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
-          onSave={hasPersistedProfile ? patchSettings : undefined}
-          onSaveLocalDisplay={!hasPersistedProfile ? handleSaveLocalProfileDisplay : undefined}
-          readOnly={false}
-          readOnlySubtitle={!hasPersistedProfile ? settingsReadOnlySubtitle : null}
-        />
-      </Suspense>
-
       <SideDrawer
         open={drawerOpen}
         onClose={closeDrawer}
@@ -806,7 +761,6 @@ export default function App() {
         effectiveProfiles={effectiveProfiles}
         effectiveProfile={effectiveProfile}
         onSwitchProfile={switchProfile}
-        onSettings={openSettings}
         onLogout={handleLogout}
         t={t}
         stats={stats}

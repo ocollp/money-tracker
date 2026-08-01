@@ -46,7 +46,7 @@ const TERTIARY_FEATURES = {
   showTravelKpi: false,
   showPatrimonyKpi: false,
   showHousingSection: false,
-  showPatterns: false,
+  showPatterns: true,
   showMilestones: false,
   assetClassMode: 'categoryGrouped',
   trimEmptyHeatmapMonths: true,
