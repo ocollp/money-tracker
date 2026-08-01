@@ -82,28 +82,26 @@ function parseAmount(amountStr) {
 }
 
 /**
- * Supports both layouts:
- * - Legacy: Fecha, Mes, Año, Cash/Inversión, Categoria, Entidad, Cantidad
- * - Compact: Fecha, Cash/Inversión, Categoria, Entidad, Cantidad
- * Month/year always come from Fecha.
+ * Parse Google Sheets `values` matrix (row 0 = header).
+ * Supports legacy (Fecha, Mes, Año, …) and compact (Fecha, Cash/Inversión, …) layouts.
  */
-export function parseCSV(text) {
-  const lines = text.trim().split('\n');
+export function parseSheetMatrix(values) {
+  if (!Array.isArray(values) || values.length < 2) return [];
   const rows = [];
 
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',');
-    const date = cols[0]?.trim();
+  for (let i = 1; i < values.length; i++) {
+    const cols = values[i] || [];
+    const date = cols[0] != null ? String(cols[0]).trim() : '';
     if (!date) continue;
 
     const parsedDate = parseSheetDate(date);
     if (!parsedDate) continue;
 
     const legacy = cols.length >= 7 && looksLikeMonthCol(cols[1]) && looksLikeYearCol(cols[2]);
-    const type = (legacy ? cols[3] : cols[1])?.trim();
-    const category = (legacy ? cols[4] : cols[2])?.trim();
-    const entity = (legacy ? cols[5] : cols[3])?.trim().replace(/\s+/g, ' ');
-    const amount = parseAmount((legacy ? cols[6] : cols[4])?.trim());
+    const type = String((legacy ? cols[3] : cols[1]) ?? '').trim();
+    const category = String((legacy ? cols[4] : cols[2]) ?? '').trim();
+    const entity = String((legacy ? cols[5] : cols[3]) ?? '').trim().replace(/\s+/g, ' ');
+    const amount = parseAmount(String((legacy ? cols[6] : cols[4]) ?? '').trim());
 
     if (!type || !category || amount === null) continue;
 
@@ -115,6 +113,19 @@ export function parseCSV(text) {
   }
 
   return rows;
+}
+
+/**
+ * Supports both layouts:
+ * - Legacy: Fecha, Mes, Año, Cash/Inversión, Categoria, Entidad, Cantidad
+ * - Compact: Fecha, Cash/Inversión, Categoria, Entidad, Cantidad
+ * Month/year always come from Fecha.
+ */
+export function parseCSV(text) {
+  const lines = String(text || '').trim().split('\n');
+  if (lines.length < 2) return [];
+  const values = lines.map((line) => line.split(','));
+  return parseSheetMatrix(values);
 }
 
 export function groupByMonth(rows) {

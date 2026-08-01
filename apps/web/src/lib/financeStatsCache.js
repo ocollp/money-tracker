@@ -19,6 +19,10 @@ function deserializeMonths(rows) {
   }));
 }
 
+function monthsFingerprint(months) {
+  return JSON.stringify(serializeMonths(months));
+}
+
 function readFromStorage(storage, sheetId, profileId) {
   if (!storage) return null;
   try {
@@ -32,14 +36,28 @@ function readFromStorage(storage, sheetId, profileId) {
   }
 }
 
-function writeToStorage(storage, sheetId, profileId, months) {
+function writeToStorage(storage, sheetId, profileId, months, fingerprint) {
   if (!storage || !sheetId || !months?.length) return;
   try {
     storage.setItem(
       cacheKey(sheetId, profileId),
-      JSON.stringify({ months: serializeMonths(months), at: Date.now() }),
+      JSON.stringify({ months: serializeMonths(months), fingerprint, at: Date.now() }),
     );
   } catch {}
+}
+
+function readFingerprint(storage, sheetId, profileId) {
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(cacheKey(sheetId, profileId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.fingerprint) return parsed.fingerprint;
+    if (Array.isArray(parsed?.months)) return JSON.stringify(parsed.months);
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export function readCachedMonths(sheetId, profileId) {
@@ -50,8 +68,17 @@ export function readCachedMonths(sheetId, profileId) {
   );
 }
 
+/** Returns true if storage was written, false if skipped (unchanged). */
 export function writeCachedMonths(sheetId, profileId, months) {
-  if (!sheetId || !months?.length || typeof window === 'undefined') return;
-  writeToStorage(typeof sessionStorage !== 'undefined' ? sessionStorage : null, sheetId, profileId, months);
-  writeToStorage(typeof localStorage !== 'undefined' ? localStorage : null, sheetId, profileId, months);
+  if (!sheetId || !months?.length || typeof window === 'undefined') return false;
+  const fingerprint = monthsFingerprint(months);
+  const session = typeof sessionStorage !== 'undefined' ? sessionStorage : null;
+  const local = typeof localStorage !== 'undefined' ? localStorage : null;
+  const existing =
+    readFingerprint(session, sheetId, profileId)
+    ?? readFingerprint(local, sheetId, profileId);
+  if (existing === fingerprint) return false;
+  writeToStorage(session, sheetId, profileId, months, fingerprint);
+  writeToStorage(local, sheetId, profileId, months, fingerprint);
+  return true;
 }

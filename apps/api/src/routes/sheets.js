@@ -2,6 +2,36 @@ import { getDb } from '../db.js';
 import { getValidAccessToken } from '../lib/googleTokens.js';
 
 const SHEET_RANGE = 'A:I';
+const SHEET_CACHE_TTL_MS = 45 * 1000;
+
+/** @type {Map<string, { expires: number, values: string[][] }>} */
+const sheetValuesCache = new Map();
+
+function cacheKey(googleSub, spreadsheetId) {
+  return `${googleSub}:${spreadsheetId}`;
+}
+
+function getCachedValues(googleSub, spreadsheetId) {
+  const key = cacheKey(googleSub, spreadsheetId);
+  const entry = sheetValuesCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expires) {
+    sheetValuesCache.delete(key);
+    return null;
+  }
+  return entry.values;
+}
+
+function setCachedValues(googleSub, spreadsheetId, values) {
+  sheetValuesCache.set(cacheKey(googleSub, spreadsheetId), {
+    expires: Date.now() + SHEET_CACHE_TTL_MS,
+    values,
+  });
+}
+
+function invalidateCachedValues(googleSub, spreadsheetId) {
+  sheetValuesCache.delete(cacheKey(googleSub, spreadsheetId));
+}
 
 async function getUser(googleSub) {
   const db = getDb();
@@ -29,6 +59,11 @@ export async function sheetsRoutes(fastify) {
       }
 
       const { spreadsheetId } = request.params;
+      const cached = getCachedValues(request.googleSub, spreadsheetId);
+      if (cached) {
+        return { values: cached };
+      }
+
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${SHEET_RANGE}`;
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -44,10 +79,9 @@ export async function sheetsRoutes(fastify) {
       }
 
       const data = await res.json();
-      const rows = data.values || [];
-      const csv = rows.map(row => row.join(',')).join('\n');
-
-      reply.type('text/plain').send(csv);
+      const values = data.values || [];
+      setCachedValues(request.googleSub, spreadsheetId, values);
+      return { values };
     },
   );
 
@@ -69,7 +103,7 @@ export async function sheetsRoutes(fastify) {
       }
 
       const { spreadsheetId } = request.params;
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${SHEET_RANGE}`;
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=spreadsheetId`;
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -180,6 +214,8 @@ export async function sheetsRoutes(fastify) {
           message: err.error?.message || `Google Sheets returned ${updateRes.status}`,
         });
       }
+
+      invalidateCachedValues(request.googleSub, spreadsheetId);
 
       const data = await updateRes.json();
       return { ok: true, rowsAdded: data.updatedRows || rows.length };

@@ -18,6 +18,13 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     base: process.env.VITE_BASE_PATH || '/',
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: { recharts: ['recharts'] },
+        },
+      },
+    },
     server: {
       port: 5174,
       strictPort: true,

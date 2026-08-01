@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { parseCSV, groupByMonth, mergeFixedHousingSheetRows, parseSheetDate } from './parseCSV.js';
+import {
+  parseCSV,
+  parseSheetMatrix,
+  groupByMonth,
+  mergeFixedHousingSheetRows,
+  parseSheetDate,
+} from './parseCSV.js';
 
 const HEADER = 'date,month,year,type,category,entity,amount\n';
 const HEADER_COMPACT = 'date,type,category,entity,amount\n';
@@ -48,6 +54,26 @@ describe('parseCSV', () => {
       amount: 17258,
     });
     expect(rows[1]).toMatchObject({ month: 4, year: 2024, amount: 8957 });
+  });
+
+  it('parseSheetMatrix matches parseCSV for the same compact rows', () => {
+    const values = [
+      ['Fecha', 'Cash/Inversión', 'Categoria', 'Entidad', 'Cantidad'],
+      ['1/03/2024', 'Cash', 'Cuenta corriente', 'CaixaBank', '17258'],
+      ['1/08/2026', 'Cash', 'Cash', 'Efectivo', '115'],
+    ];
+    const fromMatrix = parseSheetMatrix(values);
+    const fromCsv = parseCSV(
+      'Fecha,Cash/Inversión,Categoria,Entidad,Cantidad\n' +
+        '1/03/2024,Cash,Cuenta corriente,CaixaBank,17258\n' +
+        '1/08/2026,Cash,Cash,Efectivo,115',
+    );
+    expect(fromMatrix).toEqual(fromCsv);
+    expect(fromMatrix[1]).toMatchObject({
+      category: 'Cash',
+      entity: 'Efectivo',
+      amount: 115,
+    });
   });
 
   it('marks housing rows', () => {

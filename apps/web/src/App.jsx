@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { formatMoney, formatChange, formatPct, formatUpdatedClock } from './utils/formatters';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { useBackendProfile, clearAppJwt } from './hooks/useBackendProfile';
@@ -24,10 +24,7 @@ import {
   TRAVEL_PATRIMONY_SHARE,
 } from './config';
 import { SHEET_AUTH_ERRORS } from './services/sheetsApi';
-import LoginScreen from './components/LoginScreen';
-import NoSheetAccessScreen from './components/NoSheetAccessScreen';
 import { usePasskey } from './hooks/usePasskey.js';
-import ProfileSettings from './components/ProfileSettings';
 import SideDrawer, { useSidebarLayout } from './components/SideDrawer';
 import KpiCard from './components/KpiCard';
 import NetWorthChart from './components/NetWorthChart';
@@ -37,12 +34,16 @@ import MonthViewBanner from './components/MonthViewBanner';
 import Patterns from './components/Patterns';
 import MilestonesCard from './components/MilestonesCard';
 import MortgageCard from './components/MortgageCard';
-import AddMonthModal from './components/AddMonthModal';
 import DashboardLoadingShell from './components/DashboardLoadingShell';
 import DashboardHeader from './components/DashboardHeader';
 import MobilePullRefresh from './components/MobilePullRefresh';
 import { useI18n } from './i18n/I18nContext.jsx';
 import { ASSET_CLASS_LABELS } from './utils/assetClassBuckets.js';
+
+const LoginScreen = lazy(() => import('./components/LoginScreen'));
+const NoSheetAccessScreen = lazy(() => import('./components/NoSheetAccessScreen'));
+const ProfileSettings = lazy(() => import('./components/ProfileSettings'));
+const AddMonthModal = lazy(() => import('./components/AddMonthModal'));
 
 const PROFILE_KEY = 'mt_profile';
 
@@ -296,12 +297,14 @@ export default function App() {
 
   if (!isLoggedIn || needsRefresh) {
     return (
-      <LoginScreen
-        onLogin={() => login(PROFILE_EMAILS[profile])}
-        checkingSession={checkingSession}
-        authError={authError}
-        passkey={passkey}
-      />
+      <Suspense fallback={<DashboardLoadingShell />}>
+        <LoginScreen
+          onLogin={() => login(PROFILE_EMAILS[profile])}
+          checkingSession={checkingSession}
+          authError={authError}
+          passkey={passkey}
+        />
+      </Suspense>
     );
   }
 
@@ -310,15 +313,17 @@ export default function App() {
     const hasPrimarySheetId = Boolean(primarySid);
     const hasSecondarySheetConfigured = Boolean(String(financeConfig.spreadsheetId2 || '').trim());
     return (
-      <NoSheetAccessScreen
-        onLogout={() => { googleLogout(); clearAppJwt(); }}
-        hasPrimarySheetId={hasPrimarySheetId}
-        primarySpreadsheetId={primarySid}
-        hasSecondarySheetConfigured={hasSecondarySheetConfigured}
-        userEmail={effectiveUser?.email}
-        canSaveSpreadsheetViaApi={Boolean(hasApi && backendReady && settings)}
-        patchSettings={patchSettings}
-      />
+      <Suspense fallback={<DashboardLoadingShell />}>
+        <NoSheetAccessScreen
+          onLogout={() => { googleLogout(); clearAppJwt(); }}
+          hasPrimarySheetId={hasPrimarySheetId}
+          primarySpreadsheetId={primarySid}
+          hasSecondarySheetConfigured={hasSecondarySheetConfigured}
+          userEmail={effectiveUser?.email}
+          canSaveSpreadsheetViaApi={Boolean(hasApi && backendReady && settings)}
+          patchSettings={patchSettings}
+        />
+      </Suspense>
     );
   }
 
@@ -375,16 +380,18 @@ export default function App() {
 
         <DashboardLoadingShell loadingLabel={t.loadingData} />
 
-        <ProfileSettings
-          open={settingsOpen}
-          onClose={closeSettings}
-          settings={settingsModalValues}
-          settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
-          onSave={hasPersistedProfile ? patchSettings : undefined}
-          onSaveLocalDisplay={!hasPersistedProfile ? handleSaveLocalProfileDisplay : undefined}
-          readOnly={false}
-          readOnlySubtitle={!hasPersistedProfile ? settingsReadOnlySubtitle : null}
-        />
+        <Suspense fallback={null}>
+          <ProfileSettings
+            open={settingsOpen}
+            onClose={closeSettings}
+            settings={settingsModalValues}
+            settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
+            onSave={hasPersistedProfile ? patchSettings : undefined}
+            onSaveLocalDisplay={!hasPersistedProfile ? handleSaveLocalProfileDisplay : undefined}
+            readOnly={false}
+            readOnlySubtitle={!hasPersistedProfile ? settingsReadOnlySubtitle : null}
+          />
+        </Suspense>
 
         <SideDrawer
           open={drawerOpen}
@@ -763,28 +770,32 @@ export default function App() {
       </footer>
 
       {addMonthOpen && stats && (
-        <AddMonthModal
-          months={stats.months}
-          spreadsheetId={financeConfigSheetIdForProfile(financeConfig, effectiveProfile)}
-          appJwt={appJwt}
-          apiUrl={API_URL}
-          fixedHousingSheetValue={financeConfig.fixedHousingSheetValue}
-          fixedHousingSheetEntity={financeConfig.fixedHousingSheetEntity}
-          onClose={closeAddMonth}
-          onSaved={refresh}
-        />
+        <Suspense fallback={null}>
+          <AddMonthModal
+            months={stats.months}
+            spreadsheetId={financeConfigSheetIdForProfile(financeConfig, effectiveProfile)}
+            appJwt={appJwt}
+            apiUrl={API_URL}
+            fixedHousingSheetValue={financeConfig.fixedHousingSheetValue}
+            fixedHousingSheetEntity={financeConfig.fixedHousingSheetEntity}
+            onClose={closeAddMonth}
+            onSaved={refresh}
+          />
+        </Suspense>
       )}
 
-      <ProfileSettings
-        open={settingsOpen}
-        onClose={closeSettings}
-        settings={settingsModalValues}
-        settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
-        onSave={hasPersistedProfile ? patchSettings : undefined}
-        onSaveLocalDisplay={!hasPersistedProfile ? handleSaveLocalProfileDisplay : undefined}
-        readOnly={false}
-        readOnlySubtitle={!hasPersistedProfile ? settingsReadOnlySubtitle : null}
-      />
+      <Suspense fallback={null}>
+        <ProfileSettings
+          open={settingsOpen}
+          onClose={closeSettings}
+          settings={settingsModalValues}
+          settingsVariant={hasPersistedProfile ? 'api' : 'local-display'}
+          onSave={hasPersistedProfile ? patchSettings : undefined}
+          onSaveLocalDisplay={!hasPersistedProfile ? handleSaveLocalProfileDisplay : undefined}
+          readOnly={false}
+          readOnlySubtitle={!hasPersistedProfile ? settingsReadOnlySubtitle : null}
+        />
+      </Suspense>
 
       <SideDrawer
         open={drawerOpen}

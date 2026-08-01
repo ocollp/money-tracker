@@ -1,16 +1,29 @@
 import { SHEET_RANGE } from '../config';
 
+const SHEETS_META_FIELDS = 'spreadsheetId';
+
+function sheetMetaUrl(spreadsheetId) {
+  return `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=${SHEETS_META_FIELDS}`;
+}
+
+function sheetValuesUrl(spreadsheetId) {
+  return `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${SHEET_RANGE}`;
+}
+
 // ─── Direct Google Sheets API (implicit / no-backend mode) ────────────────
 
 export async function checkSheetAccess(accessToken, spreadsheetId) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${SHEET_RANGE}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const res = await fetch(sheetMetaUrl(spreadsheetId), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   return res.ok;
 }
 
+/** @returns {Promise<string[][]>} */
 export async function fetchSheetData(accessToken, spreadsheetId) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${SHEET_RANGE}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const res = await fetch(sheetValuesUrl(spreadsheetId), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -18,9 +31,9 @@ export async function fetchSheetData(accessToken, spreadsheetId) {
   }
 
   const data = await res.json();
-  const rows = data.values || [];
-  if (rows.length < 2) throw new Error('The sheet is empty or has no data');
-  return rows.map(row => row.join(',')).join('\n');
+  const values = data.values || [];
+  if (values.length < 2) throw new Error('The sheet is empty or has no data');
+  return values;
 }
 
 // ─── Backend proxy (backend mode — JWT auth, auto-refreshes Google token) ─
@@ -43,6 +56,7 @@ export const SHEET_AUTH_ERRORS = {
   GOOGLE_REAUTH: 'google_reauth_required',
 };
 
+/** @returns {Promise<string[][]>} */
 export async function fetchSheetDataViaBackend(appJwt, spreadsheetId, apiUrl) {
   const res = await fetch(`${apiUrl}/sheets/${spreadsheetId}`, {
     headers: { Authorization: `Bearer ${appJwt}` },
@@ -59,7 +73,10 @@ export async function fetchSheetDataViaBackend(appJwt, spreadsheetId, apiUrl) {
     throw new Error(body.message || `Error ${res.status} reading the sheet`);
   }
 
-  return await res.text();
+  const body = await res.json();
+  const values = body.values || [];
+  if (values.length < 2) throw new Error('The sheet is empty or has no data');
+  return values;
 }
 
 export async function appendRowsViaBackend(appJwt, spreadsheetId, rows, apiUrl) {

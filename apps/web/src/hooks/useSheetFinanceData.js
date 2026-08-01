@@ -16,7 +16,7 @@ import {
 } from '../config';
 import { financeConfigToStatsOptions } from '../lib/mergeFinanceConfig.js';
 import { readCachedMonths, writeCachedMonths } from '../lib/financeStatsCache.js';
-import { csvTextToMonths } from '../lib/sheetMonths.js';
+import { sheetValuesToMonths, sheetValuesFingerprint } from '../lib/sheetMonths.js';
 
 const POLL_INTERVAL_MS = 45 * 1000;
 
@@ -125,6 +125,8 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
   const sheetAccessRef = useRef(sheetAccess);
   sheetAccessRef.current = sheetAccess;
   const monthsCacheRef = useRef(initialCache.months);
+  const lastPayloadRef = useRef(null);
+  const lastPayloadSheetRef = useRef(null);
 
   const effectiveProfiles = !sheetAccess
     ? []
@@ -156,8 +158,8 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     return next;
   }, []);
 
-  const ingestCsv = useCallback(
-    (csvText) => csvTextToMonths(csvText, housingRef.current),
+  const ingestValues = useCallback(
+    (values) => sheetValuesToMonths(values, housingRef.current),
     [],
   );
 
@@ -168,6 +170,26 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
       return applyMonthsToStats(months, profileId);
     },
     [applyMonthsToStats, currentSheetId],
+  );
+
+  /** Apply sheet values unless payload fingerprint matches the last one for this sheet. */
+  const applySheetValues = useCallback(
+    (values, profileId, { force = false } = {}) => {
+      const fingerprint = sheetValuesFingerprint(values);
+      if (
+        !force
+        && lastPayloadSheetRef.current === currentSheetId
+        && lastPayloadRef.current === fingerprint
+      ) {
+        return false;
+      }
+      lastPayloadRef.current = fingerprint;
+      lastPayloadSheetRef.current = currentSheetId;
+      const months = ingestValues(values);
+      persistMonths(months, profileId);
+      return true;
+    },
+    [currentSheetId, ingestValues, persistMonths],
   );
 
   const updateSheetAccessAfterFetch = useCallback(() => {
@@ -216,6 +238,8 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     if (statsCacheKeyRef.current === statsKey) return;
 
     statsCacheKeyRef.current = statsKey;
+    lastPayloadRef.current = null;
+    lastPayloadSheetRef.current = null;
     const cachedMonths = readCachedMonths(currentSheetId, effectiveProfile);
     monthsCacheRef.current = cachedMonths?.length ? cachedMonths : null;
     if (cachedMonths?.length) {
@@ -242,10 +266,9 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     let cancelled = false;
 
     fetchData(currentSheetId)
-      .then((csvText) => {
+      .then((values) => {
         if (cancelled) return;
-        const months = ingestCsv(csvText);
-        persistMonths(months, effectiveProfile);
+        applySheetValues(values, effectiveProfile, { force: true });
         updateSheetAccessAfterFetch();
       })
       .catch((err) => {
@@ -279,8 +302,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     sid1,
     sid2,
     sid3,
-    ingestCsv,
-    persistMonths,
+    applySheetValues,
     updateSheetAccessAfterFetch,
   ]);
 
@@ -289,15 +311,14 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
 
     const intervalId = setInterval(() => {
       fetchData(currentSheetId)
-        .then((csvText) => {
-          const months = ingestCsv(csvText);
-          persistMonths(months, effectiveProfile);
+        .then((values) => {
+          applySheetValues(values, effectiveProfile);
         })
         .catch(() => {});
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [fetchData, currentSheetId, effectiveProfile, stats, ingestCsv, persistMonths]);
+  }, [fetchData, currentSheetId, effectiveProfile, stats, applySheetValues]);
 
   const refresh = useCallback(() => setFetchKey((k) => k + 1), []);
 
