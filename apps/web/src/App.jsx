@@ -391,7 +391,8 @@ export default function App() {
     : t.netWorthTitle;
   const kpiCount = isCategoryGroupedProfile
     ? 4
-    : 2 +
+    : (profileFeatures.showCurrentMonthKpi ? 1 : 0) +
+      1 +
       (viewStats.hasTravel && profileFeatures.showTravelKpi ? 1 : 0) +
       (viewStats.hasHousing && profileFeatures.showPatrimonyKpi ? 1 : 0);
   const kpiLgCols =
@@ -402,11 +403,16 @@ export default function App() {
 
   const travelPct = viewStats.travel?.changeVsPrevPct;
   const travelDelta = viewStats.travel?.changeVsPrev;
-  const includeTravelInMonthKpi = Boolean(!entityChange && viewStats.hasTravel && viewStats.travel);
-  const monthDelta = entityChange
-    ? entityChange.change
-    : (liquidDelta ?? 0) + (includeTravelInMonthKpi ? (travelDelta ?? 0) : 0);
+  const includeTravelInMonthKpi = Boolean(
+    profileFeatures.showCurrentMonthKpi && !entityChange && viewStats.hasTravel && viewStats.travel,
+  );
+  const monthDelta = !profileFeatures.showCurrentMonthKpi
+    ? null
+    : entityChange
+      ? entityChange.change
+      : (liquidDelta ?? 0) + (includeTravelInMonthKpi ? (travelDelta ?? 0) : 0);
   const monthDeltaPct = (() => {
+    if (!profileFeatures.showCurrentMonthKpi) return null;
     if (entityChange) return entityChange.pct;
     const liquidCurrent = Number(viewStats.current ?? 0) || 0;
     const travelCurrent = includeTravelInMonthKpi ? (Number(viewStats.travel?.current ?? 0) || 0) : 0;
@@ -563,18 +569,20 @@ export default function App() {
             </>
           ) : (
             <>
-              <KpiCard
-                title={t.kpiCurrentMonth}
-                value={formatChange(monthDelta)}
-                privacyPct={monthDeltaPct}
-                subtitle={
-                  monthDeltaPct != null && !Number.isNaN(monthDeltaPct)
-                    ? t.kpiVsPrevMonth(formatPct(monthDeltaPct))
-                    : null
-                }
-                trend={monthDelta != null ? monthDelta : 0}
-                icon="🗓️"
-              />
+              {profileFeatures.showCurrentMonthKpi && (
+                <KpiCard
+                  title={t.kpiCurrentMonth}
+                  value={formatChange(monthDelta)}
+                  privacyPct={monthDeltaPct}
+                  subtitle={
+                    monthDeltaPct != null && !Number.isNaN(monthDeltaPct)
+                      ? t.kpiVsPrevMonth(formatPct(monthDeltaPct))
+                      : null
+                  }
+                  trend={monthDelta != null ? monthDelta : 0}
+                  icon="🗓️"
+                />
+              )}
               <KpiCard
                 title={t.kpiMoneyAndInvestments}
                 value={formatMoney(entityChange ? entityChange.current : viewStats.current)}

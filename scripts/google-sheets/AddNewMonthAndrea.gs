@@ -81,8 +81,8 @@ function addNewMonthAndrea() {
   range.setValues(newRows);
   range.setFontWeight('normal');
   range.setBackground(monthBackground_(targetDate));
-  // Fecha like Andrea sheet: 01-08-26
-  sheet.getRange(HEADER_ROWS + 1, 1, newRows.length, 1).setNumberFormat('dd-mm-yy');
+  // Fecha like Olga / Diego: 01/08/2026
+  sheet.getRange(HEADER_ROWS + 1, 1, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
   // Fecha + Cantidad → right; Cash/Inversión, Categoria, Entidad → left
   sheet.getRange(HEADER_ROWS + 1, 1, newRows.length, 1).setHorizontalAlignment('right');
   sheet.getRange(HEADER_ROWS + 1, 2, newRows.length, 3).setHorizontalAlignment('left');

@@ -33,6 +33,7 @@ export const TERTIARY_DISTRIBUTION_COLORS = {
 };
 
 const DEFAULT_FEATURES = {
+  showCurrentMonthKpi: false,
   showTravelKpi: true,
   showPatrimonyKpi: true,
   showHousingSection: true,
@@ -43,6 +44,7 @@ const DEFAULT_FEATURES = {
 };
 
 const TERTIARY_FEATURES = {
+  showCurrentMonthKpi: false,
   showTravelKpi: false,
   showPatrimonyKpi: false,
   showHousingSection: false,
