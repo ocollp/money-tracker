@@ -398,9 +398,7 @@ export default function App() {
   const kpiGridCols =
     kpiCount >= 4
       ? 'grid-cols-2 lg:grid-cols-4'
-      : kpiCount === 3
-        ? 'grid-cols-3'
-        : 'grid-cols-2';
+      : 'grid-cols-2';
 
   const liquidDelta = entityChange ? entityChange.change : viewStats.changeVsPrev;
   const liquidPct = entityChange ? entityChange.pct : viewStats.changeVsPrevPct;
@@ -598,6 +596,7 @@ export default function App() {
               )}
               {viewStats.hasHousing && profileFeatures.showPatrimonyKpi && (
                 <KpiCard
+                  className={kpiCount === 3 ? 'col-span-2' : ''}
                   title={t.kpiTotalWealth}
                   value={formatMoney(
                     viewStats.currentTotalWealth -
