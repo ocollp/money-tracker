@@ -8,7 +8,7 @@ export const ASSET_CLASS_LABELS = {
   equities: 'Accions',
   crypto: 'Cripto',
   cash: 'Compte remunerat',
-  other: 'Estalvi líquid',
+  other: 'Efectiu',
 };
 
 function addTravelToOtherBucket(point, month, travelPatrimonyShare) {

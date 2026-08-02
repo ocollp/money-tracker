@@ -187,7 +187,7 @@ describe('classifyLiquidEntry', () => {
 });
 
 describe('buildAssetClassSeries', () => {
-  it('adds travel fund to Estalvi líquid bucket', () => {
+  it('adds travel fund to Efectiu bucket', () => {
     const months = [
       {
         shortLabel: 'Gen 24',

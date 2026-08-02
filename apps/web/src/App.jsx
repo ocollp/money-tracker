@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
-import { formatMoney, formatChange, formatUpdatedClock } from './utils/formatters';
+import { formatMoney, formatChange, formatChangeAbs, formatUpdatedClock } from './utils/formatters';
 import useGoogleAuth from './hooks/useGoogleAuth';
 import { useBackendProfile, clearAppJwt } from './hooks/useBackendProfile';
 import { useSheetFinanceData } from './hooks/useSheetFinanceData';
@@ -395,8 +395,12 @@ export default function App() {
       1 +
       (viewStats.hasTravel && profileFeatures.showTravelKpi ? 1 : 0) +
       (viewStats.hasHousing && profileFeatures.showPatrimonyKpi ? 1 : 0);
-  const kpiLgCols =
-    kpiCount >= 4 ? 'lg:grid-cols-4' : kpiCount === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2';
+  const kpiGridCols =
+    kpiCount >= 4
+      ? 'grid-cols-2 lg:grid-cols-4'
+      : kpiCount === 3
+        ? 'grid-cols-3'
+        : 'grid-cols-2';
 
   const liquidDelta = entityChange ? entityChange.change : viewStats.changeVsPrev;
   const liquidPct = entityChange ? entityChange.pct : viewStats.changeVsPrevPct;
@@ -503,7 +507,7 @@ export default function App() {
         }`}
         aria-busy={isRefreshing || undefined}
       >
-        <section className={`grid gap-3 sm:gap-4 grid-cols-2 ${kpiLgCols}`}>
+        <section className={`grid gap-3 sm:gap-4 ${kpiGridCols}`}>
           {isCategoryGroupedProfile && groupedKpis ? (
             <>
               <KpiCard
@@ -512,7 +516,7 @@ export default function App() {
                 privacyPct={groupedKpis.corrents.pct}
                 subtitle={
                   groupedKpis.corrents.change != null
-                    ? t.kpiVsPrevMonth(formatChange(groupedKpis.corrents.change))
+                    ? t.kpiVsPrevMonth(formatChangeAbs(groupedKpis.corrents.change))
                     : null
                 }
                 trend={groupedKpis.corrents.change != null ? groupedKpis.corrents.change : 0}
@@ -524,7 +528,7 @@ export default function App() {
                 privacyPct={groupedKpis.remunerats.pct}
                 subtitle={
                   groupedKpis.remunerats.change != null
-                    ? t.kpiVsPrevMonth(formatChange(groupedKpis.remunerats.change))
+                    ? t.kpiVsPrevMonth(formatChangeAbs(groupedKpis.remunerats.change))
                     : null
                 }
                 trend={groupedKpis.remunerats.change != null ? groupedKpis.remunerats.change : 0}
@@ -536,7 +540,7 @@ export default function App() {
                 privacyPct={groupedKpis.inversions.pct}
                 subtitle={
                   groupedKpis.inversions.change != null
-                    ? t.kpiVsPrevMonth(formatChange(groupedKpis.inversions.change))
+                    ? t.kpiVsPrevMonth(formatChangeAbs(groupedKpis.inversions.change))
                     : null
                 }
                 trend={groupedKpis.inversions.change != null ? groupedKpis.inversions.change : 0}
@@ -548,7 +552,7 @@ export default function App() {
                 privacyPct={groupedKpis.total.pct}
                 subtitle={
                   groupedKpis.total.change != null
-                    ? t.kpiVsPrevMonth(formatChange(groupedKpis.total.change))
+                    ? t.kpiVsPrevMonth(formatChangeAbs(groupedKpis.total.change))
                     : null
                 }
                 trend={groupedKpis.total.change != null ? groupedKpis.total.change : 0}
@@ -572,7 +576,7 @@ export default function App() {
                 privacyPct={liquidPct}
                 subtitle={
                   liquidDelta != null
-                    ? t.kpiVsPrevMonth(formatChange(liquidDelta))
+                    ? t.kpiVsPrevMonth(formatChangeAbs(liquidDelta))
                     : null
                 }
                 trend={liquidDelta != null ? liquidDelta : 0}
@@ -580,13 +584,12 @@ export default function App() {
               />
               {viewStats.hasTravel && viewStats.travel && profileFeatures.showTravelKpi && (
                 <KpiCard
-                  className={viewStats.hasHousing ? '' : 'col-span-2 lg:col-span-1'}
                   title={t.travelTitle}
                   value={formatMoney(viewStats.travel.current ?? 0)}
                   privacyPct={travelPct}
                   subtitle={
                     travelDelta != null
-                      ? t.kpiVsPrevMonth(formatChange(travelDelta))
+                      ? t.kpiVsPrevMonth(formatChangeAbs(travelDelta))
                       : null
                   }
                   trend={travelDelta != null ? travelDelta : 0}
@@ -595,7 +598,6 @@ export default function App() {
               )}
               {viewStats.hasHousing && profileFeatures.showPatrimonyKpi && (
                 <KpiCard
-                  className={kpiCount === 3 ? 'col-span-2 lg:col-span-1' : ''}
                   title={t.kpiTotalWealth}
                   value={formatMoney(
                     viewStats.currentTotalWealth -
@@ -605,7 +607,7 @@ export default function App() {
                   )}
                   subtitle={
                     viewStats.patrimonyKpiChangeVsPrev != null
-                      ? t.kpiVsPrevMonth(formatChange(viewStats.patrimonyKpiChangeVsPrev))
+                      ? t.kpiVsPrevMonth(formatChangeAbs(viewStats.patrimonyKpiChangeVsPrev))
                       : null
                   }
                   privacyPct={viewStats.patrimonyKpiChangeVsPrevPct}

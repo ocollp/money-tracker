@@ -21,6 +21,12 @@ export function formatChange(value) {
   return `${sign}${formatMoney(value)}`;
 }
 
+/** Absolute money amount for KPI deltas shown with ↑/↓ instead of +/-. */
+export function formatChangeAbs(value) {
+  if (value == null || isNaN(value)) return '—';
+  return formatMoney(Math.abs(value));
+}
+
 export function splitYearsAndMonths(totalMonths) {
   const total = Math.max(0, Math.round(Number(totalMonths)) || 0);
   return { years: Math.floor(total / 12), months: total % 12, total };

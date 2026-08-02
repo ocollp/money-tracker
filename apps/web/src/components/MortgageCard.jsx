@@ -26,7 +26,7 @@ function MortgageCard({ housing, amortization = null }) {
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-lg font-semibold">{t.housingTitle}</h3>
         {!hideMoney && amortization != null ? (
-          <span className="text-[11px] text-text-secondary tabular-nums shrink-0 pt-1">
+          <span className="text-[11px] text-text-secondary tabular-nums shrink-0 pt-1.5 text-right leading-snug max-w-[60%]">
             {t.kpiMortgagePaidLabel(formatChange(amortization))}
           </span>
         ) : null}

@@ -32,14 +32,16 @@ function KpiCard({
   const displayIconLabel = hideMoney ? null : iconLabel;
 
   return (
-    <div className={`glass-card p-3 sm:p-5 relative ${highlight ? 'ring-1 ring-brand/35' : ''} ${className}`.trim()}>
-      <div className="flex items-center justify-between mb-1.5 sm:mb-3 gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-text-secondary text-xs sm:text-sm font-medium">{title}</span>
+    <div className={`glass-card p-3 sm:p-5 relative min-w-0 overflow-hidden ${highlight ? 'ring-1 ring-brand/35' : ''} ${className}`.trim()}>
+      <div className="flex items-center justify-between mb-1.5 sm:mb-3 gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          <span className="text-text-secondary text-xs sm:text-sm font-medium break-words leading-snug">
+            {title}
+          </span>
           {tooltip && (
             <button
               type="button"
-              className="text-text-secondary/50 hover:text-brand transition-colors duration-150 active:scale-95"
+              className="text-text-secondary/50 hover:text-brand transition-colors duration-150 active:scale-95 shrink-0"
               onMouseEnter={() => setShowTip(true)}
               onMouseLeave={() => setShowTip(false)}
               onClick={() => setShowTip(p => !p)}
@@ -53,9 +55,9 @@ function KpiCard({
         </div>
         {icon ? <span className="text-lg sm:text-2xl shrink-0">{icon}</span> : null}
       </div>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 min-w-0">
         <div
-          className={`min-w-0 text-lg sm:text-2xl font-bold tracking-tight ${
+          className={`min-w-0 break-words text-lg sm:text-2xl font-bold tracking-tight ${
             hasPrivacyPct ? trendColor : 'text-text-primary'
           }`}
         >
@@ -66,20 +68,20 @@ function KpiCard({
             {displayIconLabel}
           </div>
         ) : displayHeaderRight ? (
-          <span className="min-w-0 max-w-[55%] text-right text-[10px] sm:text-xs font-medium text-text-secondary leading-snug tabular-nums">
+          <span className="min-w-0 max-w-[55%] text-right text-[10px] sm:text-xs font-medium text-text-secondary leading-snug tabular-nums break-words">
             {displayHeaderRight}
           </span>
         ) : null}
       </div>
       {displaySubtitle || displayDetail ? (
-        <div className="mt-0.5 sm:mt-1.5 flex flex-row flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+        <div className="mt-0.5 sm:mt-1.5 flex flex-row flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 min-w-0">
           {displaySubtitle ? (
-            <div className={`text-xs sm:text-sm ${trendColor} font-medium shrink-0`}>
-              {arrow} {displaySubtitle}
+            <div className={`text-xs sm:text-sm ${trendColor} font-medium min-w-0 max-w-full break-words leading-snug`}>
+              {arrow ? `${arrow} ` : ''}{displaySubtitle}
             </div>
           ) : null}
           {displayDetail ? (
-            <div className="text-[10px] sm:text-xs text-text-secondary leading-snug tabular-nums text-right min-w-0">
+            <div className="text-[10px] sm:text-xs text-text-secondary leading-snug tabular-nums text-right min-w-0 break-words">
               {displayDetail}
             </div>
           ) : null}
