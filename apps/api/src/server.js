@@ -3,8 +3,8 @@ import { assertJwtConfigured } from './lib/jwt.js';
 import { buildApp } from './app.js';
 
 const port = Number(process.env.PORT) || 3001;
-// Default to loopback in local dev to avoid OS/network interface edge cases.
-const host = process.env.HOST || '127.0.0.1';
+// Loopback locally; Render (and most PaaS) need 0.0.0.0 so the platform can reach the port.
+const host = process.env.HOST || (process.env.RENDER ? '0.0.0.0' : '127.0.0.1');
 
 try {
   await connectDb();
