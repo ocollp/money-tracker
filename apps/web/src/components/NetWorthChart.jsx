@@ -61,8 +61,8 @@ const RANGE_KEYS = ['3', '6', '12', 'all'];
 function NetWorthChart({
   months,
   totals,
-  title = 'Patrimoni',
-  subtitle = 'Diners i inversions',
+  title = 'Evolució del patrimoni',
+  subtitle = null,
   tooltipLabel = 'Patrimoni',
   selectedEntity,
   onClearEntity,

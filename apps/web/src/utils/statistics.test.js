@@ -193,6 +193,46 @@ describe('computeStatistics', () => {
     expect(agosto.value).toBe(-35_000);
   });
 
+  it('net worth chart MoM matches heatmap (liquid + housing, excludes travel)', () => {
+    const base = {
+      shortLabel: 'x',
+      label: 'x',
+      byEntity: {},
+      byEntityLiquid: {},
+      byEntityHousing: {},
+      cash: 0,
+      cashLiquid: 0,
+      invested: 0,
+      investedLiquid: 0,
+      total: 0,
+    };
+    const jul = {
+      ...base,
+      key: '2025-07',
+      date: new Date(2025, 6, 1),
+      liquidTotal: 54_141,
+      travelFund: 400,
+      housingValue: 150_000,
+      mortgageDebt: -111_355,
+    };
+    const ago = {
+      ...base,
+      key: '2025-08',
+      date: new Date(2025, 7, 1),
+      liquidTotal: 54_192,
+      travelFund: 750,
+      housingValue: 150_000,
+      mortgageDebt: -111_109,
+    };
+    const stats = computeStatistics([jul, ago]);
+    const julIdx = stats.netWorthMonths.findIndex((m) => m.key === '2025-07');
+    const agoIdx = stats.netWorthMonths.findIndex((m) => m.key === '2025-08');
+    const chartDelta = stats.netWorthTotals[agoIdx] - stats.netWorthTotals[julIdx];
+    const heat = stats.heatmap.find((h) => h.key === '2025-08');
+    expect(chartDelta).toBe(heat.value);
+    expect(stats.netWorthTotals[agoIdx] - stats.netWorthTotals[julIdx]).toBe(51 + 246);
+  });
+
   it('backfills mortgage debt before the first Hipoteca row in the sheet', () => {
     const eff = buildEffectiveMortgageSeries([
       { mortgageDebt: 0 },

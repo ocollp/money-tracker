@@ -70,6 +70,9 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
       filledMonths: months,
       filledLiquidTotals: months.map((m) => m.liquidTotal),
       filledTotalWealth: months.map((m) => totalWealthM(m)),
+      filledOperationalWealth: months.map(
+        (m) => (m.liquidTotal || 0) + hfFor(m) + mdFor(m),
+      ),
     };
   }
   const first = months[0].date;
@@ -78,11 +81,13 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
   const filledMonths = [];
   const filledLiquidTotals = [];
   const filledTotalWealth = [];
+  const filledOperationalWealth = [];
   const monthNamesShort = ['', 'Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
   let lastLiquid = months[0].liquidTotal;
   let lastHousingEff = hfFor(months[0]);
   let lastMortgageEff = mdFor(months[0]);
   let lastTW = totalWealthM(months[0]);
+  let lastOp = lastLiquid + lastHousingEff + lastMortgageEff;
   for (let d = new Date(first.getFullYear(), first.getMonth(), 1); d <= last; d.setMonth(d.getMonth() + 1)) {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const existing = byKey.get(key);
@@ -92,8 +97,10 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
       lastHousingEff = hfFor(existing);
       lastMortgageEff = mdFor(existing);
       lastTW = totalWealthM(existing);
+      lastOp = lastLiquid + lastHousingEff + lastMortgageEff;
       filledLiquidTotals.push(existing.liquidTotal);
       filledTotalWealth.push(lastTW);
+      filledOperationalWealth.push(lastOp);
     } else {
       const shortLabel = `${monthNamesShort[d.getMonth() + 1]} ${String(d.getFullYear()).slice(2)}`;
       const syn = {
@@ -106,10 +113,12 @@ function fillMissingMonths(months, housingValueOf = (m) => (m.housingValue || 0)
       filledMonths.push(syn);
       filledLiquidTotals.push(lastLiquid);
       lastTW = lastLiquid + lastHousingEff + lastMortgageEff + (syn.travelFund || 0);
+      lastOp = lastLiquid + lastHousingEff + lastMortgageEff;
       filledTotalWealth.push(lastTW);
+      filledOperationalWealth.push(lastOp);
     }
   }
-  return { filledMonths, filledLiquidTotals, filledTotalWealth };
+  return { filledMonths, filledLiquidTotals, filledTotalWealth, filledOperationalWealth };
 }
 
 export function computeStatistics(months, options = {}) {
@@ -148,14 +157,12 @@ export function computeStatistics(months, options = {}) {
 
   const housingWealth = buildForwardFromFirstMortgage(months, housingValueForWealth);
   const mortgageWealth = buildForwardMortgageWealthSeries(months);
-  const housingWealthByKey = new Map(months.map((m, i) => [m.key, housingWealth[i]]));
-  const mortgageWealthByKey = new Map(months.map((m, i) => [m.key, mortgageWealth[i]]));
 
-  const { filledMonths, filledLiquidTotals, filledTotalWealth } = fillMissingMonths(
+  const { filledMonths, filledLiquidTotals, filledTotalWealth, filledOperationalWealth } = fillMissingMonths(
     months,
     () => 0,
-    mortgageWealthByKey,
-    housingWealthByKey,
+    mortgageByKey,
+    housingByKey,
   );
 
   const lastIdx = months.length - 1;
@@ -629,7 +636,8 @@ export function computeStatistics(months, options = {}) {
     months,
     liquidTotals,
     netWorthMonths: filledMonths,
-    netWorthTotals: filledLiquidTotals,
+    netWorthTotals: filledOperationalWealth,
+    netWorthLiquidTotals: filledLiquidTotals,
     netWorthTotalWealth: filledTotalWealth,
     hasTravel,
     dataAsOf: {
