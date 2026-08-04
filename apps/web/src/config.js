@@ -1,11 +1,8 @@
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '').trim();
-/** En desenvolupament, si no hi ha VITE_API_URL, Vite fa proxy cap a l'API (mateix origen, sense CORS). */
 const useDevProxy = import.meta.env.DEV && !rawApiUrl;
-/** Prefix per fetch: URL completa, o "" per rutes relatives (proxy dev). */
 export const API_URL = useDevProxy ? '' : rawApiUrl;
-/** Si l'app ha de parlar amb l'API Node (URL directa o proxy local). */
 export const HAS_BACKEND = Boolean(rawApiUrl) || useDevProxy;
 export const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 export const SPREADSHEET_ID_2 = import.meta.env.VITE_SPREADSHEET_ID_2 || '';
@@ -68,11 +65,6 @@ export const OWNERSHIP_SHARE = n(import.meta.env.VITE_OWNERSHIP_SHARE);
 export const ASSUMED_UNEMPLOYMENT = n(import.meta.env.VITE_ASSUMED_UNEMPLOYMENT) ?? 1000;
 export const TRAVEL_MONTHLY_SAVING = n(import.meta.env.VITE_TRAVEL_MONTHLY_SAVING) ?? 600;
 
-/**
- * Fraction of `travelFund` (full sheet balance) that counts toward patrimony KPI + distribution slice.
- * Default 0.5 = count only my half of the shared travel fund in patrimony totals.
- * Set `VITE_TRAVEL_PATRIMONY_SHARE=1` if you want to count the full CSV balance instead.
- */
 const travelPatRaw = n(import.meta.env.VITE_TRAVEL_PATRIMONY_SHARE);
 export const TRAVEL_PATRIMONY_SHARE =
   travelPatRaw != null && travelPatRaw >= 0 && travelPatRaw <= 1 ? travelPatRaw : 0.5;

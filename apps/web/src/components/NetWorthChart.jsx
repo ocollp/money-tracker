@@ -270,7 +270,6 @@ function NetWorthChart({
                 const domainMin = yDomain?.[0];
                 const domainMax = yDomain?.[1];
                 const span = domainMax != null && domainMin != null ? domainMax - domainMin : 0;
-                // Skip bottom Y label — it collides with the first X-axis date.
                 if (span > 0 && Math.abs(payload.value - domainMin) <= span * 0.02) {
                   return null;
                 }
