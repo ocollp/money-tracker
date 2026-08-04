@@ -636,7 +636,7 @@ export function computeStatistics(months, options = {}) {
     months,
     liquidTotals,
     netWorthMonths: filledMonths,
-    netWorthTotals: filledOperationalWealth,
+    netWorthTotals: profileFeatures.showHousingSection ? filledOperationalWealth : filledLiquidTotals,
     netWorthLiquidTotals: filledLiquidTotals,
     netWorthTotalWealth: filledTotalWealth,
     hasTravel,

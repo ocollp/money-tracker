@@ -233,6 +233,42 @@ describe('computeStatistics', () => {
     expect(stats.netWorthTotals[agoIdx] - stats.netWorthTotals[julIdx]).toBe(51 + 246);
   });
 
+
+  it('keeps net worth chart on liquid-only series for tertiary profile', () => {
+    const base = {
+      shortLabel: 'x',
+      label: 'x',
+      byEntity: {},
+      byEntityLiquid: {},
+      byEntityHousing: {},
+      cash: 0,
+      cashLiquid: 0,
+      invested: 0,
+      investedLiquid: 0,
+      total: 0,
+    };
+    const jul = {
+      ...base,
+      key: '2025-07',
+      date: new Date(2025, 6, 1),
+      liquidTotal: 10_000,
+      housingValue: 150_000,
+      mortgageDebt: -100_000,
+    };
+    const ago = {
+      ...base,
+      key: '2025-08',
+      date: new Date(2025, 7, 1),
+      liquidTotal: 10_100,
+      housingValue: 150_000,
+      mortgageDebt: -99_000,
+    };
+    const stats = computeStatistics([jul, ago], { profileId: 'tertiary' });
+    const julIdx = stats.netWorthMonths.findIndex((m) => m.key === '2025-07');
+    const agoIdx = stats.netWorthMonths.findIndex((m) => m.key === '2025-08');
+    expect(stats.netWorthTotals[agoIdx] - stats.netWorthTotals[julIdx]).toBe(100);
+  });
+
   it('backfills mortgage debt before the first Hipoteca row in the sheet', () => {
     const eff = buildEffectiveMortgageSeries([
       { mortgageDebt: 0 },
