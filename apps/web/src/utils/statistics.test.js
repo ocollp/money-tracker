@@ -151,11 +151,11 @@ describe('computeStatistics', () => {
     const stats = computeStatistics([jul, ago]);
     expect(stats.patrimonyBreakdown).toEqual({
       liquid: 51,
-      travel: 350,
+      travel: 175,
       housing: 246,
-      total: 647,
+      total: 472,
     });
-    expect(stats.patrimonyKpiChangeVsPrev).toBe(647);
+    expect(stats.patrimonyKpiChangeVsPrev).toBe(472);
   });
 
   it('heatmap uses carried housing value so first Vivienda row does not fake +150k total change', () => {

@@ -70,12 +70,12 @@ export const TRAVEL_MONTHLY_SAVING = n(import.meta.env.VITE_TRAVEL_MONTHLY_SAVIN
 
 /**
  * Fraction of `travelFund` (full sheet balance) that counts toward patrimony KPI + distribution slice.
- * Default 1 = use the CSV figure as-is. Set `VITE_TRAVEL_PATRIMONY_SHARE=0.5` only if that balance is the
- * joint pot and you want “my half” in totals (KPI then subtracts `(1 - share) × travel` from raw wealth).
+ * Default 0.5 = count only my half of the shared travel fund in patrimony totals.
+ * Set `VITE_TRAVEL_PATRIMONY_SHARE=1` if you want to count the full CSV balance instead.
  */
 const travelPatRaw = n(import.meta.env.VITE_TRAVEL_PATRIMONY_SHARE);
 export const TRAVEL_PATRIMONY_SHARE =
-  travelPatRaw != null && travelPatRaw >= 0 && travelPatRaw <= 1 ? travelPatRaw : 1;
+  travelPatRaw != null && travelPatRaw >= 0 && travelPatRaw <= 1 ? travelPatRaw : 0.5;
 
 export const HOUSING_SHEET_FIXED_VALUE = n(import.meta.env.VITE_HOUSING_EQUITY);
 export const HOUSING_SHEET_FIXED_ENTITY =
