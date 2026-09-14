@@ -32,7 +32,6 @@ export default function CarGoal({ profiles, profile, months, appJwt, accessToken
   const orderedPeople = profile === PROFILE_PRIMARY_ID ? result.people : [...result.people].reverse();
   const ownOwner = profile === PROFILE_PRIMARY_ID ? 'Olga' : 'Andrea';
   const emojisByOwner = Object.fromEntries(profiles.map(person => [person.name, person.emoji]));
-  const pricePosition = ((price - 18000) / (25000 - 18000)) * 100;
   const money = value => hideMoney ? '••••' : formatMoney(value);
   return (
     <div className="rounded-xl border border-violet-500/15 bg-white/[0.02] p-3 sm:p-4 space-y-4">
@@ -41,7 +40,6 @@ export default function CarGoal({ profiles, profile, months, appJwt, accessToken
         <label htmlFor="car-price" className="flex items-center justify-between gap-2 text-xs text-text-secondary">Preu total del cotxe <strong className="text-sm font-medium tracking-tight text-text-primary tabular-nums">{formatMoney(price)}</strong></label>
         <div className="relative">
           <input id="car-price" type="range" min="18000" max="25000" step="500" value={price} onChange={e => onPriceChange(Number(e.target.value))} className="relative z-10 w-full h-10 accent-white/10 cursor-pointer" />
-          <span aria-hidden className="pointer-events-none absolute top-1/2 z-20 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/50 ring-2 ring-black/20" style={{ left: `${pricePosition}%` }} />
         </div>
         <div className="flex justify-between text-[11px] tabular-nums text-text-secondary/75"><span>18.000 €</span><span>20.000 €</span><span>22.000 €</span><span>25.000 €</span></div>
       </div>
