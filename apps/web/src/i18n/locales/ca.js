@@ -88,6 +88,8 @@ export const t = {
   patternsMonthDown: (n) => `${n}↓`,
   patternsYearMonthsAria: (year) => `Mesos de ${year}`,
   milestonesTitle: 'Objectius',
+  milestonesCarName: 'Comprar un cotxe',
+  milestonesCarPending: 'Import pendent de definir',
   milestonesLiquidName: 'Diners i inversions',
   milestonesPatrimonyName: 'Patrimoni total',
   milestonesRemaining: (amount) => `Queden ${amount}`,

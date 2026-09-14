@@ -12,19 +12,19 @@ import {
 const THEMES = {
   liquid: {
     icon: '💰',
-    card: 'border-violet-500/15 bg-gradient-to-br from-violet-500/[0.06] via-white/[0.02] to-indigo-500/[0.03]',
-    iconWrap: 'bg-violet-500/12 ring-violet-400/20',
-    bar: 'from-violet-500 via-indigo-400 to-violet-300',
+    card: 'border-violet-400/20 bg-violet-400/[0.05]',
+    iconWrap: 'bg-violet-400/10 ring-violet-300/20',
+    bar: 'from-violet-500 to-violet-300',
     barDone: 'from-emerald-600 to-emerald-400',
-    pct: 'text-violet-300/90',
+    pct: 'text-violet-200',
   },
   patrimony: {
     icon: '🏡',
-    card: 'border-violet-500/15 bg-gradient-to-br from-violet-500/[0.06] via-white/[0.02] to-indigo-500/[0.03]',
-    iconWrap: 'bg-violet-500/12 ring-violet-400/20',
-    bar: 'from-violet-500 via-indigo-400 to-violet-300',
+    card: 'border-violet-400/20 bg-violet-400/[0.05]',
+    iconWrap: 'bg-violet-400/10 ring-violet-300/20',
+    bar: 'from-violet-500 to-violet-300',
     barDone: 'from-emerald-600 to-emerald-400',
-    pct: 'text-violet-300/90',
+    pct: 'text-violet-200',
   },
 };
 
@@ -92,7 +92,7 @@ function MilestoneRow({ name, target, progress, theme, t }) {
   );
 }
 
-function MilestonesCard({ liquidCurrent, patrimonyCurrent }) {
+function MilestonesCard({ liquidCurrent, patrimonyCurrent, showWealthGoals = true, carGoal }) {
   const { t } = useI18n();
   const liquid = buildMilestoneProgress(liquidCurrent, MILESTONE_LIQUID_TARGET);
   const patrimony = buildMilestoneProgress(patrimonyCurrent, MILESTONE_PATRIMONY_TARGET);
@@ -101,6 +101,7 @@ function MilestonesCard({ liquidCurrent, patrimonyCurrent }) {
     <div className={`h-full ${DASHBOARD_SECTION_CARD}`}>
       <h3 className={`${DASHBOARD_SECTION_TITLE} text-base mb-2.5`}>{t.milestonesTitle}</h3>
       <div className="space-y-2">
+        {showWealthGoals && <>
         <MilestoneRow
           name={t.milestonesLiquidName}
           target={MILESTONE_LIQUID_TARGET}
@@ -115,6 +116,8 @@ function MilestonesCard({ liquidCurrent, patrimonyCurrent }) {
           theme="patrimony"
           t={t}
         />
+        </>}
+        {carGoal}
       </div>
     </div>
   );

@@ -60,7 +60,7 @@ export function getProfileFeatures(profileId) {
     return { ...DEFAULT_FEATURES, showMilestones: true };
   }
   if (profileId === PROFILE_SECONDARY_ID) {
-    return { ...DEFAULT_FEATURES, showMilestones: false };
+    return { ...DEFAULT_FEATURES, showMilestones: true };
   }
   return { ...DEFAULT_FEATURES, showMilestones: profileId === PROFILE_PRIMARY_ID };
 }

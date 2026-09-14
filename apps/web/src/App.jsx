@@ -32,6 +32,7 @@ import Heatmap from './components/Heatmap';
 import MonthViewBanner from './components/MonthViewBanner';
 import Patterns from './components/Patterns';
 import MilestonesCard from './components/MilestonesCard';
+import CarGoal from './components/CarGoal';
 import MortgageCard from './components/MortgageCard';
 import DashboardLoadingShell from './components/DashboardLoadingShell';
 import DashboardHeader from './components/DashboardHeader';
@@ -82,6 +83,16 @@ export default function App() {
     authError,
   } = useGoogleAuth();
   const [profile, setProfile] = useState(getInitialProfile);
+  const [carPrice, setCarPrice] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem('mt_car_price'));
+      return saved >= 5000 && saved <= 25000 ? Math.max(18000, saved) : 20000;
+    } catch { return 20000; }
+  });
+  const changeCarPrice = (price) => {
+    setCarPrice(price);
+    try { localStorage.setItem('mt_car_price', String(price)); } catch {}
+  };
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [addMonthOpen, setAddMonthOpen] = useState(false);
   const [selectedAssetClasses, setSelectedAssetClasses] = useState([]);
@@ -693,22 +704,18 @@ export default function App() {
         )}
 
         {profileFeatures.showPatterns ? (
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
-          {effectiveProfile === PROFILE_PRIMARY_ID && profileFeatures.showMilestones ? (
-            <div className="min-w-0 h-full">
+        <section className="space-y-4 sm:space-y-6">
+          {profileFeatures.showMilestones ? (
+            <div className="min-w-0 w-full">
               <MilestonesCard
                 liquidCurrent={viewStats.current}
                 patrimonyCurrent={patrimonyForMilestones}
+                showWealthGoals={effectiveProfile === PROFILE_PRIMARY_ID}
+                carGoal={<CarGoal profiles={effectiveProfiles} profile={effectiveProfile} months={stats.months} appJwt={appJwt} accessToken={accessToken} price={carPrice} onPriceChange={changeCarPrice} />}
               />
             </div>
           ) : null}
-          <div
-            className={`min-w-0 h-full ${
-              effectiveProfile === PROFILE_PRIMARY_ID && profileFeatures.showMilestones
-                ? ''
-                : 'lg:col-span-2'
-            }`}
-          >
+          <div className="min-w-0 w-full">
             <Patterns yearComparison={viewStats.yearComparison} heatmap={viewStats.heatmap} />
           </div>
         </section>
