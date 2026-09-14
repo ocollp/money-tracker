@@ -150,19 +150,19 @@ export function computeStatistics(months, options = {}) {
 
   const housingValueBaseSeries = months.map((m) => housingValueAsUsed(m));
   const housingEffective = buildCarriedForwardSeries(housingValueBaseSeries);
-  const housingByKey = new Map(months.map((m, i) => [m.key, housingEffective[i]]));
 
   const mortgageEffective = buildEffectiveMortgageSeries(months);
-  const mortgageByKey = new Map(months.map((m, i) => [m.key, mortgageEffective[i]]));
 
   const housingWealth = buildForwardFromFirstMortgage(months, housingValueForWealth);
   const mortgageWealth = buildForwardMortgageWealthSeries(months);
+  const housingWealthByKey = new Map(months.map((m, i) => [m.key, housingWealth[i]]));
+  const mortgageWealthByKey = new Map(months.map((m, i) => [m.key, mortgageWealth[i]]));
 
   const { filledMonths, filledLiquidTotals, filledTotalWealth, filledOperationalWealth } = fillMissingMonths(
     months,
     () => 0,
-    mortgageByKey,
-    housingByKey,
+    mortgageWealthByKey,
+    housingWealthByKey,
   );
 
   const lastIdx = months.length - 1;

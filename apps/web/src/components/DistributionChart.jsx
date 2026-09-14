@@ -62,6 +62,14 @@ function getColor(name, index) {
   return ENTITY_COLORS[name] ?? DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length];
 }
 
+function mixColor(color, target, amount) {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) return color;
+  const from = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+  const to = [1, 3, 5].map((i) => parseInt(target.slice(i, i + 2), 16));
+  const channels = from.map((value, i) => Math.round(value + (to[i] - value) * amount));
+  return `#${channels.map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
 function EyeIcon({ className = 'w-4 h-4' }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} aria-hidden>
@@ -330,6 +338,18 @@ function DistributionChart({
           <div className="h-full w-full max-sm:pointer-events-none">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <defs>
+                {pieData.map((d, i) => {
+                  const color = getColor(d.name, i);
+                  return (
+                    <linearGradient key={d.name} id={`distribution-gradient-${i}`} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={mixColor(color, '#ffffff', 0.14)} />
+                      <stop offset="58%" stopColor={color} />
+                      <stop offset="100%" stopColor={mixColor(color, '#000000', 0.12)} />
+                    </linearGradient>
+                  );
+                })}
+              </defs>
               <Pie
                 data={pieData} dataKey="value" nameKey="name"
                 cx="50%"
@@ -349,7 +369,7 @@ function DistributionChart({
                 {pieData.map((d, i) => (
                   <Cell
                     key={i}
-                    fill={getColor(d.name, i)}
+                    fill={`url(#distribution-gradient-${i})`}
                     opacity={selectionAppliesToPie && !isSliceSelected(d.name) ? 0.5 : 1}
                     style={{ transition: 'opacity 0.2s ease' }}
                   />

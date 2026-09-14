@@ -16,6 +16,8 @@ function KpiCard({
   highlight = false,
   subtitleColor,
   privacyPct,
+  onClick,
+  selected = false,
 }) {
   const { hideMoney } = usePrivacy();
   const [showTip, setShowTip] = useState(false);
@@ -30,9 +32,22 @@ function KpiCard({
   const displayDetail = hideMoney ? null : detail;
   const displayHeaderRight = hideMoney ? null : headerRight;
   const displayIconLabel = hideMoney ? null : iconLabel;
+  const interactive = typeof onClick === 'function';
 
   return (
-    <div className={`glass-card p-3 sm:p-5 relative min-w-0 overflow-hidden ${highlight ? 'ring-1 ring-brand/35' : ''} ${className}`.trim()}>
+    <div
+      className={`glass-card p-3 sm:p-5 relative min-w-0 overflow-hidden ${highlight || selected ? 'ring-1 ring-brand/35' : ''} ${interactive ? 'cursor-pointer transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60' : ''} ${className}`.trim()}
+      onClick={onClick}
+      onKeyDown={interactive ? (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      } : undefined}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-pressed={interactive ? selected : undefined}
+    >
       <div className="flex items-center justify-between mb-1.5 sm:mb-3 gap-2 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           <span className="text-text-secondary text-xs sm:text-sm font-medium break-words leading-snug">

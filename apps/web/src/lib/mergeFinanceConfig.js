@@ -16,6 +16,12 @@ import {
   HOUSING_SHEET_FIXED_ENTITY,
 } from '../config.js';
 
+function normalizeProfileEmoji(profileId, emoji) {
+  return profileId === PROFILE_TERTIARY_ID && emoji === '👨🏻‍🏭 👩🏼'
+    ? '👨🏻‍🦳 👩🏼'
+    : emoji;
+}
+
 export function buildFinanceConfig(apiSettings) {
   const s = apiSettings || {};
   return {
@@ -41,8 +47,11 @@ export function buildFinanceConfig(apiSettings) {
         (s.profileSecondaryEmoji && String(s.profileSecondaryEmoji).trim()) ||
         PROFILE_EMOJIS[PROFILE_SECONDARY_ID],
       [PROFILE_TERTIARY_ID]:
-        (s.profileTertiaryEmoji && String(s.profileTertiaryEmoji).trim()) ||
-        PROFILE_EMOJIS[PROFILE_TERTIARY_ID],
+        normalizeProfileEmoji(
+          PROFILE_TERTIARY_ID,
+          (s.profileTertiaryEmoji && String(s.profileTertiaryEmoji).trim()) ||
+            PROFILE_EMOJIS[PROFILE_TERTIARY_ID],
+        ),
     },
     mortgageEndYear:
       s.mortgageEndYear != null && !Number.isNaN(Number(s.mortgageEndYear))
@@ -80,7 +89,7 @@ export function applyLocalProfileDisplay(financeConfig, local) {
     }
     const ev = local[emojiKey];
     if (ev != null && String(ev).trim()) {
-      E[key] = String(ev).trim();
+      E[key] = normalizeProfileEmoji(key, String(ev).trim());
     }
   };
   apply(PROFILE_PRIMARY_ID, 'profilePrimaryLabel', 'profilePrimaryEmoji');
@@ -106,4 +115,3 @@ export function financeConfigSheetIdForProfile(finance, profileId) {
   if (profileId === PROFILE_TERTIARY_ID) return finance.spreadsheetId3;
   return finance.spreadsheetId;
 }
-

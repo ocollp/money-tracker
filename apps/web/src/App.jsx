@@ -86,8 +86,9 @@ export default function App() {
   const [carPrice, setCarPrice] = useState(() => {
     try {
       const saved = Number(localStorage.getItem('mt_car_price'));
-      return saved >= 5000 && saved <= 25000 ? Math.max(18000, saved) : 20000;
-    } catch { return 20000; }
+      if (saved === 20000) return 21500;
+      return saved >= 5000 && saved <= 25000 ? Math.max(18000, saved) : 21500;
+    } catch { return 21500; }
   });
   const changeCarPrice = (price) => {
     setCarPrice(price);
@@ -404,6 +405,7 @@ export default function App() {
     ? 4
     : (profileFeatures.showCurrentMonthKpi ? 1 : 0) +
       1 +
+      1 +
       (viewStats.hasTravel && profileFeatures.showTravelKpi ? 1 : 0) +
       (viewStats.hasHousing && profileFeatures.showPatrimonyKpi ? 1 : 0);
   const kpiGridCols =
@@ -416,6 +418,14 @@ export default function App() {
 
   const travelPct = viewStats.travel?.changeVsPrevPct;
   const travelDelta = viewStats.travel?.changeVsPrev;
+  const remuneratedName = 'Compte remunerat';
+  const remuneratedSeries = viewStats.assetClassEvolution ?? [];
+  const remuneratedCurrent = Number(remuneratedSeries.at(-1)?.[remuneratedName] ?? 0) || 0;
+  const remuneratedPrevious = remuneratedSeries.length >= 2
+    ? Number(remuneratedSeries.at(-2)?.[remuneratedName] ?? 0) || 0
+    : null;
+  const remuneratedDelta = remuneratedPrevious != null ? remuneratedCurrent - remuneratedPrevious : null;
+  const remuneratedPct = remuneratedPrevious ? (remuneratedDelta / remuneratedPrevious) * 100 : null;
   const includeTravelInMonthKpi = Boolean(
     profileFeatures.showCurrentMonthKpi && !entityChange && viewStats.hasTravel && viewStats.travel,
   );
@@ -590,6 +600,16 @@ export default function App() {
                 }
                 trend={liquidDelta != null ? liquidDelta : 0}
                 icon="💰"
+              />
+              <KpiCard
+                title="Compte remunerat"
+                value={formatMoney(remuneratedCurrent)}
+                privacyPct={remuneratedPct}
+                subtitle={remuneratedDelta != null ? t.kpiVsPrevMonth(formatChangeAbs(remuneratedDelta)) : null}
+                trend={remuneratedDelta != null ? remuneratedDelta : 0}
+                icon={<span aria-label="Trade Republic" className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-[10px] font-extrabold tracking-tight text-slate-950 shadow-sm shadow-black/10 ring-1 ring-black/10">TR</span>}
+                selected={selectedAssetClasses.includes(remuneratedName)}
+                onClick={() => handleDistributionEntitySelect(remuneratedName)}
               />
               {viewStats.hasTravel && viewStats.travel && profileFeatures.showTravelKpi && (
                 <KpiCard

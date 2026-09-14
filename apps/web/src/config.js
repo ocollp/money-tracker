@@ -49,7 +49,7 @@ export const PROFILE_LABELS = {
 export const PROFILE_EMOJIS = {
   [PROFILE_PRIMARY_ID]: import.meta.env.VITE_PROFILE_PRIMARY_EMOJI || '👩🏼',
   [PROFILE_SECONDARY_ID]: import.meta.env.VITE_PROFILE_SECONDARY_EMOJI || '👩🏻',
-  [PROFILE_TERTIARY_ID]: import.meta.env.VITE_PROFILE_TERTIARY_EMOJI || '👨🏻‍🏭 👩🏼',
+  [PROFILE_TERTIARY_ID]: import.meta.env.VITE_PROFILE_TERTIARY_EMOJI || '👨🏻‍🦳 👩🏼',
 };
 
 const n = (v) => {

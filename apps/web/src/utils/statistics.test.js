@@ -384,5 +384,7 @@ describe('computeStatistics', () => {
     expect(all.hasHousing).toBe(true);
     expect(asOfMay.hasHousing).toBe(false);
     expect(asOfMay.currentTotalWealth).toBe(86_000);
+    const mayIdx = all.netWorthMonths.findIndex((m) => m.key === '2025-05');
+    expect(all.netWorthTotals[mayIdx]).toBe(86_000);
   });
 });

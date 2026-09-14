@@ -81,11 +81,6 @@ function MilestoneRow({ name, target, progress, theme, t }) {
             </div>
           </div>
 
-          {!hideMoney && !progress.achieved ? (
-            <p className="text-[10px] text-text-secondary/75 mt-1.5 tabular-nums">
-              {t.milestonesRemaining(formatMoney(progress.remaining))}
-            </p>
-          ) : null}
         </div>
       </div>
     </div>
@@ -109,6 +104,9 @@ function MilestonesCard({ liquidCurrent, patrimonyCurrent, showWealthGoals = tru
           theme="liquid"
           t={t}
         />
+        </>}
+        {carGoal}
+        {showWealthGoals && <>
         <MilestoneRow
           name={t.milestonesPatrimonyName}
           target={MILESTONE_PATRIMONY_TARGET}
@@ -117,7 +115,6 @@ function MilestonesCard({ liquidCurrent, patrimonyCurrent, showWealthGoals = tru
           t={t}
         />
         </>}
-        {carGoal}
       </div>
     </div>
   );
