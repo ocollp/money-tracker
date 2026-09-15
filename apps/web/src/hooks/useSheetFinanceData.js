@@ -128,6 +128,15 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
   const lastPayloadRef = useRef(null);
   const lastPayloadSheetRef = useRef(null);
 
+  useEffect(() => {
+    const access = { id1: Boolean(sid1), id2: Boolean(sid2), id3: Boolean(sid3) };
+    sheetAccessRef.current = access;
+    pendingSecondaryAccessRef.current = undefined;
+    pendingTertiaryAccessRef.current = undefined;
+    setSheetAccess(access);
+    setError(null);
+  }, [sid1, sid2, sid3, appJwt, accessToken]);
+
   const effectiveProfiles = !sheetAccess
     ? []
     : [
@@ -285,7 +294,7 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
         // Network and server failures do not revoke access to the sheet.
         if (err.status !== 403 && err.status !== 404) return;
         setSheetAccess((prev) => {
-          if (currentSheetId === sid1) return { id1: false, id2: false, id3: false };
+          if (currentSheetId === sid1) return { ...prev, id1: false };
           if (currentSheetId === sid2 && prev) return { ...prev, id2: false };
           if (currentSheetId === sid3 && prev) return { ...prev, id3: false };
           return prev ?? { id1: false, id2: false, id3: false };
