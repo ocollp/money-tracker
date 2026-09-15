@@ -27,7 +27,9 @@ export default function CarGoal({ profiles, profile, months, appJwt, accessToken
   }, [sheetId, appJwt, accessToken, attempt, months]);
   const latest = months?.at(-1);
   const own = remuneratedBalance(latest);
-  const peer = other?.sheetId === sheetId && !other.error ? other?.balance ?? null : null;
+  const peer = sheetId && other && other.sheetId === sheetId && !other.error
+    ? other.balance ?? null
+    : null;
   const result = carGoal(price, own, peer);
   const orderedPeople = profile === PROFILE_PRIMARY_ID ? result.people : [...result.people].reverse();
   const ownOwner = profile === PROFILE_PRIMARY_ID ? 'Olga' : 'Andrea';

@@ -211,7 +211,7 @@ const PIE_LAYOUT = {
 };
 
 function DistributionChart({
-  distribution,
+  distribution = [],
   title,
   selectedEntities = [],
   onSelectEntity,
@@ -259,12 +259,10 @@ function DistributionChart({
     return result;
   }, [entityEvolution, distributionSparklineExtras]);
 
-  if (!distribution?.length) return null;
-
-  const visibleTotal = distribution
+  const visibleTotal = (distribution ?? [])
     .filter(d => !isHidden(d))
     .reduce((s, d) => s + d.value, 0);
-  const recalculated = distribution
+  const recalculated = (distribution ?? [])
     .map(d => {
       const hidden = isHidden(d);
       return { ...d, pct: !hidden && visibleTotal > 0 ? (d.value / visibleTotal) * 100 : 0, hidden };
@@ -293,6 +291,8 @@ function DistributionChart({
     },
     [onSelectEntity],
   );
+
+  if (!distribution?.length) return null;
 
   const setHousingVisible = (next) => {
     setShowHousing(next);
