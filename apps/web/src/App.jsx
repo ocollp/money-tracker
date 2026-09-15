@@ -342,13 +342,13 @@ export default function App() {
           ) : (
             <button
               type="button"
-              onClick={() => { googleLogout(); clearAppJwt(); }}
+              onClick={refresh}
               className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-brand transition-all duration-200 underline active:opacity-80"
             >
               <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              {t.logoutAndRetry}
+              Tornar a carregar
             </button>
           )}
         </div>

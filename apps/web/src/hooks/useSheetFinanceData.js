@@ -282,6 +282,8 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
           return;
         }
         if (!hadCachedMonths) setError(err.message);
+        // Network and server failures do not revoke access to the sheet.
+        if (err.status !== 403 && err.status !== 404) return;
         setSheetAccess((prev) => {
           if (currentSheetId === sid1) return { id1: false, id2: false, id3: false };
           if (currentSheetId === sid2 && prev) return { ...prev, id2: false };

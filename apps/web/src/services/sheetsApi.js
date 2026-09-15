@@ -27,7 +27,7 @@ export async function fetchSheetData(accessToken, spreadsheetId) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Error ${res.status} reading the sheet`);
+    throw Object.assign(new Error(err.error?.message || `Error ${res.status} reading the sheet`), { status: res.status });
   }
 
   const data = await res.json();
@@ -70,7 +70,7 @@ export async function fetchSheetDataViaBackend(appJwt, spreadsheetId, apiUrl) {
       }
       throw new Error(SHEET_AUTH_ERRORS.JWT_EXPIRED);
     }
-    throw new Error(body.message || `Error ${res.status} reading the sheet`);
+    throw Object.assign(new Error(body.message || `Error ${res.status} reading the sheet`), { status: res.status });
   }
 
   const body = await res.json();
