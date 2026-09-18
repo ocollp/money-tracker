@@ -59,7 +59,7 @@ export default function CarGoal({ profiles, profile, months, appJwt, accessToken
         {orderedPeople.map((person) => (
           <div key={person.owner} className="rounded-xl border border-white/[0.06] bg-black/10 p-3.5 sm:p-4 space-y-3.5 text-xs">
             <p className="flex items-center justify-between font-semibold text-sm"><span className="flex items-center gap-1.5"><span aria-hidden>{emojisByOwner[person.owner]}</span>{person.owner}</span><span className="rounded-full bg-violet-400/10 px-2 py-0.5 text-[11px] font-medium text-violet-200">{person.share * 100}%</span></p>
-            <p className="flex justify-between gap-2 text-text-secondary">{person.owner === ownOwner ? 'Tinc' : 'Té'} <span className="text-text-primary tabular-nums">{formatMoney(person.payment)}</span></p>
+            <p className="flex justify-between gap-2 text-text-secondary">{person.owner === ownOwner ? 'Necessito' : 'Necessita'} <span className="text-text-primary tabular-nums">{formatMoney(person.payment)}</span></p>
             <p className="flex justify-between gap-2 text-text-secondary">Estalvis <span className="text-emerald-300 tabular-nums">{person.balance == null ? '—' : money(person.balance)}</span></p>
             {person.balance != null ? <>
               {!hideMoney && <div role="progressbar" aria-label={`Progrés ${person.owner}`} aria-valuemin={0} aria-valuemax={person.payment} aria-valuenow={Math.min(person.payment, Math.max(0, person.balance))} className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">

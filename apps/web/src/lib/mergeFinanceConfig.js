@@ -17,8 +17,8 @@ import {
 } from '../config.js';
 
 function normalizeProfileEmoji(profileId, emoji) {
-  return profileId === PROFILE_TERTIARY_ID && emoji === '👨🏻‍🏭 👩🏼'
-    ? '👨🏻‍🦳 👩🏼'
+  return profileId === PROFILE_TERTIARY_ID && ['👨🏻‍🏭 👩🏼', '👨🏻‍🦳 👩🏼'].includes(emoji)
+    ? '👨🏼‍🦳 👩🏼'
     : emoji;
 }
 
