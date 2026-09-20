@@ -16,12 +16,12 @@ export default function YearAgoCard({ stats }) {
   const percent = previous?.liquidTotal > 0 ? difference / previous.liquidTotal * 100 : null;
   return (
     <KpiCard
-      title="Respecte a l’any passat"
+      title="Diners i inversions · Comparativa anual"
       icon="📅"
       value={previous ? formatChange(difference) : '—'}
       privacyPct={percent}
       trend={difference ?? 0}
-      subtitle={previous ? (percent != null ? formatPct(percent) : null) : 'Sense dades del mateix mes de l’any anterior'}
+      subtitle={previous ? (percent != null ? `${formatPct(percent)} respecte a l’any passat` : null) : 'Sense dades del mateix mes de l’any anterior'}
       detail={previous ? `${compactMonth(previous.key)}: ${formatMoney(previous.liquidTotal)} · ${compactMonth(current.key)}: ${formatMoney(current.liquidTotal)}` : null}
     />
   );
