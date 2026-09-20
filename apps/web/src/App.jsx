@@ -33,6 +33,7 @@ import MonthViewBanner from './components/MonthViewBanner';
 import Patterns from './components/Patterns';
 import MilestonesCard from './components/MilestonesCard';
 import CarGoal from './components/CarGoal';
+import YearAgoCard from './components/YearAgoCard';
 import MortgageCard from './components/MortgageCard';
 import DashboardLoadingShell from './components/DashboardLoadingShell';
 import DashboardHeader from './components/DashboardHeader';
@@ -86,8 +87,7 @@ export default function App() {
   const [carPrice, setCarPrice] = useState(() => {
     try {
       const saved = Number(localStorage.getItem('mt_car_price'));
-      if (saved === 20000) return 21500;
-      return saved >= 5000 && saved <= 25000 ? Math.max(18000, saved) : 21500;
+      return saved >= 5000 && saved <= 30000 ? Math.max(20000, saved) : 21500;
     } catch { return 21500; }
   });
   const changeCarPrice = (price) => {
@@ -650,6 +650,10 @@ export default function App() {
             </>
           )}
         </section>
+
+        {(effectiveProfile === PROFILE_PRIMARY_ID || effectiveProfile === PROFILE_SECONDARY_ID) && (
+          <YearAgoCard stats={displayStats} />
+        )}
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
           {viewStats.assetClassDistribution?.length > 0 ? (

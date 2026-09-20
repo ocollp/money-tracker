@@ -15,3 +15,13 @@ export function carGoal(price, olga, andrea) {
   });
   return { people, missing: people.some(p => p.missing == null) ? null : people.reduce((sum, p) => sum + p.missing, 0) };
 }
+
+export function savingsPaceBalance(month) {
+  if (!month) return null;
+  const bbva = month.entries.filter(row =>
+    !row.isHousing && !row.isTravel &&
+    String(row.entity).trim().toLowerCase() === 'bbva' &&
+    String(row.type).trim().toLowerCase() === 'cash'
+  ).reduce((sum, row) => sum + row.amount, 0);
+  return remuneratedBalance(month) + bbva;
+}
