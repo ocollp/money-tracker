@@ -46,7 +46,7 @@ function Patterns({ yearComparison, heatmap }) {
                 }`}
               >
                 <div className="flex items-center justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
                     <span className="text-sm font-bold tabular-nums">{y.year}</span>
                     <span className="flex items-center gap-1 text-[10px] font-semibold tabular-nums">
                       {y.positive > 0 ? (
@@ -59,13 +59,13 @@ function Patterns({ yearComparison, heatmap }) {
                   </div>
                   {hideMoney ? (
                     <span
-                      className={`text-sm font-bold shrink-0 ${isPositive ? 'text-positive' : 'text-negative'}`}
+                      className={`text-xs font-medium shrink-0 ${isPositive ? 'text-positive' : 'text-negative'}`}
                     >
                       {isPositive ? '↑' : '↓'}
                     </span>
                   ) : (
                     <span
-                      className={`text-sm font-bold tabular-nums shrink-0 ${
+                      className={`text-xs font-medium tabular-nums shrink-0 ${
                         isPositive ? 'text-positive' : 'text-negative'
                       }`}
                     >
@@ -75,8 +75,14 @@ function Patterns({ yearComparison, heatmap }) {
                   )}
                 </div>
 
+                {y.patrimony != null && (
+                  <p className="mb-2 text-xs text-text-secondary tabular-nums" title={y.patrimonyMonth}>
+                    {hideMoney ? '••••' : formatMoney(y.patrimony)} de patrimoni total
+                  </p>
+                )}
+
                 <div
-                  className="flex h-5 sm:h-2.5 w-full min-w-0 rounded-full overflow-hidden ring-1 ring-inset ring-white/[0.06] divide-x divide-black/20"
+                  className="grid grid-cols-12 gap-[3px] h-5 sm:h-2.5 w-full min-w-0"
                   role="img"
                   aria-label={t.patternsYearMonthsAria(y.year)}
                 >
@@ -95,10 +101,8 @@ function Patterns({ yearComparison, heatmap }) {
                       <div
                         key={monthIdx}
                         title={title}
-                        className={`flex-1 min-w-[2px] transition-[filter] duration-150 ${
-                          hasData ? 'hover:brightness-125' : ''
-                        }`}
-                        style={heatmapCellBackground(cell?.value, scaleMax)}
+                        className="min-w-0 h-full rounded-[2px]"
+                        style={{ ...heatmapCellBackground(cell?.value, scaleMax, { withGlow: false }), boxShadow: 'none' }}
                       />
                     );
                   })}

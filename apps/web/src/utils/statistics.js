@@ -553,6 +553,13 @@ export function computeStatistics(months, options = {}) {
     if (c.value > 0) yearSummary[y].positive++;
     else if (c.value < 0) yearSummary[y].negative++;
   }
+  for (let i = 0; i < months.length; i++) {
+    const month = months[i];
+    const summary = yearSummary[month.date.getFullYear()];
+    if (!summary) continue;
+    summary.patrimony = totalWealthByMonth[i] - (month.travelFund || 0) * (1 - TRAVEL_PATRIMONY_SHARE);
+    summary.patrimonyMonth = month.label;
+  }
   const yearComparison = buildYearComparison(yearSummary);
 
   let currentStreak = { count: 0, type: null };

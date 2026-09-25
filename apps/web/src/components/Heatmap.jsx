@@ -96,7 +96,7 @@ function Heatmap({
                               ? t.heatmapMonthSelected(cell.fullMonth || cell.month)
                               : t.heatmapMonthSelect(cell.fullMonth || cell.month)
                           }
-                          className={`rounded-md sm:rounded-lg w-[3.5rem] min-h-[2.5rem] py-0.5 sm:w-full sm:min-h-14 sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-95 mx-auto sm:mx-0 px-0.5 cursor-pointer touch-manipulation ${
+                          className={`rounded-md sm:rounded-lg w-[3.5rem] min-h-11 py-0.5 sm:w-full sm:min-h-14 sm:h-14 flex flex-col items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-95 mx-auto sm:mx-0 px-0.5 cursor-pointer touch-manipulation ${
                             isSelected
                               ? 'ring-2 ring-brand ring-offset-1 ring-offset-[#0a0f14] z-[1] relative scale-[1.03]'
                               : ''
@@ -120,7 +120,7 @@ function Heatmap({
                         </button>
                       ) : (
                         <div
-                          className="rounded-md sm:rounded-lg w-[3.5rem] min-h-[2.5rem] py-0.5 sm:w-full sm:min-h-14 sm:h-14 mx-auto sm:mx-0"
+                          className="rounded-md sm:rounded-lg w-[3.5rem] min-h-11 py-0.5 sm:w-full sm:min-h-14 sm:h-14 mx-auto sm:mx-0"
                           style={cellStyle}
                           aria-hidden
                         />
