@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { usePrivacy } from '../context/PrivacyContext.jsx';
 import { fetchSheetData, fetchSheetDataViaBackend } from '../services/sheetsApi.js';
 import { sheetValuesToMonths } from '../lib/sheetMonths.js';
-import { carGoal, remuneratedBalance, savingsPaceBalance } from '../lib/carGoal.js';
+import { carGoal, carSavingsBalance, savingsPaceBalance } from '../lib/carGoal.js';
 import { formatMoney } from '../utils/formatters.js';
 import { API_URL, HAS_BACKEND, PROFILE_PRIMARY_ID, PROFILE_SECONDARY_ID } from '../config.js';
 
@@ -35,12 +35,12 @@ export default function CarGoal({ profiles, profile, months, appJwt, accessToken
     request.then(values => {
       const history = sheetValuesToMonths(values);
       const latest = history.at(-1);
-      if (!cancelled) setOther({ sheetId, balance: remuneratedBalance(latest), history });
+      if (!cancelled) setOther({ sheetId, balance: carSavingsBalance(latest, otherId === PROFILE_PRIMARY_ID ? 0.65 : 0.35), history });
     }).catch(() => { if (!cancelled) setOther({ sheetId, error: true }); });
     return () => { cancelled = true; };
-  }, [sheetId, appJwt, accessToken, attempt, months]);
+  }, [sheetId, otherId, appJwt, accessToken, attempt, months]);
   const latest = months?.at(-1);
-  const own = remuneratedBalance(latest);
+  const own = carSavingsBalance(latest, profile === PROFILE_PRIMARY_ID ? 0.65 : 0.35);
   const peer = sheetId && other && other.sheetId === sheetId && !other.error
     ? other.balance ?? null
     : null;

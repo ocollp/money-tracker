@@ -1,9 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { carGoal, remuneratedBalance, savingsPaceBalance } from './carGoal.js';
+import { carGoal, remuneratedBalance, savingsPaceBalance, carSavingsBalance } from './carGoal.js';
 
 describe('car goal', () => {
-  it('includes personal BBVA cash in pace without adding it to car funds', () => {
-    const month = { entries: [
+  it('adds only each owner’s share of the shared fund to car savings', () => {
+    const month = { travelFund: 1391, entries: [
+      { category: 'Cuenta flexible', entity: 'Trade Republic', type: 'Cash', amount: 8000 },
+      { category: 'Cuenta compartida flexible', entity: 'Trade Republic', type: 'Cash', amount: 1391, isTravel: true },
+    ] };
+    expect(carSavingsBalance(month, 0.65)).toBeCloseTo(8904.15);
+    expect(carSavingsBalance(month, 0.35)).toBeCloseTo(8486.85);
+    expect(savingsPaceBalance(month)).toBe(8000);
+    expect(carSavingsBalance(null, 0.65)).toBeNull();
+  });
+  it('includes personal BBVA cash in car savings and pace, excluding shared and housing rows', () => {
+    const month = { travelFund: 1391, entries: [
       { category: 'Cuenta flexible', entity: 'Trade Republic', type: 'Cash', amount: 8000 },
       { entity: 'BBVA', type: 'Cash', amount: 2000 },
       { entity: 'BBVA', type: 'Cash', amount: 500, isTravel: true },
@@ -12,6 +22,8 @@ describe('car goal', () => {
     ] };
     expect(savingsPaceBalance(month)).toBe(10000);
     expect(remuneratedBalance(month)).toBe(8000);
+    expect(carSavingsBalance(month, 0.65)).toBeCloseTo(10904.15);
+    expect(carSavingsBalance(month, 0.35)).toBeCloseTo(10486.85);
   });
   it('splits the full price 65/35 and sums individual shortfalls', () => {
     const result = carGoal(25000, 12000, 6000);

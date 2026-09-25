@@ -6,6 +6,12 @@ export function remuneratedBalance(month) {
     .reduce((sum, row) => sum + row.amount, 0);
 }
 
+export function carSavingsBalance(month, share) {
+  const personal = savingsPaceBalance(month);
+  if (personal == null) return null;
+  return personal + (month.travelFund ?? 0) * share;
+}
+
 export function carGoal(price, olga, andrea) {
   const shares = [0.65, 0.35];
   const people = [olga, andrea].map((balance, i) => {
