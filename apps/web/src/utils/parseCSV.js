@@ -106,7 +106,7 @@ export function parseSheetMatrix(values) {
     if (!type || !category || amount === null) continue;
 
     const { month, year } = parsedDate;
-    const isHousing = category === VIVIENDA_PERSONAL || category === 'Hipoteca';
+    const isHousing = category === VIVIENDA_PERSONAL || category === 'Hipoteca' || category === 'Arras vivienda';
     const isTravel = category === 'Cuenta compartida flexible';
 
     rows.push({ date, month, year, type, category, entity, amount, isHousing, isTravel });
@@ -147,6 +147,7 @@ export function groupByMonth(rows) {
         invested: 0,
         investedLiquid: 0,
         housingValue: 0,
+        housingDeposit: 0,
         mortgageDebt: 0,
         travelFund: 0,
         byEntity: {},
@@ -160,9 +161,11 @@ export function groupByMonth(rows) {
     m.total += row.amount;
 
     if (row.isHousing) {
+      if (row.category === 'Arras vivienda') m.housingDeposit += row.amount;
       if (row.category === VIVIENDA_PERSONAL) m.housingValue = row.amount;
       if (row.category === 'Hipoteca') m.mortgageDebt = row.amount;
       if (!m.byEntityHousing[row.entity]) m.byEntityHousing[row.entity] = { value: 0, debt: 0 };
+      if (row.category === 'Arras vivienda') m.byEntityHousing[row.entity].deposit = (m.byEntityHousing[row.entity].deposit || 0) + row.amount;
       if (row.category === VIVIENDA_PERSONAL) m.byEntityHousing[row.entity].value = row.amount;
       if (row.category === 'Hipoteca') m.byEntityHousing[row.entity].debt = row.amount;
     } else if (row.isTravel) {

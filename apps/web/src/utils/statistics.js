@@ -149,12 +149,20 @@ export function computeStatistics(months, options = {}) {
   };
 
   const housingValueBaseSeries = months.map((m) => housingValueAsUsed(m));
-  const housingEffective = buildCarriedForwardSeries(housingValueBaseSeries);
+  let housingEffective = buildCarriedForwardSeries(housingValueBaseSeries);
 
-  const mortgageEffective = buildEffectiveMortgageSeries(months);
+  let mortgageEffective = buildEffectiveMortgageSeries(months);
 
-  const housingWealth = buildForwardFromFirstMortgage(months, housingValueForWealth);
+  const housingWealth = buildForwardFromFirstMortgage(months, housingValueForWealth).map((value, i) =>
+    firstMortgageIdx < 0 || i < firstMortgageIdx ? (months[i].housingDeposit || 0) : value,
+  );
   const mortgageWealth = buildForwardMortgageWealthSeries(months);
+  // An explicit deposit records the purchase timeline: it is replaced by
+  // property minus debt at completion, never added a second time.
+  if (months.some(m => m.housingDeposit > 0)) {
+    housingEffective = housingWealth;
+    mortgageEffective = mortgageWealth;
+  }
   const housingWealthByKey = new Map(months.map((m, i) => [m.key, housingWealth[i]]));
   const mortgageWealthByKey = new Map(months.map((m, i) => [m.key, mortgageWealth[i]]));
 
@@ -310,7 +318,9 @@ export function computeStatistics(months, options = {}) {
       fixedHousingVal != null && entityNorm === fixedHousingEntityNorm
         ? fixedHousingVal
         : (housing?.value || 0);
-    const equity = housing ? housingValuePart + (housing.debt || 0) : 0;
+    const equity = includeHousingWealth
+      ? (housing ? housingValuePart + (housing.debt || 0) : 0)
+      : (byEntityHousing[name]?.deposit || 0);
     const value = liquid + equity;
     if (name === 'BBVA' && equity !== 0 && (liquid > 0 || fixedHousingVal != null)) {
       distributionRaw.push({ name: 'Compte corrent BBVA', value: liquid });
@@ -448,7 +458,7 @@ export function computeStatistics(months, options = {}) {
     else if (travelSpentLastMonth > myHalfSaving * 1.5) travelPace = 'watch';
   }
 
-  const hasHousing = firstMortgageIdx >= 0 && lastIdx >= firstMortgageIdx;
+  const hasHousing = (firstMortgageIdx >= 0 && lastIdx >= firstMortgageIdx) || (latestMonth.housingDeposit || 0) > 0;
 
   const profileFeatures = getProfileFeatures(options.profileId);
   const assetClassResult =

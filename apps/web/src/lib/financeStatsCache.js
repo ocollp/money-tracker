@@ -1,4 +1,4 @@
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const PREFIX = 'mt_finance_v';
 
 function cacheKey(sheetId, profileId) {

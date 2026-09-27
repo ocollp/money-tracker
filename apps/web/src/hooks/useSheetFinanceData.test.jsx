@@ -69,3 +69,43 @@ it('loads the saved profile sheet after an initial sheet was denied', async () =
     delete globalThis.IS_REACT_ACT_ENVIRONMENT;
   }
 });
+
+it('discards a late background response after switching profiles', async () => {
+  const api = await import('../services/sheetsApi.js');
+  api.checkSheetAccess.mockResolvedValue(true);
+  api.checkSheetAccessViaBackend.mockResolvedValue(true);
+  const values = amount => [['Fecha', 'Tipo', 'Categoria', 'Entidad', 'Cantidad'], ['01/09/2026', 'Cash', 'Efectivo', 'Bank', String(amount)]];
+  let resolveOld;
+  let calls = 0;
+  const fetch = (_token, id) => {
+    if (id === 'olga' && ++calls > 1) return new Promise(resolve => { resolveOld = resolve; });
+    return Promise.resolve(values(id === 'olga' ? 1000 : 2000));
+  };
+  fetchSheetData.mockReset().mockImplementation(fetch);
+  fetchSheetDataViaBackend.mockReset().mockImplementation(fetch);
+  localStorage.clear(); sessionStorage.clear();
+  vi.useFakeTimers();
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const root = createRoot(document.createElement('div'));
+  const config = { spreadsheetId: 'olga', spreadsheetId2: 'andrea', profileLabels: {}, profileEmojis: {} };
+  let result;
+  const observed = [];
+  function Harness({ profile }) {
+    result = useSheetFinanceData({ accessToken: 'test', appJwt: 'test', profile, financeConfig: config });
+    observed.push([profile, result.stats?.current]);
+    return null;
+  }
+  try {
+    await act(async () => root.render(<Harness profile="primary" />));
+    await act(async () => vi.advanceTimersByTime(45000));
+    await act(async () => root.render(<Harness profile="secondary" />));
+    expect(result.stats.current).toBe(2000);
+    await act(async () => resolveOld(values(9000)));
+    expect(result.stats.current).toBe(2000);
+    expect(observed.filter(([profile]) => profile === 'secondary').every(([, amount]) => amount == null || amount === 2000)).toBe(true);
+  } finally {
+    await act(async () => root.unmount());
+    vi.useRealTimers();
+    delete globalThis.IS_REACT_ACT_ENVIRONMENT;
+  }
+});

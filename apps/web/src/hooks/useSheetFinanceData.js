@@ -103,7 +103,9 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     [labels, emojis, sid3],
   );
 
-  const initialCache = readInitialCache(financeConfig.spreadsheetId, profile);
+  const initialSheetId = profile === PROFILE_SECONDARY_ID ? sid2 : profile === PROFILE_TERTIARY_ID ? sid3 : sid1;
+  const initialCache = readInitialCache(initialSheetId, profile);
+  const [loadedStatsKey, setLoadedStatsKey] = useState(`${initialSheetId}\0${profile}`);
 
   const [sheetAccess, setSheetAccess] = useState(() => ({
     id1: Boolean(sid1),
@@ -161,11 +163,12 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     const next = buildStatsFromMonths(months, statsOptsRef.current, profileId);
     if (next) {
       setStats(next);
+      setLoadedStatsKey(`${currentSheetId}\0${profileId}`);
       setLastUpdatedAt(new Date());
       monthsCacheRef.current = months;
     }
     return next;
-  }, []);
+  }, [currentSheetId]);
 
   const ingestValues = useCallback(
     (values) => sheetValuesToMonths(values, housingRef.current),
@@ -247,6 +250,9 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     if (statsCacheKeyRef.current === statsKey) return;
 
     statsCacheKeyRef.current = statsKey;
+    setLoadedStatsKey(statsKey);
+    setError(null);
+    setLastUpdatedAt(null);
     lastPayloadRef.current = null;
     lastPayloadSheetRef.current = null;
     const cachedMonths = readCachedMonths(currentSheetId, effectiveProfile);
@@ -320,15 +326,17 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
   useEffect(() => {
     if (!fetchData || !currentSheetId || !stats) return;
 
+    let cancelled = false;
     const intervalId = setInterval(() => {
       fetchData(currentSheetId)
         .then((values) => {
+          if (cancelled) return;
           applySheetValues(values, effectiveProfile);
         })
         .catch(() => {});
     }, POLL_INTERVAL_MS);
 
-    return () => clearInterval(intervalId);
+    return () => { cancelled = true; clearInterval(intervalId); };
   }, [fetchData, currentSheetId, effectiveProfile, stats, applySheetValues]);
 
   const refresh = useCallback(() => setFetchKey((k) => k + 1), []);
@@ -338,11 +346,11 @@ export function useSheetFinanceData({ accessToken, appJwt, profile, financeConfi
     effectiveProfiles,
     effectiveProfile,
     currentSheetId,
-    stats,
-    loading,
-    isRefreshing: Boolean(loading && stats),
-    error,
+    stats: loadedStatsKey === statsKey ? stats : null,
+    loading: loadedStatsKey !== statsKey || loading,
+    isRefreshing: Boolean(loading && stats && loadedStatsKey === statsKey),
+    error: loadedStatsKey === statsKey ? error : null,
     refresh,
-    lastUpdatedAt,
+    lastUpdatedAt: loadedStatsKey === statsKey ? lastUpdatedAt : null,
   };
 }
