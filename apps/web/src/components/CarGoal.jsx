@@ -110,7 +110,7 @@ export default function CarGoal({ profiles, profile, months, appJwt, accessToken
                   <span>Cal estalviar al mes</span>
                   <span className="tabular-nums text-text-primary text-right">{person.missing === 0 ? money(0) : savingMonths > 0 ? money(Math.ceil(person.missing / savingMonths)) : 'Cal completar l’estalvi ara'}</span>
                 </p>
-                <p className="flex justify-between items-baseline gap-2 text-text-secondary"><span>Mitjana mensual</span><span className="tabular-nums text-right">{pace == null ? 'sense prou dades' : `${money(pace)} / mes`}</span></p>
+                {(pace == null || pace >= 0) && <p className="flex justify-between items-baseline gap-2 text-text-secondary"><span>Mitjana mensual</span><span className="tabular-nums text-right">{pace == null ? 'sense prou dades' : `${money(pace)} / mes`}</span></p>}
                 {!hideMoney && pace != null && required != null && person.missing > 0 && pace >= required && <p className="text-emerald-300">Al ritme necessari</p>}
               </div>
             </> : <p className="text-text-secondary">{!sheetId || other?.error ? 'Saldo no disponible' : 'Carregant saldo…'}</p>}
