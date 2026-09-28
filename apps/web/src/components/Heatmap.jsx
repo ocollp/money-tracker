@@ -58,7 +58,38 @@ function Heatmap({
         </div>
       </div>
 
-      <div className="px-3 pb-4 sm:px-5 sm:pb-5 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile max-w-full touch-pan-x">
+      <div className="sm:hidden px-3 pb-4 space-y-4">
+        {years.map(year => (
+          <section key={year} aria-label={String(year)} className="min-w-0">
+            <h4 className="text-xs font-bold text-text-secondary tabular-nums mb-2">{year}</h4>
+            <div className="space-y-2">
+              {[0, 6].map(start => {
+                const indices = visibleMonthIdxs.filter(i => i >= start && i < start + 6);
+                if (!indices.length) return null;
+                return <div key={start} className="grid grid-cols-6 gap-1">
+                  {indices.map(i => {
+                    const cell = grid[year]?.[i];
+                    const selected = cell?.key != null && cell.key === selectedMonthKey;
+                    return <div key={i} className="min-w-0" style={{ gridColumn: i - start + 1 }}>
+                      <div className="text-center text-[9px] font-semibold text-text-secondary/70 mb-1">{monthNames[i]}</div>
+                      {cell ? <button type="button"
+                        onClick={() => onSelectMonth?.(cell)}
+                        aria-pressed={selected}
+                        aria-label={selected ? t.heatmapMonthSelected(cell.fullMonth || cell.month) : t.heatmapMonthSelect(cell.fullMonth || cell.month)}
+                        style={getCellStyle(cell.value)}
+                        className={`w-full min-w-0 min-h-11 rounded-md px-0.5 py-1 text-[9px] font-bold tabular-nums leading-tight break-words touch-manipulation focus-visible:outline-2 focus-visible:outline-brand ${selected ? 'ring-2 ring-brand ring-offset-1 ring-offset-[#0a0f14]' : ''}`}>
+                        {hideMoney ? `${Math.abs(cell.pct).toFixed(1)}%` : formatChange(cell.value)}
+                      </button> : <div aria-hidden className="w-full min-h-11 rounded-md" style={getCellStyle(null)} />}
+                    </div>;
+                  })}
+                </div>;
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div className="hidden sm:block px-3 pb-4 sm:px-5 sm:pb-5 overflow-x-auto overscroll-x-contain scrollbar-hide-mobile max-w-full touch-pan-x">
         <table className="w-max min-w-full border-separate max-w-none" style={{ borderSpacing: '3px 4px' }}>
           <thead>
             <tr>

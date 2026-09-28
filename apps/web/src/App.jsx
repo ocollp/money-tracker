@@ -704,17 +704,16 @@ export default function App() {
           </div>
         </section>
 
-        <Heatmap
-          data={stats.heatmap}
-          selectedMonthKey={selectedMonthKey}
-          onSelectMonth={handleHeatmapSelectMonth}
-          trimEmptyMonths={profileFeatures.trimEmptyHeatmapMonths}
-          title={
-            viewStats.hasHousing
-              ? (t.heatmapTitleWithHousing ?? t.heatmapTitle)
-              : t.heatmapTitle
-          }
-        />
+          {profileFeatures.showPatterns && profileFeatures.showMilestones ? (
+            <div className="min-w-0 w-full">
+              <MilestonesCard
+                liquidCurrent={viewStats.current}
+                patrimonyCurrent={patrimonyForMilestones}
+                showWealthGoals={effectiveProfile === PROFILE_PRIMARY_ID}
+                carGoal={<CarGoal profiles={effectiveProfiles} profile={effectiveProfile} months={stats.months} appJwt={appJwt} accessToken={accessToken} price={carPrice} onPriceChange={changeCarPrice} />}
+              />
+            </div>
+          ) : null}
 
         {viewStats.hasHousing && profileFeatures.showHousingSection && (
           <MortgageCard
@@ -729,21 +728,28 @@ export default function App() {
 
         {profileFeatures.showPatterns ? (
         <section className="space-y-4 sm:space-y-6">
-          {profileFeatures.showMilestones ? (
-            <div className="min-w-0 w-full">
-              <MilestonesCard
-                liquidCurrent={viewStats.current}
-                patrimonyCurrent={patrimonyForMilestones}
-                showWealthGoals={effectiveProfile === PROFILE_PRIMARY_ID}
-                carGoal={<CarGoal profiles={effectiveProfiles} profile={effectiveProfile} months={stats.months} appJwt={appJwt} accessToken={accessToken} price={carPrice} onPriceChange={changeCarPrice} />}
-              />
-            </div>
-          ) : null}
+
           <div className="min-w-0 w-full">
             <Patterns yearComparison={viewStats.yearComparison} heatmap={viewStats.heatmap} />
           </div>
         </section>
         ) : null}
+
+        <Heatmap
+          data={stats.heatmap}
+          selectedMonthKey={selectedMonthKey}
+          onSelectMonth={handleHeatmapSelectMonth}
+          trimEmptyMonths={profileFeatures.trimEmptyHeatmapMonths}
+          title={
+            viewStats.hasHousing
+              ? (t.heatmapTitleWithHousing ?? t.heatmapTitle)
+              : t.heatmapTitle
+          }
+        />
+
+
+
+
       </main>
 
       <footer className="mx-auto w-full px-3 sm:px-6 lg:px-10 mt-4 pt-4 border-t border-white/[0.06] text-center text-[11px] sm:text-xs text-text-secondary/90 space-y-1.5 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
