@@ -27,8 +27,10 @@ export default function CarPaymentPlan({ people, emojis }) {
             <p className="flex justify-between gap-2"><span>{emojis[person.owner]} {person.owner} <span className="text-text-secondary">· {Math.round(person.share * 100)}%</span></span><span className="tabular-nums">{money(payment.amount)}</span></p>
             {!hideMoney && payment.reserved != null && <div role="progressbar" aria-label={`${title}: ${person.owner}`} aria-valuemin={0} aria-valuemax={payment.amount} aria-valuenow={payment.reserved} className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden"><div className="h-full rounded-full bg-sky-400/70" style={{ width: `${percent}%` }} /></div>}
             <p className="flex justify-between gap-2 text-text-secondary"><span>Reservat dels estalvis</span><span className="tabular-nums">{money(payment.reserved)}</span></p>
+            {payment.missing !== 0 && <>
             <p className="flex justify-between gap-2 text-text-secondary"><span>Falten</span><span className="tabular-nums text-text-primary">{money(payment.missing)}</span></p>
-            <p className="flex justify-between gap-2 text-text-secondary"><span>{index === 0 ? 'Fins al primer pagament' : 'Després del primer pagament'}</span><span className="text-right tabular-nums">{payment.missing === 0 ? money(0) + ' / mes' : payment.monthly == null ? (payment.missing == null ? '—' : 'Pendent ara') : money(payment.monthly) + ' / mes'}</span></p>
+            <p className="flex justify-between gap-2 text-text-secondary"><span>{index === 0 ? 'Fins al primer pagament' : 'Després del primer pagament'}</span><span className="text-right tabular-nums">{payment.monthly == null ? (payment.missing == null ? '—' : 'Pendent ara') : money(payment.monthly) + ' / mes'}</span></p>
+            </>}
           </div>;
         })}
       </div>)}

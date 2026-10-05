@@ -74,9 +74,9 @@ export default function CarGoal({ profiles, profile, months, appJwt, accessToken
                   <strong className="text-sm font-semibold tabular-nums text-red-300">{money(person.missing)}</strong>
                 </p>
               )}
-              <div className="border-t border-white/[0.06] pt-3 space-y-1">
+              {person.missing > 0 && (pace == null || pace > 0) && <div className="border-t border-white/[0.06] pt-3 space-y-1">
                 {(pace == null || pace >= 0) && <p className="flex justify-between items-baseline gap-2 text-text-secondary"><span>Mitjana mensual</span><span className="tabular-nums text-right">{pace == null ? 'sense prou dades' : `${money(pace)} / mes`}</span></p>}
-              </div>
+              </div>}
             </> : <p className="text-text-secondary">{!sheetId || other?.error ? 'Saldo no disponible' : 'Carregant saldo…'}</p>}
           </div>
         ); })}
