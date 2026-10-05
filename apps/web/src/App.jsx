@@ -84,16 +84,6 @@ export default function App() {
     authError,
   } = useGoogleAuth();
   const [profile, setProfile] = useState(getInitialProfile);
-  const [carPrice, setCarPrice] = useState(() => {
-    try {
-      const saved = Number(localStorage.getItem('mt_car_price'));
-      return saved >= 5000 && saved <= 30000 ? Math.max(20000, saved) : 21500;
-    } catch { return 21500; }
-  });
-  const changeCarPrice = (price) => {
-    setCarPrice(price);
-    try { localStorage.setItem('mt_car_price', String(price)); } catch {}
-  };
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [addMonthOpen, setAddMonthOpen] = useState(false);
   const [selectedAssetClasses, setSelectedAssetClasses] = useState([]);
@@ -710,7 +700,7 @@ export default function App() {
                 liquidCurrent={viewStats.current}
                 patrimonyCurrent={patrimonyForMilestones}
                 showWealthGoals={effectiveProfile === PROFILE_PRIMARY_ID}
-                carGoal={<CarGoal profiles={effectiveProfiles} profile={effectiveProfile} months={stats.months} appJwt={appJwt} accessToken={accessToken} price={carPrice} onPriceChange={changeCarPrice} />}
+                carGoal={<CarGoal profiles={effectiveProfiles} profile={effectiveProfile} months={stats.months} appJwt={appJwt} accessToken={accessToken} />}
               />
             </div>
           ) : null}
