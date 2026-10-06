@@ -2,8 +2,8 @@ import { usePrivacy } from '../context/PrivacyContext.jsx';
 import { formatMoney } from '../utils/formatters.js';
 import { carPaymentPlan } from '../lib/carPaymentPlan.js';
 
-const dates = ['2026-11', '2027-05'];
-const dateLabels = ['Novembre de 2026', 'Maig de 2027'];
+const dates = ['2027-02', '2027-05'];
+const dateLabels = ['Febrer de 2026', 'Maig de 2027'];
 
 export default function CarPaymentPlan({ people, emojis }) {
   const { hideMoney } = usePrivacy();
