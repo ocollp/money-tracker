@@ -39,13 +39,13 @@ describe('dashboard loading transitions', () => {
     const props = { profile: 'primary', months: [{ entries: [] }], price: 21500, onPriceChange: vi.fn() };
     await act(async () => root.render(<CarGoal {...props} profiles={[own, peer]} />));
     await act(async () => root.render(<CarGoal {...props} profiles={[own]} />));
-    expect(container.textContent).toContain('Comprar un cotxe');
+    expect(container.textContent).toContain('Toyota Yaris GR Sport');
     expect(container.textContent).toContain('Saldo no disponible');
   });
 
   it('renders the car goal without a configured peer sheet on initial load', async () => {
     await act(async () => root.render(<CarGoal profiles={[]} profile="secondary" months={[]} price={21500} onPriceChange={vi.fn()} />));
-    expect(container.textContent).toContain('Comprar un cotxe');
+    expect(container.textContent).toContain('Toyota Yaris GR Sport');
   });
 
   it('supports distribution data disappearing and returning during refresh', async () => {

@@ -53,7 +53,7 @@ export default function CarGoal({ profiles, profile, months, appJwt, accessToken
   const money = value => hideMoney ? '••••' : formatMoney(value);
   return (
     <div className="rounded-xl border border-violet-500/15 bg-white/[0.02] p-3 sm:p-4 space-y-4">
-      <h4 className="flex items-center gap-2.5 text-xs font-medium leading-snug text-text-secondary"><span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] ring-1 ring-white/[0.06] text-lg">🚗</span> Comprar un cotxe</h4>
+      <h4 className="flex items-center gap-2.5 text-xs font-medium leading-snug text-text-secondary"><span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] ring-1 ring-white/[0.06] text-lg">🚗</span> Toyota Yaris GR Sport</h4>
       <p className="flex items-center justify-between gap-2 text-xs text-text-secondary">Preu total del cotxe <span className="text-sm text-text-primary tabular-nums">{formatMoney(price)}</span></p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {orderedPeople.map((person) => {
