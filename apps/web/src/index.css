@@ -389,3 +389,27 @@ button:active:not(:disabled) {
     transition: none;
   }
 }
+
+/* Use the card width, including when the sidebar reduces available space. */
+.distribution-card {
+  container-type: inline-size;
+  container-name: distribution;
+}
+
+@container distribution (max-width: 680px) {
+  .distribution-layout { flex-direction: column; align-items: stretch; }
+  .distribution-donut {
+    display: block;
+    width: min(100%, 15rem);
+    height: auto;
+    aspect-ratio: 1;
+    max-width: 100%;
+    margin-inline: auto;
+  }
+}
+
+@container distribution (max-width: 420px) {
+  .distribution-row { flex-wrap: wrap; row-gap: 6px; }
+  .distribution-row > :first-child { flex-basis: 100%; }
+  .distribution-amounts { width: 100%; justify-content: flex-end; }
+}

@@ -307,7 +307,7 @@ function DistributionChart({
 
   return (
     <div
-      className={`h-full ${DASHBOARD_SECTION_CARD}`}
+      className={`distribution-card h-full ${DASHBOARD_SECTION_CARD}`}
       onDoubleClick={hasSelection ? clearFilter : undefined}
     >
       <div className={DISTRIBUTION_SECTION_HEADER}>
@@ -330,9 +330,9 @@ function DistributionChart({
           {t.distributionClearHint ?? t.distributionDoubleTapHint ?? ''}
         </p>
       )}
-      <div className="flex min-h-0 w-full flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-5 lg:gap-6">
+      <div className="distribution-layout flex min-h-0 w-full flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-5 lg:gap-6">
         <div
-          className="relative mx-auto aspect-square w-full max-w-[min(100%,17rem)] shrink-0 leading-none touch-pan-y sm:mx-0 sm:h-64 sm:w-64 sm:max-w-none sm:touch-auto lg:h-72 lg:w-72"
+          className="distribution-donut relative mx-auto aspect-square w-full max-w-[min(100%,17rem)] shrink-0 leading-none touch-pan-y sm:mx-0 sm:h-64 sm:w-64 sm:max-w-none sm:touch-auto lg:h-72 lg:w-72"
           onDoubleClick={hasSelection ? clearFilter : undefined}
         >
           <div className="h-full w-full max-sm:pointer-events-none">
@@ -471,10 +471,10 @@ function DistributionChart({
                 onClick={() => handleLegendClick(d.name)}
                 onDoubleClick={clearFilter}
               >
-                <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+                <div className="distribution-row flex items-center justify-between gap-1.5 sm:gap-2">
                   <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: c }} />
-                    <span className="text-xs sm:text-sm truncate text-text-secondary">
+                    <span className="text-xs sm:text-sm whitespace-normal break-words text-text-secondary">
                       {displayName(d.name)}
                     </span>
                     {isHousingRow ? (
@@ -485,7 +485,7 @@ function DistributionChart({
                       />
                     ) : null}
                   </div>
-                  <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                  <div className="distribution-amounts flex items-center gap-1 sm:gap-1.5 shrink-0">
                     {!hideMoney ? <MiniSparkline data={sparklines[d.name]} color={c} /> : null}
                     {!hideMoney ? (
                       <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(d.value)}</span>
