@@ -14,9 +14,18 @@ describe('car payment plan', () => {
   it('reserves savings only once, funding the first payment first', () => {
     expect(plan(10000).map(p => p.reserved)).toEqual([7800, 2200]);
     expect(plan(10000).map(p => p.missing)).toEqual([0, 6900]);
-    expect(plan(10000)[1].monthly).toBe(986);
+    expect(plan(10000)[1].monthly).toBe(863);
     expect(plan(5000).map(p => p.reserved)).toEqual([5000, 0]);
     expect(plan(20000).map(p => p.missing)).toEqual([0, 0]);
+  });
+  it('starts saving for May now when the November payment is covered', () => {
+    const covered = carPaymentPlan(10000, 0.65, '2026-11', '2027-05', now);
+    expect(covered[1].months).toBe(7);
+    expect(covered[1].monthly).toBe(986);
+    const pending = carPaymentPlan(5000, 0.65, '2026-11', '2027-05', now);
+    expect(pending[1].months).toBe(6);
+    expect(pending[1].monthly).toBe(1517);
+    expect(carPaymentPlan(5000, 0.35, '2026-11', '2027-05', now)[1].months).toBe(7);
   });
   it('keeps unknown balances unknown', () => {
     expect(plan(null).every(p => p.reserved === null && p.missing === null && p.monthly === null)).toBe(true);

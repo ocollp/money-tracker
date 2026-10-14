@@ -14,9 +14,11 @@ export function carPaymentPlan(balance, share, firstDate, finalDate, now = new D
   const finalAmount = 14000 * share;
   const firstReserved = available == null ? null : Math.min(available, firstAmount);
   const finalReserved = available == null ? null : Math.min(Math.max(0, available - firstAmount), finalAmount);
+  // Once the first payment is reserved, saving for the final payment can start now.
+  const finalStart = firstReserved === firstAmount ? start : Math.max(first, start);
   return [
     { amount: firstAmount, reserved: firstReserved, months: Math.max(0, first - start) },
-    { amount: finalAmount, reserved: finalReserved, months: Math.max(0, final - Math.max(first, start)) },
+    { amount: finalAmount, reserved: finalReserved, months: Math.max(0, final - finalStart) },
   ].map(payment => ({ ...payment, missing: payment.reserved == null ? null : payment.amount - payment.reserved,
     monthly: payment.reserved == null || payment.months === 0 ? null : Math.ceil((payment.amount - payment.reserved) / payment.months) }));
 }

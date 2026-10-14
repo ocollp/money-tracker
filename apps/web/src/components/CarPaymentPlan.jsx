@@ -29,7 +29,7 @@ export default function CarPaymentPlan({ people, emojis }) {
             <p className="flex justify-between gap-2 text-text-secondary"><span>Reservat dels estalvis</span><span className="tabular-nums">{money(payment.reserved)}</span></p>
             {payment.missing !== 0 && <>
             <p className="flex justify-between gap-2 text-text-secondary"><span>Falten</span><span className="tabular-nums text-text-primary">{money(payment.missing)}</span></p>
-            <p className="flex justify-between gap-2 text-text-secondary"><span>{index === 0 ? 'Fins al primer pagament' : 'Després del primer pagament'}</span><span className="text-right tabular-nums">{payment.monthly == null ? (payment.missing == null ? '—' : 'Pendent ara') : money(payment.monthly) + ' / mes'}</span></p>
+            <p className="flex justify-between gap-2 text-text-secondary"><span>{index === 0 ? 'Fins al primer pagament' : plans[i][0].missing === 0 ? 'Des d’aquest mes' : 'Després del primer pagament'}</span><span className="text-right tabular-nums">{payment.monthly == null ? (payment.missing == null ? '—' : 'Pendent ara') : money(payment.monthly) + ' / mes'}</span></p>
             </>}
           </div>;
         })}
