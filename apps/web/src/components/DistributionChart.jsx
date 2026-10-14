@@ -471,7 +471,7 @@ function DistributionChart({
                 onClick={() => handleLegendClick(d.name)}
                 onDoubleClick={clearFilter}
               >
-                <div className="distribution-row flex items-center justify-between gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-between gap-1.5 sm:gap-2">
                   <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0" style={{ background: c }} />
                     <span className="text-xs sm:text-sm whitespace-normal break-words text-text-secondary">
@@ -485,7 +485,7 @@ function DistributionChart({
                       />
                     ) : null}
                   </div>
-                  <div className="distribution-amounts flex items-center gap-1 sm:gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                     {!hideMoney ? <MiniSparkline data={sparklines[d.name]} color={c} /> : null}
                     {!hideMoney ? (
                       <span className="text-xs sm:text-sm font-semibold text-text-primary tabular-nums">{formatMoney(d.value)}</span>

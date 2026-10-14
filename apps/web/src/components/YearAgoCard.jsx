@@ -3,8 +3,8 @@ import { formatMoney, formatChange, formatPct } from '../utils/formatters.js';
 
 function compactMonth(key) {
   const [year, month] = key.split('-');
-  const names = ['Gen.', 'Feb.', 'Març', 'Abr.', 'Maig', 'Juny', 'Jul.', 'Ag.', 'Set.', 'Oct.', 'Nov.', 'Des.'];
-  return `${names[Number(month) - 1].replace('.', '')} ${year.slice(-2)}`;
+  const names = ['Gener', 'Febrer', 'Març', 'Abril', 'Maig', 'Juny', 'Juliol', 'Agost', 'Setembre', 'Octubre', 'Novembre', 'Desembre'];
+  return `${names[Number(month) - 1]} ${year.slice(-2)}`;
 }
 
 export default function YearAgoCard({ stats }) {
