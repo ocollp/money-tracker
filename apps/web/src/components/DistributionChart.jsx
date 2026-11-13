@@ -39,10 +39,10 @@ const ENTITY_COLORS = {
   'Indexa Capital': '#8b5cf6',
   Fundeen: '#ea580c',
   'Fons compartit': '#9333ea',
-  Habitatge: '#0891b2',
+  Habitatge: '#7c3aed',
   Crowdfunding: '#f97316',
   ETFs: '#a855f7',
-  'Fons indexat': '#7c3aed',
+  'Fons indexat': '#0891b2',
   'Pla de pensions': COLOR_PENSION,
   Accions: COLOR_ACCIONS,
   Cripto: '#ec4899',
@@ -224,7 +224,9 @@ function DistributionChart({
 }) {
   const { t } = useI18n();
   const { hideMoney: hideMoneyGlobal } = usePrivacy();
-  const [showHousing, setShowHousing] = useState(true);
+  // The housing card already explains this part of the patrimony. Keep the
+  // distribution focused on liquid assets until the user explicitly adds it.
+  const [showHousing, setShowHousing] = useState(false);
 
   const hasSelection = selectedEntities.length > 0;
   const isSliceSelected = (name) => selectedEntities.includes(name);
