@@ -11,13 +11,6 @@ export const ASSET_CLASS_LABELS = {
   other: 'Efectiu',
 };
 
-function addTravelToOtherBucket(point, month, travelPatrimonyShare) {
-  const tf = (month.travelFund || 0) * travelPatrimonyShare;
-  if (tf !== 0) {
-    point[ASSET_CLASS_LABELS.other] += tf;
-  }
-}
-
 function rowText(row) {
   return `${row.category || ''} ${row.entity || ''} ${row.type || ''}`.toLowerCase();
 }
@@ -159,7 +152,7 @@ export function buildCategoryGroupedAssetClassSeries(months, categoryBuckets) {
   return { distribution, evolution };
 }
 
-export function buildAssetClassSeries(months, housingEffective, mortgageEffective, hasHousing, travelPatrimonyShare) {
+export function buildAssetClassSeries(months, housingEffective, mortgageEffective, hasHousing) {
   if (!months?.length) {
     return { distribution: [], evolution: [] };
   }
@@ -177,8 +170,6 @@ export function buildAssetClassSeries(months, housingEffective, mortgageEffectiv
       const bucket = classifyLiquidEntry(row);
       point[ASSET_CLASS_LABELS[bucket]] += row.amount;
     }
-
-    addTravelToOtherBucket(point, m, travelPatrimonyShare);
 
     return point;
   });

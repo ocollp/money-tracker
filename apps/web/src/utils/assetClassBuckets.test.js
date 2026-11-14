@@ -187,7 +187,7 @@ describe('classifyLiquidEntry', () => {
 });
 
 describe('buildAssetClassSeries', () => {
-  it('adds travel fund to Efectiu bucket', () => {
+  it('excludes the shared travel fund from the distribution', () => {
     const months = [
       {
         shortLabel: 'Gen 24',
@@ -196,10 +196,9 @@ describe('buildAssetClassSeries', () => {
         travelFund: 3000,
       },
     ];
-    const { evolution, distribution } = buildAssetClassSeries(months, [0], [0], false, 1);
-    expect(evolution[0][ASSET_CLASS_LABELS.other]).toBe(3000);
-    expect(distribution.some((d) => d.name === 'Viatges')).toBe(false);
-    expect(distribution.find((d) => d.name === ASSET_CLASS_LABELS.other)?.value).toBe(3000);
+    const { evolution, distribution } = buildAssetClassSeries(months, [0], [0], false);
+    expect(evolution[0][ASSET_CLASS_LABELS.other]).toBe(0);
+    expect(distribution.some((d) => d.name === ASSET_CLASS_LABELS.other)).toBe(false);
   });
 
   it('splits liquid rows and housing equity', () => {
@@ -267,7 +266,6 @@ describe('buildAssetClassSeries', () => {
       housingEffective,
       mortgageEffective,
       true,
-      1,
     );
     expect(evolution).toHaveLength(1);
     expect(evolution[0][ASSET_CLASS_LABELS.immo]).toBe(50_000);

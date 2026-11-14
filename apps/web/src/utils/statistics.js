@@ -469,7 +469,6 @@ export function computeStatistics(months, options = {}) {
           housingWealth,
           mortgageWealth,
           hasHousing,
-          TRAVEL_PATRIMONY_SHARE,
         );
   const { distribution: assetClassDistribution, evolution: assetClassEvolution } = assetClassResult;
 
